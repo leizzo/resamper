@@ -138,7 +138,7 @@ void ClipComponent::paint (juce::Graphics& g)
 
     if (clip.selected)
     {
-        g.setColour (juce::Colours::white);
+        g.setColour (theme.clipOutlineSelected);
         g.drawRoundedRectangle (getLocalBounds().toFloat().reduced (0.5f), radius, 1.0f);
     }
 }

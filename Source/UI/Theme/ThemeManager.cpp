@@ -383,6 +383,7 @@ juce::Result ThemeManager::parse (const juce::String& text, Theme& t, LayoutMetr
         { "mute", &Theme::mute }, { "solo", &Theme::solo }, { "armed", &Theme::armed },
         { "recording", &Theme::recording }, { "loop", &Theme::loop },
         { "clip", &Theme::clip }, { "clipSelected", &Theme::clipSelected }, { "clipText", &Theme::clipText }, { "waveform", &Theme::waveform },
+        { "clipOutlineSelected", &Theme::clipOutlineSelected },
         { "midiClip", &Theme::midiClip }, { "midiClipSelected", &Theme::midiClipSelected }, { "midiNote", &Theme::midiNote },
         { "pianoWhite", &Theme::pianoWhite }, { "pianoBlack", &Theme::pianoBlack },
         { "noteSelected", &Theme::noteSelected }, { "gridLine", &Theme::gridLine }, { "velocity", &Theme::velocity },

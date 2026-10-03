@@ -58,6 +58,7 @@
     "clipSelected": "$clip-arp",
     "clipText": "$text-on-accent",
     "waveform": "#14141699",
+    "clipOutlineSelected": "#FFFFFF",
     "midiClip": "$clip-chords",
     "midiClipSelected": "#B38BE6",
     "midiNote": "#141416B3",

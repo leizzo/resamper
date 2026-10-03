@@ -74,6 +74,7 @@ struct Theme
                  recording,   ///< a recording in progress in its lane
                  loop,        ///< the loop range on the ruler
                  clip, clipSelected, clipText, waveform,
+                 clipOutlineSelected,   ///< the outline round a selected clip
                  midiClip, midiClipSelected, midiNote,
                  pianoWhite, pianoBlack, noteSelected, gridLine, velocity,
                  ruler, error;
