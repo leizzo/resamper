@@ -20,12 +20,16 @@
     If this is a const member function of an Engine class, it does not change
     the Edit: it does not add, remove, move or rename a track, clip, note,
     plugin, send or automation point, set a parameter or property on one, change
-    tempo or the selection, or call a non-const Engine method that does. The UI
+    tempo or the selection. Calling a non-const method of another Engine object
+    it holds (model, rack, mixer, projects' model) breaks it too, unless that
+    method only reads: its name says it sets, adds, removes, moves, pins,
+    selects or renames something. The UI
     holds these classes by const reference, so a const method that changes the
-    Edit lets the UI bypass Commands. Registering a listener, reading or
-    draining a live measurement (meters, spectrum, gain reduction), choosing how
-    meters measure, opening a plug-in's editor and watching parameter touches
-    pass. A method that is not const passes.
+    Edit lets the UI bypass Commands. A plug-in's live measurements are not
+    part of the Edit: draining a meter, analyser or detector the audio thread
+    fills (take(), update(), a LevelMeasurer client, setMode on a measurer)
+    passes, and so do registering a listener, opening a plug-in's editor and
+    watching parameter touches. A method that is not const passes.
 - name: tracktion-lookups-checked
   each: method
   where: Source/Engine/**/*.{cpp,h}
