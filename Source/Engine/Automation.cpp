@@ -1,6 +1,7 @@
 #include "Automation.h"
 #include "ApplicationModel.h"
 #include "EditTracks.h"
+#include "ProjectManager.h"
 
 #include <tracktion_engine/tracktion_engine.h>
 

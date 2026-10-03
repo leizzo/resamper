@@ -1,5 +1,6 @@
 #include "Shaper.h"
 #include "EditTracks.h"
+#include "ProjectManager.h"
 
 #include <tracktion_engine/tracktion_engine.h>
 

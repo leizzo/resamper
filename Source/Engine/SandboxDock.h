@@ -1,5 +1,8 @@
 #pragma once
 
+#include "EngineInternal.h"
+#ifdef RESAMPER_ENGINE_INTERNAL
+
 #include <juce_gui_basics/juce_gui_basics.h>
 #include <functional>
 #include <memory>
@@ -62,3 +65,4 @@ namespace sandboxdock
 }
 
 } // namespace resamper
+#endif

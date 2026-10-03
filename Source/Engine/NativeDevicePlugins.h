@@ -1,5 +1,7 @@
 #pragma once
 
+#include "EngineInternal.h"
+#ifdef RESAMPER_ENGINE_INTERNAL
 #include "NativeDeviceDsp.h"
 
 #include <tracktion_engine/tracktion_engine.h>
@@ -200,3 +202,4 @@ private:
 };
 
 } // namespace resamper
+#endif

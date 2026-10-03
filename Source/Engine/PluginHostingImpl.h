@@ -1,5 +1,7 @@
 #pragma once
 
+#include "EngineInternal.h"
+#ifdef RESAMPER_ENGINE_INTERNAL
 #include "PluginHosting.h"
 #include "PluginSandbox.h"
 
@@ -139,3 +141,4 @@ private:
 };
 
 } // namespace resamper
+#endif

@@ -1,5 +1,6 @@
 #include "Production.h"
 #include "EditTracks.h"
+#include "ProjectManager.h"
 #include "EngineManager.h"
 #include "PluginHosting.h"
 #include "Render.h"

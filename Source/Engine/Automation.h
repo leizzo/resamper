@@ -1,11 +1,12 @@
 #pragma once
 
-#include "Engine/ProjectManager.h"
-
+#include <juce_core/juce_core.h>
 #include <vector>
 
 namespace resamper
 {
+
+class ProjectManager;
 
 /** One breakpoint on a parameter's automation curve.
 

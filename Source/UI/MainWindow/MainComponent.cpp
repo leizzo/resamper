@@ -1,4 +1,5 @@
 #include "MainComponent.h"
+#include "App/ResamperApp.h"
 #include "Commands/AppCommands.h"
 #include "Commands/ApplicationCommandTable.h"
 #include "UI/Developer/DeveloperCommands.h"
@@ -11,32 +12,38 @@ namespace resamper
 {
 
 MainComponent::MainComponent (ResamperApp& a, juce::ApplicationCommandManager& cm)
-    : app (a),
-      uiFiles (app.theme.getUIFileSource()),
-      audioDeviceDescription (app.engine.describeActiveAudioDevice()),
+    : model (a.model),
+      mixer (a.mixer),
+      plugins (a.plugins),
+      hosting (a.engine.getPluginHosting()),
+      preview (a.preview),
+      commands (a.commands),
+      themeManager (a.theme),
+      uiState (a.uiState),
+      preferences (a.preferences),
+      host (a.host),
+      uiFiles (themeManager.getUIFileSource()),
+      audioDeviceDescription (a.engine.describeActiveAudioDevice()),
       commandManager (cm),
-      shell (app.uiState.getState ("shell")),
-      statusBar (app.theme),
-      topBar (app.model, app.commands, app.theme, shell),
-      arrangement (app.model, app.commands, app.theme, app.uiState, shell),
-      pianoRoll (app.model, app.commands, app.theme, app.uiState),
-      browser (app.commands, app.plugins, app.model, app.theme, app.preview,
-               Library::defaultRoot()),
-      detailView (app.model, app.plugins, app.engine.getPluginHosting(), app.commands, app.theme, shell,
-                  app.uiState.getState ("detail")),
-      mixerView (app.model, app.mixer, app.plugins, app.engine.getPluginHosting(), app.commands, app.theme,
-                 app.uiState.getState ("mixer")),
-      sessionPlaceholder (app.theme, "The Session view arrives with M5."),
-      editorPlaceholder (app.theme, "The audio Editor arrives with M4. Double-click an audio clip then."),
-      pianoRollPlaceholder (app.theme, "Select a MIDI clip, or double-click one, to edit its notes."),
-      developerOverlay (app.theme),
-      toasts (app.theme),
-      pluginWindows (app.model, app.plugins, app.engine.getPluginHosting(), app.commands, app.theme, app.preferences)
+      shell (uiState.getState ("shell")),
+      statusBar (themeManager),
+      topBar (model, commands, themeManager, shell),
+      arrangement (model, commands, themeManager, uiState, shell),
+      pianoRoll (model, commands, themeManager, uiState),
+      browser (commands, plugins, model, themeManager, preview, Library::defaultRoot()),
+      detailView (model, plugins, hosting, commands, themeManager, shell, uiState.getState ("detail")),
+      mixerView (model, mixer, plugins, hosting, commands, themeManager, uiState.getState ("mixer")),
+      sessionPlaceholder (themeManager, "The Session view arrives with M5."),
+      editorPlaceholder (themeManager, "The audio Editor arrives with M4. Double-click an audio clip then."),
+      pianoRollPlaceholder (themeManager, "Select a MIDI clip, or double-click one, to edit its notes."),
+      developerOverlay (themeManager),
+      toasts (themeManager),
+      pluginWindows (model, plugins, hosting, commands, themeManager, preferences)
 {
     // Looked up per call: the platform may fill in host.reportError after the app is built.
-    auto reportError = [this] (const juce::String& message) { app.host.reportError (message); };
-    registerDeveloperCommands (app.commands, app.theme, reportError);
-    registerShellCommands (app.commands, shell);
+    auto reportError = [this] (const juce::String& message) { host.reportError (message); };
+    registerDeveloperCommands (commands, themeManager, reportError);
+    registerShellCommands (commands, shell);
     registerArrangementZoomCommands();
     registerEscapeCommand();
     registerPianoRollCommands();
@@ -56,7 +63,7 @@ MainComponent::MainComponent (ResamperApp& a, juce::ApplicationCommandManager& c
     // The mixer's Track chain row: back to the timeline, the track selected, its chain in view.
     mixerView.onShowDeviceChain = [this] (const juce::String& trackId)
     {
-        app.commands.invoke (cmd::trackSelect, { trackId });
+        commands.invoke (cmd::trackSelect, { trackId });
         shell.setDetailCollapsed (false);
         shell.setView (shell.getLastTimelineView());
         detailView.revealDeviceChain();
@@ -105,7 +112,7 @@ MainComponent::MainComponent (ResamperApp& a, juce::ApplicationCommandManager& c
     };
 
     // The opening rule (§9.6) applies to every insert, whichever view it came from.
-    app.host.pluginAdded = [this] (const juce::String& trackId, const juce::String& pluginId)
+    host.pluginAdded = [this] (const juce::String& trackId, const juce::String& pluginId)
     {
         pluginWindows.pluginAdded (trackId, pluginId);
     };
@@ -123,11 +130,11 @@ MainComponent::MainComponent (ResamperApp& a, juce::ApplicationCommandManager& c
     if (auto dir = uiFiles.getDevDirectory(); dir != juce::File())
     {
         themeWatch = std::make_unique<ThemeWatcher> (dir.getChildFile ("themes"));
-        themeWatch->onJsonUpdated = [this] (const juce::File&) { app.commands.invoke (cmd::devReloadTheme); };
+        themeWatch->onJsonUpdated = [this] (const juce::File&) { commands.invoke (cmd::devReloadTheme); };
     }
 
-    app.model.addListener (this);
-    app.theme.addListener (this);
+    model.addListener (this);
+    themeManager.addListener (this);
     shell.getState().addListener (this);
     themeChanged();
     pluginWindows.refresh();   // a project's open windows come back
@@ -136,10 +143,10 @@ MainComponent::MainComponent (ResamperApp& a, juce::ApplicationCommandManager& c
 MainComponent::~MainComponent()
 {
     setInspectorOpen (false);
-    app.host.pluginAdded = nullptr;
+    host.pluginAdded = nullptr;
     shell.getState().removeListener (this);
-    app.theme.removeListener (this);
-    app.model.removeListener (this);
+    themeManager.removeListener (this);
+    model.removeListener (this);
 }
 
 void MainComponent::registerArrangementZoomCommands()
@@ -147,7 +154,7 @@ void MainComponent::registerArrangementZoomCommands()
     // Zoom is for the Arrangement, so these only act while it shows.
     auto add = [this] (CommandRef<> ref, const char* name, void (ArrangementView::*fn)())
     {
-        app.commands.add (ref, { name }, [this, fn]
+        commands.add (ref, { name }, [this, fn]
         {
             if (arrangement.isShowing())
                 (arrangement.*fn)();
@@ -163,26 +170,26 @@ void MainComponent::registerArrangementZoomCommands()
 void MainComponent::registerEscapeCommand()
 {
     // Esc (PRD §16.1): closes popovers and menus, cancels a drag, clears the selection.
-    app.commands.add (cmd::uiEscape, { "Clear Selection" }, [this]
+    commands.add (cmd::uiEscape, { "Clear Selection" }, [this]
     {
         juce::PopupMenu::dismissAllActiveMenus();
         arrangement.cancelDrag();
-        app.commands.invoke (cmd::editDeselectAll);
+        commands.invoke (cmd::editDeselectAll);
     });
 }
 
 void MainComponent::registerPluginWindowCommands()
 {
-    auto& prefs = app.preferences;
+    auto& prefs = preferences;
 
-    app.commands.add (cmd::pluginWindowToggleAll, { "Show / Hide Plug-in Windows" }, [this] { pluginWindows.toggleAll(); });
-    app.commands.add (cmd::pluginWindowCloseFocused, { "Close Plug-in Window" }, [this] { pluginWindows.closeFocused(); });
+    commands.add (cmd::pluginWindowToggleAll, { "Show / Hide Plug-in Windows" }, [this] { pluginWindows.toggleAll(); });
+    commands.add (cmd::pluginWindowCloseFocused, { "Close Plug-in Window" }, [this] { pluginWindows.closeFocused(); });
 
-    app.commands.add (cmd::pluginWindowToggleAutoOpen,
+    commands.add (cmd::pluginWindowToggleAutoOpen,
                       { "Auto-open Plug-in Window on Insert", {}, [&prefs] { return prefs.getAutoOpenPluginWindows(); } },
                       [&prefs] { prefs.setAutoOpenPluginWindows (! prefs.getAutoOpenPluginWindows()); });
 
-    app.commands.add (cmd::pluginWindowToggleSelectedTrackOnly,
+    commands.add (cmd::pluginWindowToggleSelectedTrackOnly,
                       { "Show Plug-in Windows for Selected Track Only", {},
                         [&prefs] { return prefs.getPluginWindowsForSelectedTrackOnly(); } },
                       [&prefs] { prefs.setPluginWindowsForSelectedTrackOnly (! prefs.getPluginWindowsForSelectedTrackOnly()); });
@@ -190,7 +197,7 @@ void MainComponent::registerPluginWindowCommands()
 
 void MainComponent::registerDeveloperOverlayCommand()
 {
-    app.commands.add (cmd::devToggleOverlay, { "Developer Overlay" }, [this] { toggleDeveloperOverlay(); });
+    commands.add (cmd::devToggleOverlay, { "Developer Overlay" }, [this] { toggleDeveloperOverlay(); });
 }
 
 void MainComponent::toggleDeveloperOverlay()
@@ -236,7 +243,7 @@ void MainComponent::setInspectorOpen (bool open)
 
 void MainComponent::showToast (const juce::String& message, bool undoable, bool isError)
 {
-    toasts.show (message, undoable ? std::function<void()> ([this] { app.commands.invoke (cmd::editUndo); })
+    toasts.show (message, undoable ? std::function<void()> ([this] { commands.invoke (cmd::editUndo); })
                                    : std::function<void()>(),
                  isError);
 }
@@ -250,13 +257,13 @@ void MainComponent::Placeholder::paint (juce::Graphics& g)
 
 void MainComponent::paint (juce::Graphics& g)
 {
-    g.fillAll (app.theme.getTheme().bgDeep);
+    g.fillAll (themeManager.getTheme().bgDeep);
 }
 
 void MainComponent::resized()
 {
     using View = ShellState::View;
-    auto& metrics = app.theme.getMetrics();
+    auto& metrics = themeManager.getMetrics();
     auto r = getLocalBounds();
     toasts.followHost();
     topBar.setBounds (r.removeFromTop (metrics.topBarHeight));
@@ -308,9 +315,9 @@ void MainComponent::valueTreePropertyChanged (juce::ValueTree&, const juce::Iden
 
 void MainComponent::openPianoRollForSelection()
 {
-    const auto clipId = app.model.getSelectedClipId();
+    const auto clipId = model.getSelectedClipId();
 
-    if (auto clip = app.model.getClip (clipId); clip && clip->kind == TrackKind::midi)
+    if (auto clip = model.getClip (clipId); clip && clip->kind == TrackKind::midi)
         pianoRoll.openClip (clipId);
 }
 
@@ -329,14 +336,14 @@ void MainComponent::showMenu (const juce::String& name, juce::Rectangle<int> scr
 
 void MainComponent::updateStatusBar()
 {
-    statusBar.setProject ("Project: " + app.model.getProjectName());
+    statusBar.setProject ("Project: " + model.getProjectName());
     statusBar.setDevice (audioDeviceDescription);
     statusBar.setMode (uiFiles.isDevMode() ? "Dev UI: source tree" : juce::String());
 
     if (developerOverlay.isVisible())
-        developerOverlay.setStatusText (app.model.getProjectName()
-                                        + "   " + juce::String (app.model.getTracks().size()) + " tracks"
-                                        + "   " + juce::String (app.model.getTransportPositionSeconds(), 2) + " s");
+        developerOverlay.setStatusText (model.getProjectName()
+                                        + "   " + juce::String (model.getTracks().size()) + " tracks"
+                                        + "   " + juce::String (model.getTransportPositionSeconds(), 2) + " s");
 }
 
 void MainComponent::modelChanged()
@@ -357,14 +364,14 @@ void MainComponent::themeChanged()
 void MainComponent::getAllCommands (juce::Array<juce::CommandID>& ids)
 {
     for (auto& entry : getApplicationCommandTable())
-        if (app.commands.contains (entry.commandId))
+        if (commands.contains (entry.commandId))
             ids.add (entry.applicationCommandID);
 }
 
 void MainComponent::getCommandInfo (juce::CommandID id, juce::ApplicationCommandInfo& info)
 {
     auto* entry = findApplicationCommand (id);
-    auto* command = entry != nullptr ? app.commands.find (entry->commandId) : nullptr;
+    auto* command = entry != nullptr ? commands.find (entry->commandId) : nullptr;
 
     if (command == nullptr)
         return;
@@ -384,7 +391,7 @@ void MainComponent::getCommandInfo (juce::CommandID id, juce::ApplicationCommand
 bool MainComponent::perform (const InvocationInfo& invocation)
 {
     if (auto* entry = findApplicationCommand (invocation.commandID))
-        return app.commands.invokeById (entry->commandId);
+        return commands.invokeById (entry->commandId);
 
     return false;
 }
@@ -427,10 +434,10 @@ bool MainComponent::ShortcutListener::viewShortcut (const juce::KeyPress& key)
     if (binding->contexts == ShortcutContext::anyView && binding->argument == KeyBinding::noArgument && inMenus)
         return false;
 
-    if (! owner.app.commands.contains (binding->commandId))
+    if (! owner.commands.contains (binding->commandId))
         return false;
 
-    owner.app.commands.invokeById (binding->commandId, bindingArgs (*binding));
+    owner.commands.invokeById (binding->commandId, bindingArgs (*binding));
     return true;
 }
 
@@ -442,22 +449,22 @@ void MainComponent::registerPianoRollCommands()
         return pianoRoll.isShowing() ? pianoRoll.openClipId() : juce::String();
     };
 
-    app.commands.add (cmd::pianoRollQuantize, { "Quantize" }, [this, openClip]
+    commands.add (cmd::pianoRollQuantize, { "Quantize" }, [this, openClip]
     {
         if (auto clipId = openClip(); clipId.isNotEmpty())
-            app.commands.invoke (cmd::noteQuantize, { clipId, "1/16" });
+            commands.invoke (cmd::noteQuantize, { clipId, "1/16" });
     });
 
-    app.commands.add (cmd::pianoRollTranspose, { "Transpose" }, [this, openClip] (const int& semitones)
+    commands.add (cmd::pianoRollTranspose, { "Transpose" }, [this, openClip] (const int& semitones)
     {
         if (auto clipId = openClip(); clipId.isNotEmpty())
-            app.commands.invoke (cmd::noteTransposeSelected, { clipId, semitones });
+            commands.invoke (cmd::noteTransposeSelected, { clipId, semitones });
     });
 
-    app.commands.add (cmd::pianoRollSelectAll, { "Select All Notes" }, [this, openClip]
+    commands.add (cmd::pianoRollSelectAll, { "Select All Notes" }, [this, openClip]
     {
         if (auto clipId = openClip(); clipId.isNotEmpty())
-            app.commands.invoke (cmd::noteSelectAll, { clipId });
+            commands.invoke (cmd::noteSelectAll, { clipId });
     });
 }
 

@@ -1,5 +1,9 @@
 #pragma once
 
+#include "EngineInternal.h"
+#ifdef RESAMPER_ENGINE_INTERNAL
+#include "EqBand.h"
+
 #include <juce_core/juce_core.h>
 
 #include <algorithm>
@@ -12,18 +16,6 @@ namespace resamper::dsp
 {
 
 //==============================================================================
-/** The shape of one EQ Eight band (PRD §9.2.1a): 12 dB / octave cuts,
-    shelves, a bell and a notch. */
-enum class EqBandType { lowCut, lowShelf, bell, notch, highShelf, highCut };
-
-inline constexpr int numEqBandTypes = 6;
-
-/** Whether a band type has a gain (the cuts and the notch don't). */
-inline bool hasGain (EqBandType t)
-{
-    return t == EqBandType::lowShelf || t == EqBandType::bell || t == EqBandType::highShelf;
-}
-
 /** One second-order section, normalised so a0 is 1. */
 struct Biquad
 {
@@ -141,14 +133,6 @@ struct BiquadState
     void reset() noexcept   { z1 = z2 = 0; }
 };
 
-/** The span a band's Q covers, as the ratio of its upper edge to its frequency
-    (the edges are hz / ratio and hz * ratio): what the Q-width shading shows. */
-inline double qEdgeRatio (double q)
-{
-    const auto octaves = 2.0 / std::log (2.0) * std::asinh (1.0 / (2.0 * juce::jmax (0.05, q)));
-    return std::pow (2.0, octaves / 2.0);
-}
-
 //==============================================================================
 /** How Compressor v2 reads its input (PRD §9.2.1a): the peak, a 10 ms RMS, or
     peak into a downward expander instead of a compressor. */
@@ -218,3 +202,4 @@ struct PeakSince
 };
 
 } // namespace resamper::dsp
+#endif

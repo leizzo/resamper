@@ -1,6 +1,7 @@
 #pragma once
 
-#include "App/ResamperApp.h"
+#include "Commands/AppCommandHost.h"
+#include "Commands/CommandRegistry.h"
 #include "UI/Arrangement/ArrangementView.h"
 #include "UI/Mixer/MixerView.h"
 #include "UI/PianoRoll/PianoRollView.h"
@@ -22,6 +23,7 @@ namespace melatonin
 namespace resamper
 {
 
+struct ResamperApp;
 class UIFileSource;
 
 /** The Commands of the window's views: they act on the view in front. */
@@ -86,7 +88,19 @@ public:
     bool perform (const InvocationInfo&) override;
 
 private:
-    ResamperApp& app;
+    /** The engine facades the window may read. A change to the Edit goes
+        through commands; these references cannot call a setter. */
+    const ApplicationModel& model;
+    const Mixer& mixer;
+    const PluginRack& plugins;
+    const PluginHosting& hosting;
+    SamplePreview& preview;
+    CommandRegistry& commands;
+    ThemeManager& themeManager;
+    UIStateStore& uiState;
+    Preferences& preferences;
+    AppCommandHost& host;
+
     const UIFileSource& uiFiles;
     const juce::String audioDeviceDescription;
     juce::ApplicationCommandManager& commandManager;

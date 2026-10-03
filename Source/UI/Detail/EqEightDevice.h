@@ -1,7 +1,7 @@
 #pragma once
 
 #include "DeviceBody.h"
-#include "Engine/NativeDeviceDsp.h"
+#include "Engine/EqBand.h"
 
 #include <array>
 

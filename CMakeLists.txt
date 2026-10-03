@@ -88,6 +88,7 @@ target_link_libraries(resamper_engine
         juce::juce_recommended_lto_flags)
 
 target_include_directories(resamper_engine PUBLIC Source)
+target_compile_definitions(resamper_engine PRIVATE RESAMPER_ENGINE_INTERNAL=1)
 set_target_properties(resamper_engine PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 if(APPLE)
@@ -285,7 +286,9 @@ target_sources(ResamperTests PRIVATE
 # Tests may reach into the engine to verify rendered audio, so they get the
 # full include path, Tracktion included.
 target_include_directories(ResamperTests PRIVATE ${resamper_module_includes} Tests)
-target_compile_definitions(ResamperTests PRIVATE ${resamper_module_definitions})
+target_compile_definitions(ResamperTests PRIVATE
+    ${resamper_module_definitions}
+    RESAMPER_ENGINE_INTERNAL=1)
 target_link_libraries(ResamperTests PRIVATE
     resamper_ui
     juce::juce_recommended_config_flags

@@ -13,20 +13,6 @@
     centring and ratios like getWidth() / 2 pass, and so does icon glyph path
     data. Literal colours are checked by Semgrep (ui-colour-from-theme), not
     here.
-- name: ui-changes-edit-through-commands
-  each: method
-  where: Source/UI/MainWindow/**/*.{cpp,h}
-  min: 70
-  ensure: >-
-    Look only at calls this method makes through app.model, app.mixer,
-    app.plugins or app.engine. If one of those calls is not a const member
-    function of that class (a setter, insert, remove, move, select or any other
-    non-const call), this breaks: the UI must invoke a Command
-    (app.commands.invoke (cmd::..., {...})) instead. Passing those objects to a
-    constructor, reading them, and addListener / removeListener pass. Every
-    other UI component holds the engine classes by const reference, so the
-    compiler already stops it; this rule covers MainComponent, which holds the
-    whole App.
 - name: ui-paint-only-draws
   each: method
   where: Source/UI/**/*.{cpp,h}

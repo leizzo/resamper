@@ -1,9 +1,11 @@
 #pragma once
 
-#include "ProjectManager.h"
+#include <juce_core/juce_core.h>
 
 namespace resamper
 {
+
+class ProjectManager;
 
 /** Production operations over the current Edit.
 

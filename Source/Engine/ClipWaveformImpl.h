@@ -1,5 +1,7 @@
 #pragma once
 
+#include "EngineInternal.h"
+#ifdef RESAMPER_ENGINE_INTERNAL
 #include "ClipWaveform.h"
 
 #include <tracktion_engine/tracktion_engine.h>
@@ -29,3 +31,4 @@ struct ClipWaveform::Impl
 };
 
 } // namespace resamper
+#endif
