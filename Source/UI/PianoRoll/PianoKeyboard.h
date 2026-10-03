@@ -15,13 +15,12 @@ class CommandRegistry;
 class PianoKeyboard : public juce::Component
 {
 public:
-    PianoKeyboard (const ApplicationModel&, CommandRegistry&, ThemeManager&, ArrangementViewState&);
+    PianoKeyboard (CommandRegistry&, ThemeManager&, ArrangementViewState&);
 
     void paint (juce::Graphics&) override;
     void mouseDown (const juce::MouseEvent&) override;
 
 private:
-    const ApplicationModel& model;
     CommandRegistry& commands;
     ThemeManager& themeManager;
     ArrangementViewState& view;

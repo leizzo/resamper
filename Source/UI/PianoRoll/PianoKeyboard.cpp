@@ -6,8 +6,8 @@
 namespace resamper
 {
 
-PianoKeyboard::PianoKeyboard (const ApplicationModel& m, CommandRegistry& c, ThemeManager& tm, ArrangementViewState& v)
-    : model (m), commands (c), themeManager (tm), view (v)
+PianoKeyboard::PianoKeyboard (CommandRegistry& c, ThemeManager& tm, ArrangementViewState& v)
+    : commands (c), themeManager (tm), view (v)
 {
 }
 
