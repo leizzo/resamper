@@ -51,7 +51,7 @@ A named operation the user triggers from a button, menu or keyboard shortcut. It
 _Avoid_: Action, operation; JUCE's ApplicationCommand is a different thing and is always spelled in full
 
 **Engine Undo**:
-The one undo history of the Edit. Every discrete change and every completed gesture (a fader drag, a velocity drag) is one undo step, including mute, solo and mixer changes during playback. Not undoable: transport (including the Loop), selection, zoom, scroll, a track's Input and arming.
+The one undo history of the Edit. Every discrete change and every completed gesture (a fader drag, a velocity drag) is one undo step, including mute, solo and mixer changes during playback. Not undoable: transport (including the Loop), selection, zoom, scroll, a Device card's size, a track's Input and arming.
 
 ### Tracks & Clips
 

@@ -283,7 +283,7 @@ void TrackLanes::showClipMenu (const ClipInfo& clip)
 
     menu.addSeparator();
     menu.addItem (commandItem (commands, cmd::editDelete));
-    menu.showMenuAsync (juce::PopupMenu::Options().withMousePosition());
+    menu.showMenuAsync (juce::PopupMenu::Options().withTargetComponent (this).withMousePosition());
 }
 
 void TrackLanes::startRename (const ClipInfo& clip)

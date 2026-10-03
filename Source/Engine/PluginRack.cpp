@@ -1057,6 +1057,7 @@ std::unique_ptr<PluginRack::TouchWatch> PluginRack::watchTouches (const juce::St
     return {};
 }
 
+// Not an undo step: a card's size is a view, like zoom, kept with the plug-in so it reopens the same.
 juce::Result PluginRack::setSize (const juce::String& pluginId, DeviceSize size)
 {
     auto plugin = findPlugin (projectManager.getEdit(), pluginId);
