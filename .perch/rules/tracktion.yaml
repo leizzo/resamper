@@ -40,5 +40,7 @@
     EditItemID parsed from a string — is checked before it is dereferenced, and
     the not-found case returns a juce::Result, nullptr or std::nullopt the
     caller can see. Dereferencing one unchecked, or turning not-found into a
-    silent success, breaks this.
+    silent success, breaks this. An index into a list this code built from the
+    same plug-in list, and a method with no Tracktion lookup (POSIX, JUCE or
+    std calls only), pass.
   min: 70

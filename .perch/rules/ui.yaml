@@ -35,8 +35,10 @@
     If this method is paint, paintOverChildren or resized, it only lays out or
     draws from state the component already holds: it does not change any state,
     start timers, add or remove child components, call repaint, allocate large
-    buffers, sort, read files or walk the whole Edit to find what to draw. Any
-    other method passes.
+    buffers, sort, read files or walk the whole Edit to find what to draw.
+    resized may also rebuild what depends on the size and paint draws from (a
+    curve's points, a cached Path) and repaint after it. Any other method
+    passes.
 - name: ui-timer-repaints-on-change
   each: method
   where: Source/UI/**/*.{cpp,h}

@@ -10,7 +10,11 @@
     juce::Component::SafePointer or juce::WeakReference and returns early if it
     is null. Lambdas assigned to this object's own members or to members of an
     object it owns (onClick, onChange, a command host's std::function fields),
-    and code that runs synchronously, pass.
+    and code that runs synchronously, pass. A popup menu item capturing this
+    passes when the menu is shown withTargetComponent (this or one of its child
+    components), or the items are added for a menu this object shows that way:
+    JUCE dismisses the menu without running an item once its target is gone. A
+    menu shown with only withMousePosition or a screen area has no such guard.
 - name: juce-listeners-removed
   each: file
   where: Source/{UI,Engine,App}/**/*.{cpp,h}
@@ -27,7 +31,8 @@
   ensure: >-
     Ownership is expressed with std::unique_ptr, juce::OwnedArray or a member
     object. A new whose result is kept in a raw pointer that this code must
-    later delete, or any explicit delete, breaks this. new handed straight to an
-    API that documents taking ownership (setContentOwned, OwnedArray::add, a
-    unique_ptr) passes.
+    later delete breaks this. new handed straight to an API that documents
+    taking ownership (setContentOwned, OwnedArray::add, a unique_ptr) passes,
+    and so does placement new into memory something else owns. An explicit
+    delete is checked by Semgrep (no-explicit-delete), not here.
   min: 70
