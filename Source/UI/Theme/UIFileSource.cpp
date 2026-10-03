@@ -1,11 +1,11 @@
-#include "LayoutSource.h"
+#include "UIFileSource.h"
 
 #include <ResamperResources.h>
 
 namespace resamper
 {
 
-LayoutSource::LayoutSource()
+UIFileSource::UIFileSource()
 {
    #ifdef RESAMPER_DEV_UI_DIR
     if (juce::File dir (RESAMPER_DEV_UI_DIR); dir.isDirectory())
@@ -13,7 +13,7 @@ LayoutSource::LayoutSource()
    #endif
 }
 
-juce::Result LayoutSource::read (const juce::String& relativePath, juce::String& text) const
+juce::Result UIFileSource::read (const juce::String& relativePath, juce::String& text) const
 {
     juce::MemoryBlock data;
 
@@ -24,7 +24,7 @@ juce::Result LayoutSource::read (const juce::String& relativePath, juce::String&
     return juce::Result::ok();
 }
 
-juce::Result LayoutSource::readData (const juce::String& relativePath, juce::MemoryBlock& data) const
+juce::Result UIFileSource::readData (const juce::String& relativePath, juce::MemoryBlock& data) const
 {
     if (isDevMode())
     {

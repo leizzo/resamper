@@ -4,12 +4,11 @@ namespace resamper
 {
 
 DeveloperOverlay::DeveloperOverlay (ThemeManager& tm)
-    : themes (tm), inspector (tm)
+    : themes (tm)
 {
     setInterceptsMouseClicks (false, true);
 
     addAndMakeVisible (status);
-    addAndMakeVisible (inspector);
     status.setComponentID ("developer.status");
     status.setJustificationType (juce::Justification::centredLeft);
 
@@ -34,9 +33,7 @@ void DeveloperOverlay::paint (juce::Graphics& g)
 
 void DeveloperOverlay::resized()
 {
-    auto area = getLocalBounds();
-    status.setBounds (area.removeFromTop (themes.getMetrics().trackControlHeight));
-    inspector.setBounds (area);
+    status.setBounds (getLocalBounds());
 }
 
 void DeveloperOverlay::themeChanged()

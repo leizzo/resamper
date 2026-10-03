@@ -2,20 +2,21 @@
 #include "Commands/AppCommands.h"
 #include "Commands/ApplicationCommandTable.h"
 #include "UI/Developer/DeveloperCommands.h"
-#include "UI/Layout/LayoutSource.h"
-#include "UI/Layout/Primitives.h"
+#include "UI/Theme/UIFileSource.h"
 #include "UI/State/UIStateStore.h"
+
+#include <melatonin_inspector/melatonin_inspector.h>
 
 namespace resamper
 {
 
 MainComponent::MainComponent (ResamperApp& a, juce::ApplicationCommandManager& cm)
     : app (a),
-      layoutSource (app.theme.getLayoutSource()),
+      uiFiles (app.theme.getUIFileSource()),
       audioDeviceDescription (app.engine.describeActiveAudioDevice()),
       commandManager (cm),
       shell (app.uiState.getState ("shell")),
-      layouts (layoutSource, factory, app.uiState),
+      statusBar (app.theme),
       topBar (app.model, app.commands, app.theme, shell),
       arrangement (app.model, app.commands, app.theme, app.uiState, shell),
       pianoRoll (app.model, app.commands, app.theme, app.uiState),
@@ -32,23 +33,17 @@ MainComponent::MainComponent (ResamperApp& a, juce::ApplicationCommandManager& c
       toasts (app.theme),
       pluginWindows (app.model, app.plugins, app.engine.getPluginHosting(), app.commands, app.theme, app.preferences)
 {
-    // Every Command a layout or the menus may name must be registered before they build.
-    registerPrimitives (factory, app.commands, app.theme);
     // Looked up per call: the platform may fill in host.reportError after the app is built.
     auto reportError = [this] (const juce::String& message) { app.host.reportError (message); };
-    registerDeveloperCommands (app.commands, layouts, app.theme, reportError);
+    registerDeveloperCommands (app.commands, app.theme, reportError);
     registerShellCommands (app.commands, shell);
     registerArrangementZoomCommands();
     registerEscapeCommand();
     registerPianoRollCommands();
     registerPluginWindowCommands();
 
-    if (layoutSource.isDevMode())
+    if (uiFiles.isDevMode())
         registerDeveloperOverlayCommand();
-
-    layouts.onError = reportError;
-    statusBarHost.onBuilt = [this] { updateStatusBar(); };
-    layouts.addHost (statusBarHost);
 
     topBar.onMenu = [this] (const juce::String& name, juce::Rectangle<int> area) { showMenu (name, area); };
 
@@ -118,19 +113,16 @@ MainComponent::MainComponent (ResamperApp& a, juce::ApplicationCommandManager& c
     for (auto* c : std::initializer_list<juce::Component*> { &topBar, &browser, &detailView,
                                                              &arrangement, &sessionPlaceholder, &pianoRoll, &mixerView,
                                                              &editorPlaceholder, &pianoRollPlaceholder,
-                                                             &developerOverlay, &statusBarHost })
+                                                             &developerOverlay, &statusBar })
         addChildComponent (c);
 
     addAndMakeVisible (toasts);
 
     topBar.setVisible (true);
-    addMouseListener (this, true);
 
-    if (auto dir = layoutSource.getDevDirectory(); dir != juce::File())
+    if (auto dir = uiFiles.getDevDirectory(); dir != juce::File())
     {
-        layoutWatch = std::make_unique<LayoutWatcher> (dir.getChildFile ("layouts"));
-        themeWatch = std::make_unique<LayoutWatcher> (dir.getChildFile ("themes"));
-        layoutWatch->onJsonUpdated = [this] (const juce::File&) { app.commands.invoke (cmd::devReloadLayout); };
+        themeWatch = std::make_unique<ThemeWatcher> (dir.getChildFile ("themes"));
         themeWatch->onJsonUpdated = [this] (const juce::File&) { app.commands.invoke (cmd::devReloadTheme); };
     }
 
@@ -143,6 +135,7 @@ MainComponent::MainComponent (ResamperApp& a, juce::ApplicationCommandManager& c
 
 MainComponent::~MainComponent()
 {
+    setInspectorOpen (false);
     app.host.pluginAdded = nullptr;
     shell.getState().removeListener (this);
     app.theme.removeListener (this);
@@ -205,9 +198,40 @@ void MainComponent::toggleDeveloperOverlay()
     // The status bar and inspector are not part of the design, so they stay hidden until asked for.
     const auto show = ! developerOverlay.isVisible();
     developerOverlay.setVisible (show);
-    statusBarHost.setVisible (show);
+    statusBar.setVisible (show);
+    setInspectorOpen (show);
     updateStatusBar();
     resized();
+}
+
+void MainComponent::setInspectorOpen (bool open)
+{
+    if (open == (inspector != nullptr))
+        return;
+
+    if (! open)
+    {
+        removeKeyListener (&shortcuts);
+        inspector.reset();
+        setWantsKeyboardFocus (false);
+        return;
+    }
+
+    inspector = std::make_unique<melatonin::Inspector> (*this);
+
+    // JUCE asks the newest key listener first, and the inspector's takes Cmd+I and Escape.
+    // Ours goes after it, so Resamper's shortcuts still win while the inspector is open.
+    addKeyListener (&shortcuts);
+
+    // Deferred: the inspector calls this from its own close button.
+    inspector->onClose = [safe = juce::Component::SafePointer<MainComponent> (this)]
+    {
+        juce::MessageManager::callAsync ([safe]
+        {
+            if (safe != nullptr)
+                safe->setInspectorOpen (false);
+        });
+    };
 }
 
 void MainComponent::showToast (const juce::String& message, bool undoable, bool isError)
@@ -237,11 +261,11 @@ void MainComponent::resized()
     toasts.followHost();
     topBar.setBounds (r.removeFromTop (metrics.topBarHeight));
 
-    if (statusBarHost.isVisible())
-        statusBarHost.setBounds (r.removeFromBottom (metrics.statusBarHeight));
+    if (statusBar.isVisible())
+        statusBar.setBounds (r.removeFromBottom (metrics.statusBarHeight));
 
     if (developerOverlay.isVisible())
-        developerOverlay.setBounds (r.removeFromBottom (metrics.trackControlHeight * 5));
+        developerOverlay.setBounds (r.removeFromBottom (metrics.trackControlHeight));
 
     const auto view = shell.getView();
     const auto timeline = view == View::session || view == View::arrange;
@@ -305,26 +329,14 @@ void MainComponent::showMenu (const juce::String& name, juce::Rectangle<int> scr
 
 void MainComponent::updateStatusBar()
 {
-    auto setText = [this] (const char* id, const juce::String& text)
-    {
-        if (auto* label = dynamic_cast<TextLabel*> (statusBarHost.findById (id)))
-            label->setText (text);
-    };
-
-    setText ("status.project", "Project: " + app.model.getProjectName());
-    setText ("status.device", audioDeviceDescription);
-    setText ("status.mode", layoutSource.isDevMode() ? "Dev UI: source tree" : juce::String());
+    statusBar.setProject ("Project: " + app.model.getProjectName());
+    statusBar.setDevice (audioDeviceDescription);
+    statusBar.setMode (uiFiles.isDevMode() ? "Dev UI: source tree" : juce::String());
 
     if (developerOverlay.isVisible())
         developerOverlay.setStatusText (app.model.getProjectName()
                                         + "   " + juce::String (app.model.getTracks().size()) + " tracks"
                                         + "   " + juce::String (app.model.getTransportPositionSeconds(), 2) + " s");
-}
-
-void MainComponent::mouseDown (const juce::MouseEvent& e)
-{
-    if (developerOverlay.isVisible() && e.mods.isAltDown() && e.eventComponent != nullptr)
-        developerOverlay.getInspector().setInspected (e.eventComponent);
 }
 
 void MainComponent::modelChanged()

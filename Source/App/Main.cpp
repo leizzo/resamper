@@ -4,7 +4,7 @@
 #include "Engine/EngineManager.h"
 #include "Engine/PluginSandbox.h"
 #include "Engine/PluginScanner.h"
-#include "UI/Layout/LayoutSource.h"
+#include "UI/Theme/UIFileSource.h"
 #include "UI/MainWindow/MainWindow.h"
 #include "UI/Theme/ThemeManager.h"
 
@@ -134,8 +134,8 @@ public:
     }
 
 private:
-    LayoutSource layoutSource;
-    ThemeManager theme { layoutSource, "themes/dark.json" };
+    UIFileSource uiFiles;
+    ThemeManager theme { uiFiles, "themes/dark.json" };
 
     std::unique_ptr<EngineManager> engine;
     std::unique_ptr<ResamperApp> app;

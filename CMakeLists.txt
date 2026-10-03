@@ -16,6 +16,7 @@ endif()
 #                              release plus an EditSnapshot crash fix needed for Save)
 #     -> modules/juce          JUCE 8.0.13-7-g37c894f8, as pinned by Tracktion
 #   external/gin               GIN ea795541
+#   external/melatonin_inspector  melatonin_inspector 9c483f86 (module 1.4.0)
 # ------------------------------------------------------------------------------
 set(TE_ADD_EXAMPLES OFF CACHE BOOL "" FORCE)
 add_subdirectory(external/tracktion_engine/modules/juce EXCLUDE_FROM_ALL)
@@ -25,6 +26,9 @@ add_subdirectory(external/tracktion_engine EXCLUDE_FROM_ALL)
 # gin::FileSystemWatcher). Add a module here and to resamper_engine when
 # code starts using it.
 juce_add_module(external/gin/modules/gin)
+
+# The Developer Mode component inspector.
+juce_add_module(external/melatonin_inspector)
 
 # ------------------------------------------------------------------------------
 # resamper_engine: the only target that sees Tracktion headers.
@@ -78,6 +82,7 @@ target_link_libraries(resamper_engine
         juce::juce_audio_utils
         juce::juce_gui_extra
         gin
+        melatonin_inspector
         juce::juce_recommended_config_flags
         juce::juce_recommended_lto_flags)
 
@@ -106,14 +111,13 @@ function(resamper_use_engine_without_tracktion target)
 endfunction()
 
 # ------------------------------------------------------------------------------
-# UI resources: layouts and themes embedded for production builds.
+# UI resources: themes and fonts embedded for production builds.
 # Debug builds read the same files from the source tree (dev-mode override).
 # ------------------------------------------------------------------------------
 juce_add_binary_data(resamper_resources
     HEADER_NAME ResamperResources.h
     NAMESPACE ResamperResources
     SOURCES
-        UI/layouts/statusbar.json
         UI/themes/dark.json
         UI/themes/light.json
         UI/fonts/Inter-Regular.ttf
@@ -158,14 +162,11 @@ add_library(resamper_ui STATIC
     Source/UI/Controls/Icons.cpp
     Source/UI/Controls/Menus.cpp
     Source/UI/MainWindow/Toasts.cpp
-    Source/UI/Layout/LayoutSource.cpp
-    Source/UI/Layout/ComponentFactory.cpp
-    Source/UI/Layout/Primitives.cpp
-    Source/UI/Layout/LayoutManager.cpp
+    Source/UI/Theme/UIFileSource.cpp
     Source/UI/Developer/DeveloperCommands.cpp
-    Source/UI/Developer/Inspector.cpp
     Source/UI/Developer/DeveloperOverlay.cpp
-    Source/UI/Developer/LayoutWatcher.cpp
+    Source/UI/Developer/StatusBar.cpp
+    Source/UI/Developer/ThemeWatcher.cpp
     Source/Commands/ProductionCommands.cpp
     Source/UI/Browser/Library.cpp
     Source/UI/Browser/Browser.cpp
@@ -253,7 +254,6 @@ target_sources(ResamperTests PRIVATE
     Tests/RenderTests.cpp
     Tests/MidiTrackTests.cpp
     Tests/NoteEditingTests.cpp
-    Tests/ComponentFactoryTests.cpp
     Tests/ProductionTests.cpp
     Tests/PluginRackTests.cpp
     Tests/PluginSandboxTests.cpp

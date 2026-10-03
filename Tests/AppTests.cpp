@@ -33,7 +33,7 @@ struct AppTests : juce::UnitTest
             // The developer overlay exists only when the UI is read from the source tree.
             auto expected = [&f] (const juce::String& id)
             {
-                return id != "dev.toggleOverlay" || f.layoutSource.isDevMode();
+                return id != "dev.toggleOverlay" || f.uiFiles.isDevMode();
             };
 
             for (auto& entry : getApplicationCommandTable())

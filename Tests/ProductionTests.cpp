@@ -1,7 +1,6 @@
 #include "TestFixture.h"
 
 #include "Commands/ProductionCommands.h"
-#include "UI/Developer/Inspector.h"
 
 #include <tracktion_engine/tracktion_engine.h>
 #include <juce_audio_formats/juce_audio_formats.h>
@@ -203,36 +202,6 @@ struct ProductionTests : juce::UnitTest
                 expect (! f.production.isFrozen (id));
                 expectEquals (undo.getUndoDescriptions().size(), undoCount);
             }
-        }
-
-        beginTest ("Inspector shows the inspected component id");
-        {
-            Fixture f;
-            juce::Component parent, component;
-            parent.setComponentID ("arrangement");
-            component.setName ("Lane");
-            component.setComponentID ("lane.track1");
-            parent.addAndMakeVisible (component);
-
-            expect (f.theme.load().wasOk());
-            Inspector inspector (f.theme);
-            inspector.setInspected (&component);
-
-            auto sawId = false, sawParent = false;
-
-            for (int i = 0; i < inspector.getNumChildComponents(); ++i)
-                if (auto* label = dynamic_cast<juce::Label*> (inspector.getChildComponent (i)))
-                {
-                    if (label->getText().contains ("lane.track1"))
-                        sawId = true;
-
-                    if (label->getText().contains ("arrangement"))
-                        sawParent = true;
-                }
-
-            expect (sawId, "inspector did not show the component id");
-            expect (sawParent, "inspector did not show the parent id");
-            inspector.setInspected (nullptr);
         }
     }
 };

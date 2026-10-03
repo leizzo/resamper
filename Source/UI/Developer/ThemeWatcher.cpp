@@ -1,13 +1,13 @@
-#include "LayoutWatcher.h"
+#include "ThemeWatcher.h"
 
 #include <gin/gin.h>
 
 namespace resamper
 {
 
-struct LayoutWatcher::Impl : private gin::FileSystemWatcher::Listener
+struct ThemeWatcher::Impl : private gin::FileSystemWatcher::Listener
 {
-    Impl (LayoutWatcher& o, const juce::File& folder)
+    Impl (ThemeWatcher& o, const juce::File& folder)
         : owner (o)
     {
         watcher.addListener (this);
@@ -27,15 +27,15 @@ struct LayoutWatcher::Impl : private gin::FileSystemWatcher::Listener
             owner.onJsonUpdated (file);
     }
 
-    LayoutWatcher& owner;
+    ThemeWatcher& owner;
     gin::FileSystemWatcher watcher;
 };
 
-LayoutWatcher::LayoutWatcher (const juce::File& folder)
+ThemeWatcher::ThemeWatcher (const juce::File& folder)
     : impl (std::make_unique<Impl> (*this, folder))
 {
 }
 
-LayoutWatcher::~LayoutWatcher() = default;
+ThemeWatcher::~ThemeWatcher() = default;
 
 } // namespace resamper

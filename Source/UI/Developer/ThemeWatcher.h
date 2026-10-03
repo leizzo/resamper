@@ -9,14 +9,14 @@ namespace resamper
 
 /** Watches a folder for .json updates via gin::FileSystemWatcher.
 
-    MainComponent watches the dev-mode layouts and themes folders and invokes
-    dev.reloadLayout or dev.reloadTheme. Callbacks arrive on the message thread.
+    MainComponent watches the dev-mode themes folder and invokes
+    dev.reloadTheme. Callbacks arrive on the message thread.
 */
-class LayoutWatcher
+class ThemeWatcher
 {
 public:
-    explicit LayoutWatcher (const juce::File& folder);
-    ~LayoutWatcher();
+    explicit ThemeWatcher (const juce::File& folder);
+    ~ThemeWatcher();
 
     /** Called when a watched .json file is updated. */
     std::function<void (const juce::File&)> onJsonUpdated;
@@ -25,7 +25,7 @@ private:
     struct Impl;
     std::unique_ptr<Impl> impl;
 
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (LayoutWatcher)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ThemeWatcher)
 };
 
 } // namespace resamper
