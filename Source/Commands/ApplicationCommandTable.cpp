@@ -76,7 +76,6 @@ namespace
         "pluginWindow.toggleAll",
         "pluginWindow.closeFocused",
         "theme.use",
-        "dev.reloadLayout",
         "dev.reloadTheme",
         "dev.toggleOverlay",
     };
@@ -194,7 +193,6 @@ namespace
         KeyBinding { "plugin.scan",               'P',                 cmd | shift,       anyView },
         KeyBinding { "pluginWindow.toggleAll",    'P',                 cmd | alt,         anyView },
         KeyBinding { "pluginWindow.closeFocused", 'W',                 cmd,               anyView },
-        KeyBinding { "dev.reloadLayout",          'L',                 cmd | alt | shift, anyView },
         KeyBinding { "dev.reloadTheme",           'T',                 cmd | alt | shift, anyView },
         KeyBinding { "dev.toggleOverlay",         'D',                 cmd | alt | shift, anyView },
 

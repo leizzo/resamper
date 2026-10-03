@@ -6,7 +6,7 @@
 #include "Commands/PluginCommands.h"
 #include "Commands/ProductionCommands.h"
 #include "Commands/SessionCommands.h"
-#include "UI/Layout/LayoutSource.h"
+#include "UI/Theme/UIFileSource.h"
 #include "UI/Theme/ThemeManager.h"
 
 namespace resamper::test
@@ -33,8 +33,8 @@ struct Fixture
     Fixture();
     ~Fixture();
 
-    LayoutSource layoutSource;
-    ThemeManager theme { layoutSource, "themes/dark.json" };
+    UIFileSource uiFiles;
+    ThemeManager theme { uiFiles, "themes/dark.json" };
     ResamperApp app { getEngineManager(), theme };
 
     // The app's parts, by their short names.

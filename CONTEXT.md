@@ -293,7 +293,7 @@ The facade over the engine that exposes app-level operations. It keeps no copy o
 _Avoid_: Track Model, shadow model
 
 **Hot Reload**:
-Reloading UI layout, theme and config files while the app runs.
+Reloading the Theme file while the app runs. Layouts are C++ components, not files.
 _Avoid_: C++ hot reload (explicitly out of scope)
 
 **Vertical Slice**:

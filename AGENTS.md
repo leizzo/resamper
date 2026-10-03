@@ -4,7 +4,7 @@
 
 - C++20 (`CMAKE_CXX_STANDARD 20`, extensions off), CMake ≥ 3.22, Ninja.
 - macOS: Apple Clang from the Xcode command-line tools; deployment target 10.15.
-- Dependencies are pinned git submodules under `external/` (JUCE, Tracktion Engine, GIN). Never edit them; see README "For developers" for the init commands.
+- Dependencies are pinned git submodules under `external/` (JUCE, Tracktion Engine, GIN, melatonin_inspector). Never edit them; see README "For developers" for the init commands.
 
 ### Build
 
@@ -31,7 +31,11 @@ Only `resamper_engine` (`Source/Engine/`) sees Tracktion headers. `Source/UI`, `
 
 `Source/UI` holds the Engine classes (`ApplicationModel`, `Mixer`, `PluginRack`, `PluginHosting`, `NativeDevices`) by `const&`, so a UI call that changes the Edit — selection included — is a compile error: invoke a Command (`commands.invoke (cmd::..., {...})`) instead, adding one in `Source/Commands` if none fits. On those classes `const` means "leaves the Edit alone", not "changes no bits": listeners, meter and analyser reads, the meter mode, plug-in editors and touch watchers are `const`. Keep that true when marking an Engine method `const` (perch `engine-const-leaves-edit-alone`).
 
-JUCE and GIN modules are INTERFACE targets that compile their sources into every target that links them, so only `resamper_engine` links them — each module is built once. Other targets get the headers through `resamper_use_engine_without_tracktion`; never add a `juce::juce_*` or `gin*` module to their `target_link_libraries`. GIN has no Tracktion dependency, so `Source/UI` may include `<gin/...>` directly. Register only the GIN modules the code uses: a new one goes in both `juce_add_module(...)` and `resamper_engine`'s link list. GIN must build against the JUCE that Tracktion pins; recheck that whenever either submodule moves.
+JUCE, GIN and melatonin_inspector modules are INTERFACE targets that compile their sources into every target that links them, so only `resamper_engine` links them — each module is built once. Other targets get the headers through `resamper_use_engine_without_tracktion`; never add a `juce::juce_*`, `gin*` or `melatonin_inspector` module to their `target_link_libraries`. GIN and melatonin_inspector have no Tracktion dependency, so `Source/UI` may include `<gin/...>` and `<melatonin_inspector/...>` directly. Register only the GIN modules the code uses: a new one goes in both `juce_add_module(...)` and `resamper_engine`'s link list. GIN must build against the JUCE that Tracktion pins; recheck that whenever either submodule moves.
+
+### Reuse before building
+
+Before writing an infrastructure piece (a widget, a watcher, a modulation source, a scanner, a host), search Tracktion Engine, JUCE and GIN for an equivalent, then read the ADRs in `docs/adr/` that touch the area. Build on what exists; write new code only for what none of them covers. The PR description names what was searched and why the existing piece was used or passed over. `docs/analysis/gin-and-ready-made-solutions.md` maps what each dependency already offers.
 
 ### Style
 
