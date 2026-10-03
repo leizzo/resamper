@@ -33,7 +33,7 @@ class ArrangementView : public juce::Component,
 public:
     static constexpr const char* componentId = "arrangement";
 
-    ArrangementView (ApplicationModel&, CommandRegistry&, ThemeManager&, UIStateStore&, ShellState&);
+    ArrangementView (const ApplicationModel&, CommandRegistry&, ThemeManager&, UIStateStore&, ShellState&);
 
     void cancelDrag()   { lanes.cancelDrag(); }
 
@@ -67,7 +67,7 @@ public:
     void itemDropped (const SourceDetails&) override;
 
 private:
-    ApplicationModel& model;
+    const ApplicationModel& model;
     ThemeManager& themeManager;
     ArrangementViewState view;
 

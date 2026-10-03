@@ -55,7 +55,7 @@ public:
     /** The EQ's spectrum before (post = false) or after its bands, in dB at
         each of hz, into db (resized). Drains what the audio thread sent since
         the last call. False when the id isn't an EQ Eight. */
-    bool getSpectrum (const juce::String& pluginId, bool post, const std::vector<float>& hz, std::vector<float>& db);
+    bool getSpectrum (const juce::String& pluginId, bool post, const std::vector<float>& hz, std::vector<float>& db) const;
 
     /** Plays only band (a band-pass at its frequency and Q) while auditioning;
         -1 stops. Monitoring only: never saved, never an undo step. */
@@ -70,7 +70,7 @@ public:
     float getMakeupDb (const juce::String& pluginId) const;
 
     /** Its meters since the last read. */
-    DynamicsReading readDynamics (const juce::String& pluginId);
+    DynamicsReading readDynamics (const juce::String& pluginId) const;
 
     //==============================================================================
     /** The span a modulator moves a device parameter over, in the parameter's

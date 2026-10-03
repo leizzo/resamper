@@ -64,7 +64,7 @@ void NativeDevices::getEqResponse (const juce::String& pluginId, const std::vect
     }
 }
 
-bool NativeDevices::getSpectrum (const juce::String& pluginId, bool post, const std::vector<float>& hz, std::vector<float>& db)
+bool NativeDevices::getSpectrum (const juce::String& pluginId, bool post, const std::vector<float>& hz, std::vector<float>& db) const
 {
     db.assign (hz.size(), -120.0f);
     auto* eq = find<EqEightPlugin> (projects.getEdit(), pluginId);
@@ -117,7 +117,7 @@ float NativeDevices::getMakeupDb (const juce::String& pluginId) const
     return 0.0f;
 }
 
-DynamicsReading NativeDevices::readDynamics (const juce::String& pluginId)
+DynamicsReading NativeDevices::readDynamics (const juce::String& pluginId) const
 {
     DynamicsReading reading;
 

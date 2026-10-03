@@ -217,7 +217,7 @@ public:
         in the plug-in's own window (its change gesture begins): how a card
         learns what to pin. Empty for an unknown plug-in. */
     std::unique_ptr<TouchWatch> watchTouches (const juce::String& pluginId,
-                                              std::function<void (const juce::String& parameterId)> onTouch);
+                                              std::function<void (const juce::String& parameterId)> onTouch) const;
 
     /** Folds, unfolds or expands a native device's card. A view of the device,
         so not an undo step, but saved with the project. */
@@ -233,11 +233,11 @@ public:
     double getCpuLoad (const juce::String& pluginId) const;
 
     /** Hosted JUCE editor for an inserted plug-in. Empty if it has none, or the id is unknown. */
-    std::unique_ptr<juce::Component> createEditor (const juce::String& pluginId);
+    std::unique_ptr<juce::Component> createEditor (const juce::String& pluginId) const;
 
     /** A host-drawn panel of an external plug-in's parameters (the window's
         Parameters). Empty if the id is unknown or isn't an external plug-in. */
-    std::unique_ptr<juce::Component> createParameterEditor (const juce::String& pluginId);
+    std::unique_ptr<juce::Component> createParameterEditor (const juce::String& pluginId) const;
 
     //==============================================================================
     // The plug-in window (PRD §9.6)
@@ -273,7 +273,8 @@ public:
     juce::Result copyAToB (const juce::String& pluginId);
 
     /** The v2 native devices' curves, spectra and meters. */
-    NativeDevices& getNativeDevices() noexcept   { return nativeDevices; }
+    NativeDevices& getNativeDevices() noexcept               { return nativeDevices; }
+    const NativeDevices& getNativeDevices() const noexcept   { return nativeDevices; }
 
 private:
     struct ScanThread;

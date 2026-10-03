@@ -8,7 +8,7 @@
 namespace resamper
 {
 
-TrackLanes::TrackLanes (ApplicationModel& m, CommandRegistry& c, ThemeManager& tm, ArrangementViewState& v)
+TrackLanes::TrackLanes (const ApplicationModel& m, CommandRegistry& c, ThemeManager& tm, ArrangementViewState& v)
     : model (m), commands (c), themeManager (tm), view (v)
 {
     startTimerHz (30);
@@ -356,7 +356,7 @@ void TrackLanes::mouseDown (const juce::MouseEvent& e)
         {
             // A right-click inside the selection keeps it, so Consolidate can act on all of it.
             if (! info.selected)
-                model.selectClip (info.id);
+                commands.invoke (cmd::clipSelect, { info.id });
 
             showClipMenu (info);
             return;
@@ -364,7 +364,7 @@ void TrackLanes::mouseDown (const juce::MouseEvent& e)
 
         if (e.getNumberOfClicks() == 2)
         {
-            model.selectClip (info.id);
+            commands.invoke (cmd::clipSelect, { info.id });
             auto& open = info.kind == TrackKind::midi ? onMidiClipOpened : onAudioClipOpened;
 
             if (open)
@@ -378,7 +378,7 @@ void TrackLanes::mouseDown (const juce::MouseEvent& e)
         if (e.mods.isShiftDown() || e.mods.isCommandDown())
         {
             // Extending or toggling the selection is a click, not the start of a drag.
-            model.selectClip (info.id, e.mods.isShiftDown() ? Mode::add : Mode::toggle);
+            commands.invoke (cmd::clipSelect, { info.id, e.mods.isShiftDown() ? Mode::add : Mode::toggle });
             return;
         }
 
@@ -386,7 +386,7 @@ void TrackLanes::mouseDown (const juce::MouseEvent& e)
         drag = Drag { dragModeAt (*clip, e.getPosition()), info, info, rowOf (info.id), view.xToTime ((float) e.x), false };
 
         if (! clip->getClip().selected)
-            model.selectClip (info.id);
+            commands.invoke (cmd::clipSelect, { info.id });
 
         return;
     }

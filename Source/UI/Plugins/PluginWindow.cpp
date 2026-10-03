@@ -211,7 +211,7 @@ private:
 };
 
 //==============================================================================
-PluginWindow::PluginWindow (PluginRack& r, CommandRegistry& c, ThemeManager& tm, const PluginInfo& info,
+PluginWindow::PluginWindow (const PluginRack& r, CommandRegistry& c, ThemeManager& tm, const PluginInfo& info,
                             const HostingState& state, const juce::String& track)
     : FloatingDeviceWindow (tm, info, track, "PluginWindow"), rack (r), commands (c)
 {

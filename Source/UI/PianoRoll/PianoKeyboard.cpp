@@ -1,12 +1,13 @@
 #include "PianoKeyboard.h"
 #include "BeatGrid.h"
+#include "Commands/AppCommands.h"
 #include "UI/State/ArrangementViewState.h"
 
 namespace resamper
 {
 
-PianoKeyboard::PianoKeyboard (ApplicationModel& m, ThemeManager& tm, ArrangementViewState& v)
-    : model (m), themeManager (tm), view (v)
+PianoKeyboard::PianoKeyboard (const ApplicationModel& m, CommandRegistry& c, ThemeManager& tm, ArrangementViewState& v)
+    : model (m), commands (c), themeManager (tm), view (v)
 {
 }
 
@@ -51,7 +52,7 @@ void PianoKeyboard::paint (juce::Graphics& g)
 
 void PianoKeyboard::mouseDown (const juce::MouseEvent&)
 {
-    model.selectNotes ({});
+    commands.invoke (cmd::noteSelect, {});
 }
 
 } // namespace resamper

@@ -14,6 +14,13 @@ struct ClipArgs
     juce::String clipId;
 };
 
+/** A click on a clip: replaces the selection, or extends or toggles it. */
+struct ClipSelectArgs
+{
+    juce::String clipId;
+    ApplicationModel::SelectionMode mode = ApplicationModel::SelectionMode::replace;
+};
+
 /** An audio file dropped on a track at a position. */
 struct ClipInsertArgs
 {
@@ -79,6 +86,7 @@ namespace cmd
     inline constexpr CommandRef<ClipRenameArgs> clipRename { "clip.rename" };
     inline constexpr CommandRef<ClipArgs> clipReverse { "clip.reverse" };          ///< no clipId: the selected clip
     inline constexpr CommandRef<ClipColourArgs> clipSetColour { "clip.setColour" };
+    inline constexpr CommandRef<ClipSelectArgs> clipSelect { "clip.select" };     ///< never undoable
 
     // These act on the selected clips.
     inline constexpr CommandRef<> clipDuplicate { "clip.duplicate" };

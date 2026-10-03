@@ -38,7 +38,7 @@ class PluginWindow : public FloatingDeviceWindow,
                      private ThemeManager::Listener
 {
 public:
-    PluginWindow (PluginRack&, CommandRegistry&, ThemeManager&, const PluginInfo&, const HostingState&,
+    PluginWindow (const PluginRack&, CommandRegistry&, ThemeManager&, const PluginInfo&, const HostingState&,
                   const juce::String& trackName);
     ~PluginWindow() override;
 
@@ -77,7 +77,7 @@ private:
     class Readout;
     class Grip;
 
-    PluginRack& rack;
+    const PluginRack& rack;
     CommandRegistry& commands;
     int uiScale = 100;
     Status status = Status::loading;

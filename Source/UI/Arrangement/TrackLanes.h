@@ -29,7 +29,7 @@ class TrackLanes : public juce::Component,
                    private juce::Timer
 {
 public:
-    TrackLanes (ApplicationModel&, CommandRegistry&, ThemeManager&, ArrangementViewState&);
+    TrackLanes (const ApplicationModel&, CommandRegistry&, ThemeManager&, ArrangementViewState&);
 
     void setTracks (const std::vector<TrackInfo>&);
 
@@ -71,7 +71,7 @@ private:
         bool copy = false;         ///< Alt-drag: a copy lands, the original stays
     };
 
-    ApplicationModel& model;
+    const ApplicationModel& model;
     CommandRegistry& commands;
     ThemeManager& themeManager;
     ArrangementViewState& view;

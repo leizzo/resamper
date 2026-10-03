@@ -13,7 +13,7 @@ namespace
     constexpr int loopDragThresholdPixels = 4;
 }
 
-TimelineHeader::TimelineHeader (ApplicationModel& m, CommandRegistry& c, ThemeManager& tm, ArrangementViewState& v)
+TimelineHeader::TimelineHeader (const ApplicationModel& m, CommandRegistry& c, ThemeManager& tm, ArrangementViewState& v)
     : model (m), commands (c), themeManager (tm), view (v)
 {
 }

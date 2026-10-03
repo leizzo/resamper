@@ -31,7 +31,7 @@ class PianoRollView : public juce::Component,
 public:
     static constexpr const char* componentId = "pianoRoll";
 
-    PianoRollView (ApplicationModel&, CommandRegistry&, ThemeManager&, UIStateStore&);
+    PianoRollView (const ApplicationModel&, CommandRegistry&, ThemeManager&, UIStateStore&);
     ~PianoRollView() override;
 
     /** The open clip is still in the Edit. */
@@ -52,7 +52,7 @@ public:
     void mouseMagnify (const juce::MouseEvent&, float scaleFactor) override;
 
 private:
-    ApplicationModel& model;
+    const ApplicationModel& model;
     CommandRegistry& commands;
     ThemeManager& themeManager;
     ArrangementViewState view;

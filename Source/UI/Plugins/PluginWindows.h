@@ -48,7 +48,7 @@ class PluginWindows : private ApplicationModel::Listener,
                       private juce::Timer
 {
 public:
-    PluginWindows (ApplicationModel&, PluginRack&, PluginHosting&, CommandRegistry&, ThemeManager&, Preferences&);
+    PluginWindows (const ApplicationModel&, const PluginRack&, const PluginHosting&, CommandRegistry&, ThemeManager&, Preferences&);
     ~PluginWindows() override;
 
     /** The desktop area a first window centres over (the arrangement). The main display's when unset. */
@@ -103,9 +103,9 @@ private:
         bool hiddenByUser = false;   ///< toggleAll hid it
     };
 
-    ApplicationModel& model;
-    PluginRack& rack;
-    PluginHosting& hosting;
+    const ApplicationModel& model;
+    const PluginRack& rack;
+    const PluginHosting& hosting;
     CommandRegistry& commands;
     ThemeManager& themeManager;
     Preferences& preferences;

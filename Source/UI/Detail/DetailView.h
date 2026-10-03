@@ -23,7 +23,7 @@ class DetailView : public juce::Component,
                    private ApplicationModel::Listener
 {
 public:
-    DetailView (ApplicationModel&, PluginRack&, PluginHosting&, CommandRegistry&, ThemeManager&, ShellState&,
+    DetailView (const ApplicationModel&, const PluginRack&, const PluginHosting&, CommandRegistry&, ThemeManager&, ShellState&,
                 juce::ValueTree uiState);
     ~DetailView() override;
 
@@ -57,9 +57,9 @@ private:
     struct ClipPanel;
     struct Chain;
 
-    ApplicationModel& model;
-    PluginRack& rack;
-    PluginHosting& hosting;
+    const ApplicationModel& model;
+    const PluginRack& rack;
+    const PluginHosting& hosting;
     CommandRegistry& commands;
     ThemeManager& themeManager;
     ShellState& shell;

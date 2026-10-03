@@ -1845,7 +1845,7 @@ std::unique_ptr<ClipWaveform> ApplicationModel::createRecordingWaveform (const j
     return std::make_unique<ClipWaveform> (std::make_unique<ClipWaveform::Impl> (std::move (thumbnail)));
 }
 
-void ApplicationModel::addListener (Listener* l)      { impl->listeners.add (l); }
-void ApplicationModel::removeListener (Listener* l)   { impl->listeners.remove (l); }
+void ApplicationModel::addListener (Listener* l) const      { impl->listeners.add (l); }
+void ApplicationModel::removeListener (Listener* l) const   { impl->listeners.remove (l); }
 
 } // namespace resamper

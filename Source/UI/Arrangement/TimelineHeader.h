@@ -18,7 +18,7 @@ class ThemeManager;
 class TimelineHeader : public juce::Component
 {
 public:
-    TimelineHeader (ApplicationModel&, CommandRegistry&, ThemeManager&, ArrangementViewState&);
+    TimelineHeader (const ApplicationModel&, CommandRegistry&, ThemeManager&, ArrangementViewState&);
 
     void paint (juce::Graphics&) override;
     void mouseDown (const juce::MouseEvent&) override;
@@ -26,7 +26,7 @@ public:
     void mouseUp (const juce::MouseEvent&) override;
 
 private:
-    ApplicationModel& model;
+    const ApplicationModel& model;
     CommandRegistry& commands;
     ThemeManager& themeManager;
     ArrangementViewState& view;

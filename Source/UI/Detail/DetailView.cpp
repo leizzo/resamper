@@ -291,7 +291,7 @@ struct DetailView::Chain : juce::Component,
 };
 
 //==============================================================================
-DetailView::DetailView (ApplicationModel& m, PluginRack& r, PluginHosting& h, CommandRegistry& c, ThemeManager& tm, ShellState& s,
+DetailView::DetailView (const ApplicationModel& m, const PluginRack& r, const PluginHosting& h, CommandRegistry& c, ThemeManager& tm, ShellState& s,
                         juce::ValueTree uiState)
     : model (m), rack (r), hosting (h), commands (c), themeManager (tm), shell (s), state (std::move (uiState)),
       clipPanel (std::make_unique<ClipPanel> (tm)), chain (std::make_unique<Chain> (*this))

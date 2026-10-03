@@ -420,8 +420,8 @@ public:
         Returns nullptr if the track isn't recording. */
     std::unique_ptr<ClipWaveform> createRecordingWaveform (const juce::String& trackId) const;
 
-    void addListener (Listener*);
-    void removeListener (Listener*);
+    void addListener (Listener*) const;
+    void removeListener (Listener*) const;
 
 private:
     struct Impl;

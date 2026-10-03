@@ -311,7 +311,7 @@ void CompressorGraph::mouseDoubleClick (const juce::MouseEvent& e)
 }
 
 //==============================================================================
-CompressorDevice::CompressorDevice (CommandRegistry& c, PluginRack& r, ThemeManager& tm, const juce::String& id)
+CompressorDevice::CompressorDevice (CommandRegistry& c, const PluginRack& r, ThemeManager& tm, const juce::String& id)
     : DeviceBody (c, r, tm, id),
       meters (tm),
       view (tm, { "TRANSFER", "ACTIVITY" }, Segmented::Style::device),

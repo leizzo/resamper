@@ -503,7 +503,7 @@ void EqEightGraph::mouseWheelMove (const juce::MouseEvent& e, const juce::MouseW
 }
 
 //==============================================================================
-EqEightDevice::EqEightDevice (CommandRegistry& c, PluginRack& r, ThemeManager& tm, const juce::String& id)
+EqEightDevice::EqEightDevice (CommandRegistry& c, const PluginRack& r, ThemeManager& tm, const juce::String& id)
     : DeviceBody (c, r, tm, id),
       graph (*this),
       header (std::make_unique<BandHeader> (*this)),

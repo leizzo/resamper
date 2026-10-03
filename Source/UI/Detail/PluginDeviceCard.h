@@ -37,7 +37,7 @@ class PluginDeviceCard : public DeviceCard,
 public:
     static constexpr int width = 214;
 
-    PluginDeviceCard (CommandRegistry&, PluginRack&, PluginHosting&, ThemeManager&, const juce::String& trackId,
+    PluginDeviceCard (CommandRegistry&, const PluginRack&, const PluginHosting&, ThemeManager&, const juce::String& trackId,
                       const PluginInfo&);
     ~PluginDeviceCard() override;
 
@@ -56,7 +56,7 @@ private:
     class CardButton;
     class PinnedParameter;
 
-    PluginHosting& hosting;
+    const PluginHosting& hosting;
     HostingState hostingState;
     DevicePowerButton power;
     std::unique_ptr<CardButton> openWindow, locate, replace, reload, pinLearn;

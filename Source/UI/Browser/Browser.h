@@ -22,7 +22,7 @@ class Browser : public juce::Component,
                 private juce::Timer
 {
 public:
-    Browser (CommandRegistry&, PluginRack&, ApplicationModel&, ThemeManager&, SamplePreview&, juce::File libraryRoot);
+    Browser (CommandRegistry&, const PluginRack&, const ApplicationModel&, ThemeManager&, SamplePreview&, juce::File libraryRoot);
     ~Browser() override;
 
     /** A device double-clicked (or Return) for the selected track. Unset, it
@@ -38,8 +38,8 @@ public:
 
 private:
     CommandRegistry& commands;
-    PluginRack& rack;
-    ApplicationModel& model;
+    const PluginRack& rack;
+    const ApplicationModel& model;
     ThemeManager& themeManager;
     SamplePreview& preview;
     Library library;

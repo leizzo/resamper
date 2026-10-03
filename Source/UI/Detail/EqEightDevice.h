@@ -75,7 +75,7 @@ class EqEightDevice : public DeviceBody
 public:
     static constexpr int compactWidth = 470, numBands = NativeDevices::numEqBands;
 
-    EqEightDevice (CommandRegistry&, PluginRack&, ThemeManager&, const juce::String& pluginId);
+    EqEightDevice (CommandRegistry&, const PluginRack&, ThemeManager&, const juce::String& pluginId);
     ~EqEightDevice() override;
 
     int getPreferredWidth (bool expanded, int dockedWidth) const override;
@@ -116,7 +116,7 @@ public:
     juce::Colour bandColour (int band) const;
     juce::Colour getColour() const noexcept   { return colour; }
     ThemeManager& getThemeManager() const noexcept   { return themeManager; }
-    NativeDevices& natives() const            { return rack.getNativeDevices(); }
+    const NativeDevices& natives() const      { return rack.getNativeDevices(); }
     const juce::String& getPluginId() const   { return pluginId; }
 
     /** The span a modulator moves a band's parameter over, if one does. */

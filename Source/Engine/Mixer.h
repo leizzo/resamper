@@ -135,13 +135,13 @@ public:
     /** Peaks of the track's level meter since the last read, left and right,
         in dB. Silence (ApplicationModel::minVolume) when the track has no meter or the meter has
         not seen audio. A mono signal reads the same on both sides. */
-    StereoLevel getTrackLevel (const juce::String& trackId);
+    StereoLevel getTrackLevel (const juce::String& trackId) const;
 
     /** The master track's meter. Same silence rule. */
-    StereoLevel getMasterLevel();
+    StereoLevel getMasterLevel() const;
 
     /** Whether the meters measure RMS (the mixer's RMS and LUFS modes) rather than peak. */
-    void setMeasuringRms (bool);
+    void setMeasuringRms (bool) const;
 
     /** Master fader, not a track fader. continuesGesture as for setSendGain. */
     bool setMasterVolume (Decibels volume, bool continuesGesture = false);
@@ -153,11 +153,11 @@ private:
     const ApplicationModel& model;
     const PluginRack& plugins;
     std::unique_ptr<MeterState> meters;
-    bool measuringRms = false;
+    mutable bool measuringRms = false;   ///< how the meters read, not part of the Edit
 
     /** meterPlugin is a tracktion::LevelMeterPlugin*. Kept as void* so this
         header stays free of Tracktion types. */
-    StereoLevel levelOf (const juce::String& slotId, void* meterPlugin);
+    StereoLevel levelOf (const juce::String& slotId, void* meterPlugin) const;
 
     JUCE_DECLARE_NON_COPYABLE (Mixer)
 };

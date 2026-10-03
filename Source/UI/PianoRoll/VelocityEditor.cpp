@@ -6,7 +6,7 @@
 namespace resamper
 {
 
-VelocityEditor::VelocityEditor (ApplicationModel& m, CommandRegistry& c, ThemeManager& tm, ArrangementViewState& v)
+VelocityEditor::VelocityEditor (const ApplicationModel& m, CommandRegistry& c, ThemeManager& tm, ArrangementViewState& v)
     : model (m), commands (c), themeManager (tm), view (v)
 {
 }
@@ -81,7 +81,7 @@ void VelocityEditor::mouseDown (const juce::MouseEvent& e)
         return;
 
     if (! note->selected)
-        model.selectNotes ({ note->id });
+        commands.invoke (cmd::noteSelect, { { note->id } });
 
     previewVelocity = note->velocity;
     reload();

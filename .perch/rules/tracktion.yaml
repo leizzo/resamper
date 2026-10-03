@@ -12,6 +12,20 @@
     change to the Edit breaks this. Building a detached ValueTree that is added
     to the Edit afterwards with the UndoManager passes, and so does a method
     that changes nothing in the Edit.
+- name: engine-const-leaves-edit-alone
+  each: method
+  where: Source/Engine/**/*.{cpp,h}
+  min: 70
+  ensure: >-
+    If this is a const member function of an Engine class, it does not change
+    the Edit: it does not add, remove, move or rename a track, clip, note,
+    plugin, send or automation point, set a parameter or property on one, change
+    tempo or the selection, or call a non-const Engine method that does. The UI
+    holds these classes by const reference, so a const method that changes the
+    Edit lets the UI bypass Commands. Registering a listener, reading or
+    draining a live measurement (meters, spectrum, gain reduction), choosing how
+    meters measure, opening a plug-in's editor and watching parameter touches
+    pass. A method that is not const passes.
 - name: tracktion-lookups-checked
   each: method
   where: Source/Engine/**/*.{cpp,h}

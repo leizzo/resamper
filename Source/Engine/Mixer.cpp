@@ -191,7 +191,7 @@ Mixer::~Mixer()
         MeterState::detach (edit, slot);
 }
 
-StereoLevel Mixer::levelOf (const juce::String& slotId, void* meterPlugin)
+StereoLevel Mixer::levelOf (const juce::String& slotId, void* meterPlugin) const
 {
     auto* meter = static_cast<te::LevelMeterPlugin*> (meterPlugin);
     auto& edit = projects.getEdit();
@@ -231,7 +231,7 @@ StereoLevel Mixer::levelOf (const juce::String& slotId, void* meterPlugin)
     return readPeaks (slot.client);
 }
 
-StereoLevel Mixer::getTrackLevel (const juce::String& trackId)
+StereoLevel Mixer::getTrackLevel (const juce::String& trackId) const
 {
     auto* track = findStripTrack (projects.getEdit(), trackId);
     auto* audio = dynamic_cast<te::AudioTrack*> (track);
@@ -239,12 +239,12 @@ StereoLevel Mixer::getTrackLevel (const juce::String& trackId)
                              : track != nullptr ? meterOnTrack (*track) : nullptr);
 }
 
-void Mixer::setMeasuringRms (bool rms)
+void Mixer::setMeasuringRms (bool rms) const
 {
     measuringRms = rms;
 }
 
-StereoLevel Mixer::getMasterLevel()
+StereoLevel Mixer::getMasterLevel() const
 {
     auto* master = projects.getEdit().getMasterTrack();
     return levelOf ("master", master != nullptr ? meterOnTrack (*master) : nullptr);

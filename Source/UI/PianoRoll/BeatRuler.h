@@ -13,13 +13,13 @@ class ThemeManager;
 class BeatRuler : public juce::Component
 {
 public:
-    BeatRuler (ApplicationModel&, CommandRegistry&, ThemeManager&, ArrangementViewState&);
+    BeatRuler (const ApplicationModel&, CommandRegistry&, ThemeManager&, ArrangementViewState&);
 
     void paint (juce::Graphics&) override;
     void mouseDown (const juce::MouseEvent&) override;
 
 private:
-    ApplicationModel& model;
+    const ApplicationModel& model;
     CommandRegistry& commands;
     ThemeManager& themeManager;
     ArrangementViewState& view;

@@ -61,7 +61,7 @@ MainComponent::MainComponent (ResamperApp& a, juce::ApplicationCommandManager& c
     // The mixer's Track chain row: back to the timeline, the track selected, its chain in view.
     mixerView.onShowDeviceChain = [this] (const juce::String& trackId)
     {
-        app.model.selectTrack (trackId);
+        app.commands.invoke (cmd::trackSelect, { trackId });
         shell.setDetailCollapsed (false);
         shell.setView (shell.getLastTimelineView());
         detailView.revealDeviceChain();

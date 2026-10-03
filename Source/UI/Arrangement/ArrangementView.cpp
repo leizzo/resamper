@@ -1,4 +1,5 @@
 #include "ArrangementView.h"
+#include "Commands/AppCommands.h"
 #include "UI/Browser/Library.h"
 #include "UI/State/ShellState.h"
 #include "UI/State/UIStateStore.h"
@@ -13,7 +14,7 @@ namespace
     constexpr double zoomPerWheelUnit = 4.0;
 }
 
-ArrangementView::ArrangementView (ApplicationModel& m, CommandRegistry& c, ThemeManager& tm, UIStateStore& uiState,
+ArrangementView::ArrangementView (const ApplicationModel& m, CommandRegistry& c, ThemeManager& tm, UIStateStore& uiState,
                                   ShellState& s)
     : model (m), themeManager (tm), view (uiState.getState (componentId)),
       timeline (model, c, themeManager, view),
@@ -166,7 +167,7 @@ void ArrangementView::selectRow (int row, juce::ModifierKeys mods)
 {
     using Mode = ApplicationModel::SelectionMode;
     const auto mode = mods.isShiftDown() ? Mode::add : mods.isCommandDown() ? Mode::toggle : Mode::replace;
-    model.selectTrack (juce::isPositiveAndBelow (row, (int) tracks.size()) ? tracks[(size_t) row].id : juce::String(), mode);
+    commands.invoke (cmd::trackSelect, { juce::isPositiveAndBelow (row, (int) tracks.size()) ? tracks[(size_t) row].id : juce::String(), mode });
 }
 
 void ArrangementView::valueTreePropertyChanged (juce::ValueTree&, const juce::Identifier&)

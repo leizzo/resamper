@@ -111,8 +111,8 @@ public:
     };
 
     /** Adds or removes a Listener. On the message thread. */
-    void addListener (Listener*);
-    void removeListener (Listener*);
+    void addListener (Listener*) const;
+    void removeListener (Listener*) const;
 
     /** The engine side, for the engine module only (PluginHostingImpl.h). */
     Impl& getImpl() noexcept;

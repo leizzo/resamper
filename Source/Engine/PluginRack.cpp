@@ -1049,7 +1049,7 @@ namespace
 }
 
 std::unique_ptr<PluginRack::TouchWatch> PluginRack::watchTouches (const juce::String& pluginId,
-                                                                  std::function<void (const juce::String&)> onTouch)
+                                                                  std::function<void (const juce::String&)> onTouch) const
 {
     if (auto plugin = findPlugin (projectManager.getEdit(), pluginId))
         return std::make_unique<ParameterTouchWatch> (*plugin, std::move (onTouch));
@@ -1132,7 +1132,7 @@ double PluginRack::getCpuLoad (const juce::String& pluginId) const
     return 0;
 }
 
-std::unique_ptr<juce::Component> PluginRack::createEditor (const juce::String& pluginId)
+std::unique_ptr<juce::Component> PluginRack::createEditor (const juce::String& pluginId) const
 {
     if (pluginId.isEmpty())
         return {};
@@ -1144,7 +1144,7 @@ std::unique_ptr<juce::Component> PluginRack::createEditor (const juce::String& p
     return {};
 }
 
-std::unique_ptr<juce::Component> PluginRack::createParameterEditor (const juce::String& pluginId)
+std::unique_ptr<juce::Component> PluginRack::createParameterEditor (const juce::String& pluginId) const
 {
     if (pluginId.isEmpty())
         return {};

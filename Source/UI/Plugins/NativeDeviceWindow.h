@@ -19,7 +19,7 @@ class NativeDeviceCard;
 class NativeDeviceWindow : public FloatingDeviceWindow
 {
 public:
-    NativeDeviceWindow (PluginRack&, CommandRegistry&, ThemeManager&, const PluginInfo&, const juce::String& trackName);
+    NativeDeviceWindow (const PluginRack&, CommandRegistry&, ThemeManager&, const PluginInfo&, const juce::String& trackName);
     ~NativeDeviceWindow() override;
 
     /** The width the floating card fills at least. */

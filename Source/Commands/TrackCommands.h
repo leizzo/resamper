@@ -12,6 +12,13 @@ struct TrackArgs
     juce::String trackId;
 };
 
+/** A click on a track: replaces the selection, or extends or toggles it. */
+struct TrackSelectArgs
+{
+    juce::String trackId;   ///< empty with replace: nothing selected
+    ApplicationModel::SelectionMode mode = ApplicationModel::SelectionMode::replace;
+};
+
 /** A track fader. A continuous gesture (a fader drag) passes continuesGesture
     for every value after its first, making the whole gesture one undo step. */
 struct TrackVolumeArgs
@@ -55,7 +62,7 @@ namespace cmd
     inline constexpr CommandRef<TrackArgs> trackToggleArm { "track.toggleArm" };
     inline constexpr CommandRef<TrackInputArgs> trackSetInput { "track.setInput" };
     inline constexpr CommandRef<TrackColourArgs> trackSetColour { "track.setColour" };
-    inline constexpr CommandRef<TrackArgs> trackSelect { "track.select" };          ///< in every view; never undoable
+    inline constexpr CommandRef<TrackSelectArgs> trackSelect { "track.select" };    ///< in every view; never undoable
     inline constexpr CommandRef<int> trackToggleMuteAt { "track.toggleMuteAt" };    ///< F1-F8: the track's 0-based index
     inline constexpr CommandRef<> trackToggleSoloSelected { "track.toggleSoloSelected" };
 }

@@ -9,7 +9,7 @@
 namespace resamper
 {
 
-std::unique_ptr<DeviceCard> DeviceCard::create (CommandRegistry& c, PluginRack& r, PluginHosting& h, ThemeManager& tm,
+std::unique_ptr<DeviceCard> DeviceCard::create (CommandRegistry& c, const PluginRack& r, const PluginHosting& h, ThemeManager& tm,
                                                 const juce::String& track, const PluginInfo& info)
 {
     if (info.external)
@@ -18,7 +18,7 @@ std::unique_ptr<DeviceCard> DeviceCard::create (CommandRegistry& c, PluginRack& 
     return std::make_unique<NativeDeviceCard> (c, r, tm, track, info);
 }
 
-DeviceCard::DeviceCard (CommandRegistry& c, PluginRack& r, ThemeManager& tm, const juce::String& track, const PluginInfo& info)
+DeviceCard::DeviceCard (CommandRegistry& c, const PluginRack& r, ThemeManager& tm, const juce::String& track, const PluginInfo& info)
     : commands (c), rack (r), themeManager (tm), trackId (track), plugin (info)
 {
     setTitle (info.name);

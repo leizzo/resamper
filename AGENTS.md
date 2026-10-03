@@ -29,6 +29,8 @@ Tests are headless `juce::UnitTest` suites in category `"Resamper"`, built on `T
 
 Only `resamper_engine` (`Source/Engine/`) sees Tracktion headers. `Source/UI`, `Source/Commands` and `Source/App` are compiled without Tracktion on the include path, so including one there is a compile error — add a facade method in `Source/Engine` instead. Tests may include Tracktion.
 
+`Source/UI` holds the Engine classes (`ApplicationModel`, `Mixer`, `PluginRack`, `PluginHosting`, `NativeDevices`) by `const&`, so a UI call that changes the Edit — selection included — is a compile error: invoke a Command (`commands.invoke (cmd::..., {...})`) instead, adding one in `Source/Commands` if none fits. On those classes `const` means "leaves the Edit alone", not "changes no bits": listeners, meter and analyser reads, the meter mode, plug-in editors and touch watchers are `const`. Keep that true when marking an Engine method `const` (perch `engine-const-leaves-edit-alone`).
+
 JUCE and GIN modules are INTERFACE targets that compile their sources into every target that links them, so only `resamper_engine` links them — each module is built once. Other targets get the headers through `resamper_use_engine_without_tracktion`; never add a `juce::juce_*` or `gin*` module to their `target_link_libraries`. GIN has no Tracktion dependency, so `Source/UI` may include `<gin/...>` directly. Register only the GIN modules the code uses: a new one goes in both `juce_add_module(...)` and `resamper_engine`'s link list. GIN must build against the JUCE that Tracktion pins; recheck that whenever either submodule moves.
 
 ### Style

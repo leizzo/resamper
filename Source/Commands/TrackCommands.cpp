@@ -48,7 +48,7 @@ void registerTrackCommands (CommandRegistry& registry, ApplicationModel& model)
         model.setTrackColour (a.trackId, a.colourIndex);
     });
 
-    registry.add (cmd::trackSelect, { "Select Track" }, [&model] (const TrackArgs& a) { model.selectTrack (a.trackId); });
+    registry.add (cmd::trackSelect, { "Select Track" }, [&model] (const TrackSelectArgs& a) { model.selectTrack (a.trackId, a.mode); });
 
     registry.add (cmd::trackToggleMuteAt, { "Mute Track" }, [&model] (const int& index)
     {

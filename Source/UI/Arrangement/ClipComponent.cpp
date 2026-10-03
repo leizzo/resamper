@@ -4,7 +4,7 @@
 namespace resamper
 {
 
-ClipComponent::ClipComponent (ApplicationModel& m, ThemeManager& tm, const ClipInfo& info)
+ClipComponent::ClipComponent (const ApplicationModel& m, ThemeManager& tm, const ClipInfo& info)
     : model (m), themeManager (tm)
 {
     setInterceptsMouseClicks (false, false);
