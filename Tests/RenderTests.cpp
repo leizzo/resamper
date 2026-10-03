@@ -34,10 +34,10 @@ struct RenderTests : juce::UnitTest
             const auto tone = f.model.getTracks()[0].id, empty = f.model.getTracks()[1].id;
 
             const auto fullPeak = renderPeak (f);
-            f.invoke (cmd::trackSetVolume, { tone, -12.0 });
+            f.invoke (cmd::trackSetVolume, { tone, Decibels (-12.0) });
             expectWithinAbsoluteError (renderPeak (f), fullPeak * juce::Decibels::decibelsToGain (-12.0f), fullPeak * 0.05f);
 
-            f.invoke (cmd::trackSetVolume, { tone, ApplicationModel::minVolumeDb });
+            f.invoke (cmd::trackSetVolume, { tone, ApplicationModel::minVolume });
             expectLessThan (renderPeak (f), 1e-4f);
             f.invoke (cmd::editUndo);
             f.invoke (cmd::editUndo);

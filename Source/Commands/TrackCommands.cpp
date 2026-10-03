@@ -9,14 +9,14 @@ void registerTrackCommands (CommandRegistry& registry, ApplicationModel& model)
     registry.add (cmd::trackAddMidi, { "Add MIDI Track" }, [&model] { model.addMidiTrack(); });
     registry.add (cmd::trackRemove, { "Remove Track" }, [&model] { model.removeTrack(); });
 
-    registry.add (cmd::trackSetVolume, { "Set Track Volume" }, [&model] (const TrackControlArgs& a)
+    registry.add (cmd::trackSetVolume, { "Set Track Volume" }, [&model] (const TrackVolumeArgs& a)
     {
-        model.setTrackVolume (a.trackId, a.value, a.continuesGesture);
+        model.setTrackVolume (a.trackId, a.volume, a.continuesGesture);
     });
 
-    registry.add (cmd::trackSetPan, { "Set Track Pan" }, [&model] (const TrackControlArgs& a)
+    registry.add (cmd::trackSetPan, { "Set Track Pan" }, [&model] (const TrackPanArgs& a)
     {
-        model.setTrackPan (a.trackId, a.value, a.continuesGesture);
+        model.setTrackPan (a.trackId, a.pan, a.continuesGesture);
     });
 
     // Mute and solo also flip on a Bus.

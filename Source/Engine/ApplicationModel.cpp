@@ -574,10 +574,10 @@ bool ApplicationModel::removeTrack()
     return true;
 }
 
-bool ApplicationModel::setTrackVolume (const juce::String& trackId, double db, bool continuesGesture)
+bool ApplicationModel::setTrackVolume (const juce::String& trackId, Decibels volume, bool continuesGesture)
 {
     // The engine stores a fader position, not dB.
-    const auto position = te::decibelsToVolumeFaderPosition ((float) juce::jlimit (minVolumeDb, maxVolumeDb, db));
+    const auto position = te::decibelsToVolumeFaderPosition ((float) juce::jlimit (minVolume, maxVolume, volume).value);
 
     return impl->changeVolumePlugin (trackId, "Set Volume", continuesGesture,
                                      [] (te::VolumeAndPanPlugin& p) { return p.getSliderPos(); },
@@ -1774,7 +1774,7 @@ std::vector<TrackInfo> ApplicationModel::getTracks() const
 
         if (auto* volume = t->getVolumePlugin())
         {
-            info.volumeDb = juce::jmax (minVolumeDb, (double) volume->getVolumeDb());
+            info.volume = juce::jmax (minVolume, Decibels (volume->getVolumeDb()));
             info.pan = volume->getPan();
         }
 

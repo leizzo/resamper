@@ -406,7 +406,7 @@ void DetailView::refresh()
             clipPanel->title = track.name;
             clipPanel->subtitle = midi ? "MIDI track" : "Audio track";
             clipPanel->rows = { { "Clips", juce::String ((int) track.clips.size()) },
-                                { "Volume", ValueFormat::decibels().format (track.volumeDb) },
+                                { "Volume", ValueFormat::decibels().format (track.volume.value) },
                                 { "Pan", ValueFormat::pan().format (track.pan) },
                                 { "Armed", track.armed ? "On" : "Off", track.armed } };
         }

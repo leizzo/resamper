@@ -38,6 +38,7 @@ There is no `.clang-format`: no clang-format setting reproduces the JUCE lambda 
 - 4-space indent, Allman braces, space before the parenthesis of calls and declarations: `foo (a, b)`, `if (! x)`.
 - `namespace resamper`; file-local helpers in an anonymous namespace; `namespace te = tracktion;` in `.cpp` files.
 - camelCase functions and variables, PascalCase types, no member prefixes; `juce::String` / `juce::Result` at API boundaries.
+- A level that crosses the Engine, Commands or UI boundary is a `Decibels` (`Source/Engine/Decibels.h`), never a bare `double`; DSP code reads `.value` where it does the maths.
 - `/** ... */` doc comments on public types and methods; `#pragma once` in headers.
 - Warnings come from `juce::juce_recommended_warning_flags`; keep builds warning-free.
 

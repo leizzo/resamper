@@ -19,7 +19,7 @@ void registerMixerCommands (CommandRegistry& registry, Mixer& mixer, AppCommandH
     // A send fader: one undo step per drag.
     registry.add (cmd::mixerSetSendGain, { "Set Send Gain" }, [&mixer] (const SendGainArgs& a)
     {
-        mixer.setSendGain (a.trackId, a.sendId, a.db, a.continuesGesture);
+        mixer.setSendGain (a.trackId, a.sendId, a.gain, a.continuesGesture);
     });
 
     registry.add (cmd::mixerSetSendMuted, { "Mute Send" }, [&mixer] (const SendMutedArgs& a)
@@ -40,7 +40,7 @@ void registerMixerCommands (CommandRegistry& registry, Mixer& mixer, AppCommandH
     // The master fader: one undo step per drag.
     registry.add (cmd::mixerSetMasterVolume, { "Set Master Volume" }, [&mixer] (const MasterVolumeArgs& a)
     {
-        mixer.setMasterVolume (a.db, a.continuesGesture);
+        mixer.setMasterVolume (a.volume, a.continuesGesture);
     });
 }
 

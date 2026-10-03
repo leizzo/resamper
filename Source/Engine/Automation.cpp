@@ -93,8 +93,8 @@ namespace
     {
         if (key == "volume" || isSendKey (key))
         {
-            const auto db = juce::jlimit ((float) ApplicationModel::minVolumeDb,
-                                          (float) ApplicationModel::maxVolumeDb, value);
+            const auto db = juce::jlimit ((float) ApplicationModel::minVolume.value,
+                                          (float) ApplicationModel::maxVolume.value, value);
             return te::decibelsToVolumeFaderPosition (db);
         }
 

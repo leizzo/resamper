@@ -17,7 +17,7 @@ namespace resamper
 namespace
 {
     // AuxSendPlugin::isMute() treats a send at or below this as muted.
-    constexpr float sendMuteThresholdDb = -90.0f;
+    constexpr Decibels sendMuteThreshold { -90.0 };
 
     te::FolderTrack* findBus (te::Edit& edit, const juce::String& id)
     {
@@ -82,15 +82,15 @@ namespace
         return edit.getMasterVolumePlugin().get();
     }
 
-    double dbFromFader (float position)
+    Decibels dbFromFader (float position)
     {
-        return te::volumeFaderPositionToDB (position);
+        return Decibels (te::volumeFaderPositionToDB (position));
     }
 
-    float faderPosition (double db)
+    float faderPosition (Decibels volume)
     {
-        return te::decibelsToVolumeFaderPosition ((float) juce::jlimit (ApplicationModel::minVolumeDb,
-                                                                        ApplicationModel::maxVolumeDb, db));
+        return te::decibelsToVolumeFaderPosition ((float) juce::jlimit (ApplicationModel::minVolume,
+                                                                        ApplicationModel::maxVolume, volume).value);
     }
 
 
@@ -153,7 +153,7 @@ namespace
 
     StereoLevel readPeaks (te::LevelMeasurer::Client& client)
     {
-        const auto floor = (float) ApplicationModel::minVolumeDb;
+        const auto floor = (float) ApplicationModel::minVolume.value;
         const int channels = juce::jlimit (1, 8, juce::jmax (1, client.getNumChannelsUsed()));
         StereoLevel level { floor, floor };
         level.left = juce::jmax (floor, client.getAndClearAudioLevel (0).dB);
@@ -313,7 +313,7 @@ juce::Result Mixer::addSend (const juce::String& fromTrackId, int bus)
     return juce::Result::ok();
 }
 
-bool Mixer::setSendGain (const juce::String& trackId, const juce::String& sendId, double gainDb, bool continuesGesture)
+bool Mixer::setSendGain (const juce::String& trackId, const juce::String& sendId, Decibels gain, bool continuesGesture)
 {
     auto* track = findStripTrack (projects.getEdit(), trackId);
     auto* send = track != nullptr ? findSend (*track, sendId) : nullptr;
@@ -321,7 +321,7 @@ bool Mixer::setSendGain (const juce::String& trackId, const juce::String& sendId
     if (send == nullptr || send->gain == nullptr)
         return false;
 
-    const auto position = faderPosition (gainDb);
+    const auto position = faderPosition (gain);
     pinDefault (send->gainLevel);
     syncParameter (*send->gain, send->gainLevel);
 
@@ -355,7 +355,7 @@ bool Mixer::setSendMuted (const juce::String& trackId, const juce::String& sendI
     if (send->gain != nullptr)
         syncParameter (*send->gain, send->gainLevel);
 
-    const bool already = dbFromFader (send->gainLevel.get()) <= sendMuteThresholdDb;
+    const bool already = dbFromFader (send->gainLevel.get()) <= sendMuteThreshold;
 
     if (already == muted)
         return false;
@@ -378,9 +378,9 @@ std::vector<SendInfo> Mixer::getSends (const juce::String& trackId) const
         if (send->gain != nullptr)
             syncParameter (*send->gain, send->gainLevel);
 
-        const auto gainDb = dbFromFader (send->gainLevel.get());
-        sends.push_back ({ send->itemID.toString(), send->getBusNumber(), gainDb,
-                           gainDb <= sendMuteThresholdDb });
+        const auto gain = dbFromFader (send->gainLevel.get());
+        sends.push_back ({ send->itemID.toString(), send->getBusNumber(), gain,
+                           gain <= sendMuteThreshold });
     }
 
     return sends;
@@ -457,7 +457,7 @@ std::vector<Strip> Mixer::getStrips() const
         strip.kind = info.kind;
         strip.colourIndex = info.colourIndex;
         strip.selected = info.selected;
-        strip.volumeDb = info.volumeDb;
+        strip.volume = info.volume;
         strip.pan = info.pan;
         strip.muted = info.muted;
         strip.solo = info.solo;
@@ -487,7 +487,7 @@ std::vector<Strip> Mixer::getStrips() const
 
         if (auto* volume = folder.getVolumePlugin())
         {
-            strip.volumeDb = juce::jmax (ApplicationModel::minVolumeDb, (double) volume->getVolumeDb());
+            strip.volume = juce::jmax (ApplicationModel::minVolume, Decibels (volume->getVolumeDb()));
             strip.pan = volume->getPan();
         }
 
@@ -554,14 +554,14 @@ MasterInfo Mixer::getMaster() const
     return { dbFromFader (plugin->volume.get()) };
 }
 
-bool Mixer::setMasterVolume (double db, bool continuesGesture)
+bool Mixer::setMasterVolume (Decibels volume, bool continuesGesture)
 {
     auto* plugin = masterFader (projects.getEdit());
 
     if (plugin == nullptr || plugin->volParam == nullptr)
         return false;
 
-    const auto position = faderPosition (db);
+    const auto position = faderPosition (volume);
     pinVolumeDefaults (*plugin);
     syncParameter (*plugin->volParam, plugin->volume);
 

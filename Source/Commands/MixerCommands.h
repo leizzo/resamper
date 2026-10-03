@@ -32,7 +32,7 @@ struct SendGainArgs
 {
     juce::String trackId;
     juce::String sendId;
-    double db = 0;
+    Decibels gain;
     bool continuesGesture = false;
 };
 
@@ -54,7 +54,7 @@ struct MoveToBusArgs
 /** The master fader; continuesGesture as for SendGainArgs. */
 struct MasterVolumeArgs
 {
-    double db = 0;
+    Decibels volume;
     bool continuesGesture = false;
 };
 
