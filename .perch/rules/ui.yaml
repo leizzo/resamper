@@ -3,15 +3,16 @@
   where: Source/UI/**/*.{cpp,h}
   except: Source/UI/{Theme,Developer}/**/*.{cpp,h}
   min: 70
+  gate: false
   ensure: >-
-    Look only at colour values and numeric literals written directly in this
-    method's body. A literal colour (juce::Colour (0x...), juce::Colours::red,
-    Colour::fromRGB/fromFloatRGBA) or a literal font size, corner radius,
-    padding or pixel size used for layout or drawing breaks this. Any named
-    value passes wherever it is defined: Theme fields (theme.accent, radiusSm),
-    LayoutMetrics fields, a constexpr in a *Metrics namespace, a named member or
-    local. juce::Colours::transparentBlack, 0, 1 px hairlines, 0.5f centring and
-    ratios like getWidth() / 2 pass, and so does icon glyph path data.
+    Look only at numeric literals written directly in this method's body. A
+    literal font size, corner radius, padding or pixel size used for layout or
+    drawing breaks this. Any named value passes wherever it is defined: Theme
+    fields (radiusSm), LayoutMetrics fields, a constexpr in a *Metrics namespace
+    or anonymous namespace, a named member or local. 0, 1 px hairlines, 0.5f
+    centring and ratios like getWidth() / 2 pass, and so does icon glyph path
+    data. Literal colours are checked by Semgrep (ui-colour-from-theme), not
+    here.
 - name: ui-changes-edit-through-commands
   each: method
   where: Source/UI/**/*.{cpp,h}

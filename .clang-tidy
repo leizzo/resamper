@@ -1,0 +1,29 @@
+---
+# Gated on the lines a change touches (scripts/lint.sh runs clang-tidy-diff).
+# Turned off: checks that misread JUCE idioms on this codebase, measured over
+# Source/ when this file was written. Ownership through JUCE APIs that take it
+# (DynamicObject, AlertWindow, setContentOwned) is judged by perch instead
+# (juce-owned-not-raw).
+Checks: >
+  -*,
+  bugprone-*,
+  -bugprone-easily-swappable-parameters,
+  -bugprone-throwing-static-initialization,
+  -bugprone-signed-bitwise,
+  -bugprone-exception-escape,
+  -bugprone-unchecked-optional-access,
+  -bugprone-misplaced-widening-cast,
+  -bugprone-assignment-in-if-condition,
+  -bugprone-float-loop-counter,
+  -bugprone-narrowing-conversions,
+  -bugprone-implicit-widening-of-multiplication-result,
+  performance-*,
+  -performance-enum-size,
+  cppcoreguidelines-slicing,
+  cppcoreguidelines-virtual-class-destructor,
+  misc-redundant-expression,
+  misc-misplaced-const,
+  modernize-use-override,
+  readability-misleading-indentation
+WarningsAsErrors: '*'
+HeaderFilterRegex: '.*/Source/.*'

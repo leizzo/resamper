@@ -15,14 +15,15 @@
 - name: dsp-sample-rate-from-prepare
   each: method
   where: Source/Engine/**/*.{cpp,h}
+  min: 70
   ensure: >-
     Filter coefficients, envelope/ramp step sizes, delay lengths and any
     time-to-samples conversion are computed from the sample rate the engine
     hands over in prepare/initialise (or the current Edit/device rate). A
-    literal 44100 or 48000, or a coefficient computed in a constructor before
-    the rate is known, breaks this. A method that does no time or frequency
-    maths passes.
-  min: 70
+    coefficient computed in a constructor before the rate is known, or a rate
+    cached once and not refreshed when prepare is called again, breaks this. A
+    method that does no time or frequency maths passes. Literal sample rates are
+    checked by Semgrep (no-hardcoded-sample-rate), not here.
 - name: dsp-gain-units
   each: method
   where: Source/**/*.{cpp,h}

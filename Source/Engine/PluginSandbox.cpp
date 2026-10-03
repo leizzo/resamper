@@ -786,7 +786,7 @@ private:
 
         // Realtime, the host gets most of the block's time (shared along a chain);
         // offline (a render), as long as it needs.
-        const auto rate = getSampleRate() > 0 ? getSampleRate() : 44100.0;
+        const auto rate = getSampleRate() > 0 ? getSampleRate() : 44100.0;   // nosemgrep: no-hardcoded-sample-rate -- only sizes the wait before the host reports a rate; no DSP uses it
         const auto sent = juce::Time::getHighResolutionTicks();
         const auto deadline = isNonRealtime() ? sent + juce::Time::secondsToHighResolutionTicks (offlineDeadlineMs / 1000.0)
                                               : answerDeadline (length, rate, lastWaitBlock);
@@ -1189,7 +1189,7 @@ namespace
         void handleMessageFromCoordinator (const juce::MemoryBlock& data) override
         {
             // The plug-in is only touched on the message thread (the audio aside).
-            juce::MessageManager::callAsync ([this, message = decode (data)] { handle (message); });
+            juce::MessageManager::callAsync ([this, message = decode (data)] { handle (message); });   // nosemgrep: deferred-callback-guards-lifetime -- runHost keeps the Host alive until the dispatch loop stops
         }
 
         void reply (const juce::ValueTree& request, juce::ValueTree answer = juce::ValueTree (msg::reply))

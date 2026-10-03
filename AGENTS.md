@@ -33,13 +33,26 @@ JUCE and GIN modules are INTERFACE targets that compile their sources into every
 
 ### Style
 
-There is no `.clang-format` or `.clang-tidy` in the repo; match the surrounding code, which follows JUCE style:
+There is no `.clang-format`: no clang-format setting reproduces the JUCE lambda braces and hand-aligned lists below, so match the surrounding code, which follows JUCE style:
 
 - 4-space indent, Allman braces, space before the parenthesis of calls and declarations: `foo (a, b)`, `if (! x)`.
 - `namespace resamper`; file-local helpers in an anonymous namespace; `namespace te = tracktion;` in `.cpp` files.
 - camelCase functions and variables, PascalCase types, no member prefixes; `juce::String` / `juce::Result` at API boundaries.
 - `/** ... */` doc comments on public types and methods; `#pragma once` in headers.
 - Warnings come from `juce::juce_recommended_warning_flags`; keep builds warning-free.
+
+### Deterministic lint
+
+```sh
+scripts/lint.sh               # lines changed since origin/main; run before perch
+```
+
+It needs `brew install llvm` and `uv tool install semgrep`, and a configured `build/` (for `compile_commands.json`). CI runs it on every pull request.
+
+- **Semgrep** (`.semgrep/resamper.yml`) fails on literal colours in `Source/UI` (use a Theme entry), literal sample rates, a deferred callback (`callAsync`, `callAfterDelay`) capturing `this`, `&` or `=`, and explicit `delete`. A justified exception carries its reason on the line: `// nosemgrep: <rule-id> -- <why>`.
+- **clang-tidy** (`.clang-tidy`) fails on bugprone and performance findings in the lines you changed; stage a new file (`git add`) so it is checked.
+
+A rule a pattern can decide belongs here, not in perch: it is exact, free and needs no model. perch keeps the rules that need judgement.
 
 ### Semantic lint (perch)
 
@@ -54,7 +67,7 @@ perch close <issue-id> --reason "..."              # set aside a false positive,
 
 `check` and `scan` exit 3 while something is still wrong. Results live in `.perch/`; only `closed.jsonl` and `rules/` there are committed. Custom rules go in `perch.yaml` or `.perch/rules/*.yaml` (`perch rules add ...`).
 
-When the user asks to open a pull request, run the unfiltered `ResamperTests` before creating it. On `N FAILURE(S)`, explain each failed test from the log and stop. On `ALL TESTS PASSED`, continue in this order: `perch scan --since origin/main` exits 0 (fix or `close` every finding) → run the `code-review` skill against `main` → attach test evidence. perch covers method-level defects, code-review covers repo standards and the spec; neither replaces the other, and perch goes first so the review sees final code. Evidence is a screenshot when one frame shows the result, a video when the result is motion or a sequence, or one sentence when the change never draws. See `docs/agents/pr-evidence.md`.
+When the user asks to open a pull request, run the unfiltered `ResamperTests` before creating it. On `N FAILURE(S)`, explain each failed test from the log and stop. On `ALL TESTS PASSED`, continue in this order: `scripts/lint.sh` exits 0 → `perch scan --since origin/main` exits 0 (fix or `close` every finding) → run the `code-review` skill against `main` → attach test evidence. perch covers method-level defects, code-review covers repo standards and the spec; neither replaces the other, and perch goes first so the review sees final code. Evidence is a screenshot when one frame shows the result, a video when the result is motion or a sequence, or one sentence when the change never draws. See `docs/agents/pr-evidence.md`.
 
 ## Agent skills
 

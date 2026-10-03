@@ -1,0 +1,32 @@
+# Deterministic lint on what a pull request changes: Semgrep and clang-tidy
+# (see scripts/lint.sh).
+name: Lint
+
+on:
+  pull_request:
+
+jobs:
+  lint:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fetch dependencies
+        run: |
+          git submodule update --init external/gin external/tracktion_engine
+          git -C external/tracktion_engine config submodule.modules/juce.url https://github.com/juce-framework/JUCE.git
+          git -C external/tracktion_engine submodule update --init modules/juce
+          brew install ninja llvm
+          pipx install semgrep
+
+      # clang-tidy reads build/compile_commands.json and the generated ResamperResources.h;
+      # the app itself is not compiled.
+      - name: Configure
+        run: |
+          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug
+          cmake --build build --target resamper_resources
+
+      - name: Lint
+        run: scripts/lint.sh "origin/${{ github.base_ref }}"
