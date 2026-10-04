@@ -38,6 +38,9 @@ public:
     /** A toast with any actions, in order. */
     void show (const juce::String& message, std::vector<Action> actions, bool isError = false);
 
+    /** Closes every toast showing message, before its time is up. */
+    void dismiss (const juce::String& message);
+
     /** Lays toasts out at the bottom centre of their host. While any are showing,
         that is a window of their own above plug-in UI. */
     void followHost();

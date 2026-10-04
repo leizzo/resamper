@@ -225,6 +225,9 @@ void MainComponent::chooseLanguage (const juce::String& preference)
     preferences.setLanguage (preference);
 
     // The mapping is read once, at launch: a change shows after a relaunch.
+    const auto offer = TRANS ("The new language shows after Resamper relaunches.");
+    toasts.dismiss (offer);
+
     if (resolveUILanguage (preference, juce::SystemStats::getUserLanguage()) == getInstalledUILanguage())
         return;
 
@@ -236,7 +239,7 @@ void MainComponent::chooseLanguage (const juce::String& preference)
     }, std::nullopt });
     actions.push_back ({ TRANS ("Later"), [] (bool) {}, std::nullopt });
 
-    toasts.show (TRANS ("The new language shows after Resamper relaunches."), std::move (actions));
+    toasts.show (offer, std::move (actions));
 }
 
 void MainComponent::registerDeveloperOverlayCommand()

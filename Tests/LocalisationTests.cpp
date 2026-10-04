@@ -273,6 +273,17 @@ struct LocalisationTests : juce::UnitTest
             expectEquals (f.app.preferences.getLanguage(), juce::String ("en"));
             expect (toasts != nullptr && toasts->getMessages().isEmpty());
 
+            // Back before answering: the offer goes, as there is nothing left to relaunch for.
+            expect (f.invoke (cmd::uiLanguageTurkish));
+            expect (toasts != nullptr && toasts->getMessages().contains (message));
+            expect (f.invoke (cmd::uiLanguageEnglish));
+            expect (toasts != nullptr && toasts->getMessages().isEmpty());
+
+            // Choosing again replaces the offer rather than stacking a second one.
+            expect (f.invoke (cmd::uiLanguageTurkish));
+            expect (f.invoke (cmd::uiLanguageSystem));
+            expect (toasts != nullptr && toasts->getMessages().size() <= 1);
+
             expect (f.invoke (cmd::uiLanguageTurkish));
             expect (toasts != nullptr && toasts->runAction (message, "Relaunch now"));
             expectEquals (relaunches, 1);

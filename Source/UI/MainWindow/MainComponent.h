@@ -44,8 +44,8 @@ namespace cmd
     inline constexpr CommandRef<> pluginWindowToggleAutoOpen { "pluginWindow.toggleAutoOpen" }; ///< a preference
     inline constexpr CommandRef<> pluginWindowToggleSelectedTrackOnly { "pluginWindow.toggleSelectedTrackOnly" }; ///< a preference
     inline constexpr CommandRef<> uiLanguageSystem { "ui.language.system" };     ///< the UI Language: a preference
-    inline constexpr CommandRef<> uiLanguageEnglish { "ui.language.en" };
-    inline constexpr CommandRef<> uiLanguageTurkish { "ui.language.tr" };
+    inline constexpr CommandRef<> uiLanguageEnglish { "ui.language.en" };        ///< "en"
+    inline constexpr CommandRef<> uiLanguageTurkish { "ui.language.tr" };        ///< "tr"
 }
 
 /** The MainWindow's content (PRD §5–6): the top bar, then the view the shell
