@@ -80,7 +80,7 @@ public:
 
     /** The first launch of a version opens the completion dialog. `then` runs
         when it closes or when there is nothing to show. `relaunch` runs from Restart. */
-    void presentLaunchNotes (const juce::String& current, std::function<void()> then, std::function<void()> relaunch);
+    void presentLaunchNotes (const juce::String& current, const std::function<void()>& then, const std::function<void()>& relaunch);
     ~MainComponent() override;
 
     /** The plug-in windows and their rules (PRD §9.6). */

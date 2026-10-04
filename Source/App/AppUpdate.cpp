@@ -356,7 +356,7 @@ fi
         return trimmed.startsWithChar ('[') && trimmed.contains ("]:");
     }
 
-    juce::String stripEmphasis (juce::String text)
+    juce::String stripEmphasis (const juce::String& text)
     {
         return text.replace ("**", {});
     }
@@ -493,7 +493,7 @@ fi
             return note;
         }
 
-        note.title = text;
+        note.title = std::move (text);
         return note;
     }
 
@@ -630,7 +630,7 @@ bool canReplaceInstalledApp (const juce::File& bundle)
     if (! bundle.isDirectory())
         return false;
 
-    const auto path = bundle.getFullPathName();
+    const auto& path = bundle.getFullPathName();
 
     if (! path.startsWithChar ('/') || bundle.getFileName() != "Resamper.app")
         return false;

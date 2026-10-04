@@ -272,7 +272,7 @@ void MainComponent::bindUpdateCheck (UpdateCheck& check)
     updatePrompt.onFailed = [this] (const juce::String& message) { showToast (message, false, true); };
 }
 
-void MainComponent::presentLaunchNotes (const juce::String& current, std::function<void()> then, std::function<void()> relaunch)
+void MainComponent::presentLaunchNotes (const juce::String& current, const std::function<void()>& then, const std::function<void()>& relaunch)
 {
     auto items = notesForLaunch (preferences, current);
 
