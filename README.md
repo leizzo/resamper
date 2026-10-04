@@ -14,7 +14,7 @@
 A dark, dense, keyboard-friendly desktop DAW for electronic producers and mix engineers.
 
 > **Status: alpha.** Resamper is in early development. The current release is
-> [v0.2.1 — M1.1 Devices & Plug-ins](https://github.com/leizzo/resamper/releases/tag/v0.2.1),
+> [v0.2.2 — M1.1 Devices & Plug-ins](https://github.com/leizzo/resamper/releases/tag/v0.2.2),
 > published as an alpha pre-release. Expect missing features, rough edges and project-format
 > changes — don't trust it with your only copy of a song yet.
 
@@ -28,7 +28,7 @@ signal path you can always see.
 
 > These images come from the product design ([`design/design.pen`](design/design.pen)) and show
 > where Resamper is heading. Several features in them belong to later milestones — see the
-> [roadmap](#roadmap) for what's in v0.2.1 today.
+> [roadmap](#roadmap) for what's in v0.2.2 today.
 
 ### A console, not a list
 
@@ -42,7 +42,7 @@ signal path you can always see.
 
 <img src="docs/images/workflow.png" alt="Scale-aware piano roll, audio clip envelopes with their own loop, folders and bus channels, and arrangement automation." width="100%">
 
-## What you can do today (v0.2.1)
+## What you can do today (v0.2.2)
 
 - **Arrange** — audio and MIDI tracks, clips you can move, resize, split, duplicate, loop-extend and
   consolidate; zoom, lane height and Follow.
@@ -65,7 +65,7 @@ See [CHANGELOG.md](CHANGELOG.md) for the full list.
 | Milestone | What it brings |
 |---|---|
 | **M1 — Core** ✅ | Shell, transport, Arrangement, device chain with plug-ins, basic Mixer, design system (v0.1.0) |
-| **M1.1 — Devices & Plug-ins** ✅ | Native devices (EQ Eight, Compressor), VST3 / AU / CLAP hosting with crash isolation, plug-in window on insert (v0.2.1) |
+| **M1.1 — Devices & Plug-ins** ✅ | Native devices (EQ Eight, Compressor), VST3 / AU / CLAP hosting with crash isolation, plug-in window on insert (v0.2.2) |
 | **M2 — Mix** | Pre-FX / Pre / Post sends, returns, master loudness, folders & buses, sidechain inputs |
 | **M3 — Automation** | Arrangement lanes, clip overlays, Read / Touch / Latch / Write |
 | **M4 — Editors** | Scale-aware piano roll with chords and velocity, audio editor with warp and fades, clip envelopes |

@@ -9,6 +9,26 @@ patch release; until then every release is published on GitHub as an alpha pre-r
 
 ## [Unreleased]
 
+## [0.2.2] - 2026-10-04
+
+Fixes and layout internals on top of **M1.1 — Devices & Plug-ins**.
+
+### Changed
+
+- Layouts are C++ components. Saving a theme file still re-styles the app. Developer Mode opens
+  melatonin_inspector instead of the in-house inspector.
+- A plug-in saved in the Project but not installed is **Missing**. Plug-in Hosting starts it once a
+  scan finds it.
+- The per-instance sandbox switch is named **Run in-process**.
+
+### Fixed
+
+- Menus, the Save Preset dialog, tooltips and toasts stay above a sandboxed plug-in's own UI.
+- A clip's context menu belongs to its lane, so it is dismissed when the lane goes.
+- The selected clip's outline comes from the Theme.
+- Undoing a plug-in insert drops that plug-in's pending sandbox load with the Edit. A load one Edit
+  leaves pending is not taken up by the next Edit.
+
 ## [0.2.1] - 2026-10-02
 
 Release fix on top of **M1.1 — Devices & Plug-ins**. v0.2.0 was tagged but never published: its
@@ -181,7 +201,8 @@ basic Mixer, and the Resamper design system.
 - Silent tempo-tagged loops with no waveform.
 - M1 review findings and design parity in lanes, devices and the mixer.
 
-[Unreleased]: https://github.com/leizzo/resamper/compare/v0.2.1...HEAD
+[Unreleased]: https://github.com/leizzo/resamper/compare/v0.2.2...HEAD
+[0.2.2]: https://github.com/leizzo/resamper/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/leizzo/resamper/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/leizzo/resamper/compare/v0.1.3...v0.2.0
 [0.1.3]: https://github.com/leizzo/resamper/compare/v0.1.2...v0.1.3

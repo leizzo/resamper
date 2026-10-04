@@ -15,7 +15,7 @@ Elektronik müzik prodüktörleri ve miks mühendisleri için koyu temalı, yoğ
 masaüstü DAW.
 
 > **Durum: alfa.** Resamper erken geliştirme aşamasında. Güncel sürüm
-> [v0.2.1 — M1.1 Devices & Plug-ins](https://github.com/leizzo/resamper/releases/tag/v0.2.1),
+> [v0.2.2 — M1.1 Devices & Plug-ins](https://github.com/leizzo/resamper/releases/tag/v0.2.2),
 > alfa ön sürümü olarak yayımlandı. Eksik özellikler, pürüzler ve proje formatında değişiklikler
 > olabilir — şarkınızın tek kopyasını henüz ona emanet etmeyin.
 
@@ -29,7 +29,7 @@ bir sinyal yolu.
 
 > Bu görseller ürün tasarımından ([`design/design.pen`](design/design.pen)) alınmıştır ve
 > Resamper'ın nereye gittiğini gösterir. İçlerindeki bazı özellikler sonraki kilometre taşlarına
-> aittir — v0.2.1'da bugün neler olduğunu görmek için [yol haritasına](#yol-haritası) bakın.
+> aittir — v0.2.2'da bugün neler olduğunu görmek için [yol haritasına](#yol-haritası) bakın.
 
 ### Liste değil, konsol
 
@@ -43,7 +43,7 @@ bir sinyal yolu.
 
 <img src="docs/images/workflow.png" alt="Gam destekli piano roll, kendi döngüsüne sahip ses klibi zarfları, klasörler ve bus kanalları, arrangement otomasyonu." width="100%">
 
-## Bugün neler yapabilirsiniz (v0.2.1)
+## Bugün neler yapabilirsiniz (v0.2.2)
 
 - **Aranje** — ses ve MIDI kanalları; taşıyabildiğiniz, boyutlandırabildiğiniz, bölebildiğiniz,
   çoğaltabildiğiniz, döngüyle uzatabildiğiniz ve birleştirebildiğiniz klipler; zoom, kanal yüksekliği
@@ -67,7 +67,7 @@ Tam liste için [CHANGELOG.md](CHANGELOG.md) dosyasına bakın.
 | Kilometre taşı | Getirdikleri |
 |---|---|
 | **M1 — Core** ✅ | Kabuk, transport, Arrangement, eklentili cihaz zinciri, temel Mixer, tasarım sistemi (v0.1.0) |
-| **M1.1 — Cihazlar ve Eklentiler** ✅ | Yerleşik cihazlar (EQ Eight, Compressor), çökme izolasyonlu VST3 / AU / CLAP desteği, eklenince açılan eklenti penceresi (v0.2.1) |
+| **M1.1 — Cihazlar ve Eklentiler** ✅ | Yerleşik cihazlar (EQ Eight, Compressor), çökme izolasyonlu VST3 / AU / CLAP desteği, eklenince açılan eklenti penceresi (v0.2.2) |
 | **M2 — Miks** | Pre-FX / Pre / Post send'ler, return kanalları, master loudness, klasörler ve bus'lar, sidechain girişleri |
 | **M3 — Otomasyon** | Arrangement otomasyon şeritleri, klip üzeri zarflar, Read / Touch / Latch / Write |
 | **M4 — Editörler** | Gam ve akor destekli, velocity şeritli piano roll; warp ve fade destekli ses editörü; klip zarfları |
