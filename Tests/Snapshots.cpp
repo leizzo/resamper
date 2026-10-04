@@ -1,6 +1,8 @@
 #include "App/AppUpdate.h"
 #include "App/UILanguage.h"
+#include "ComponentSearch.h"
 #include "TestFixture.h"
+#include "Commands/ApplicationCommandTable.h"
 #include "UI/MainWindow/AppUpdatePrompt.h"
 #include "UI/MainWindow/MainComponent.h"
 
@@ -167,5 +169,85 @@ struct WhatsNewSnapshot : juce::UnitTest
 };
 
 static WhatsNewSnapshot whatsNewSnapshot;
+
+/** The Options menu with its Language / Dil submenu, and the relaunch offer
+    after choosing another language, in the SNAPSHOT_LANG UI Language. */
+struct LanguageSnapshot : juce::UnitTest
+{
+    LanguageSnapshot() : juce::UnitTest ("Language menu", "Snapshot") {}
+
+    void runTest() override
+    {
+        beginTest ("Render the Language / Dil submenu and the relaunch toast");
+
+        Fixture f;
+        installSnapshotLanguage (f.uiFiles);
+        expect (f.theme.load().wasOk());
+        juce::LookAndFeel::setDefaultLookAndFeel (&f.theme.getLookAndFeel());
+
+        if (getInstalledUILanguage() != "en")
+            f.app.preferences.setLanguage (getInstalledUILanguage());
+
+        auto dir = juce::File ("/tmp/resamper-snapshots");
+        dir.createDirectory();
+        const auto suffix = getInstalledUILanguage() == "en" ? juce::String() : "-" + getInstalledUILanguage();
+
+        auto write = [&] (juce::Component& c, const juce::String& name)
+        {
+            juce::Image image (juce::Image::ARGB, c.getWidth() * 2 + 48, c.getHeight() * 2 + 48, true);
+            {
+                juce::Graphics g (image);
+                g.fillAll (f.theme.getTheme().bgDeep);
+                g.drawImageAt (c.createComponentSnapshot (c.getLocalBounds(), true, 2.0f), 24, 24);
+            }
+
+            auto file = dir.getChildFile (name + suffix + ".png");
+            file.deleteFile();
+            juce::FileOutputStream out (file);
+            expect (juce::PNGImageFormat().writeImageToStream (image, out));
+        };
+
+        {
+            juce::ApplicationCommandManager commandManager;
+            MainComponent main (f.app, commandManager);
+            commandManager.registerAllCommandsForTarget (&main);
+            commandManager.setFirstCommandTarget (&main);
+            main.setSize (1600, 1000);
+
+            // Each popup in turn, captured as it opens: a menu closes once the run's app is not in front.
+            auto capture = [&] (juce::PopupMenu menu, const juce::String& name)
+            {
+                menu.showMenuAsync (juce::PopupMenu::Options().withTargetScreenArea ({ 200, 200, 1, 1 }));
+                auto& desktop = juce::Desktop::getInstance();
+
+                if (auto* window = desktop.getComponent (desktop.getNumComponents() - 1))
+                    write (*window, name);
+
+                juce::PopupMenu::dismissAllActiveMenus();
+                juce::MessageManager::getInstance()->runDispatchLoopUntil (100);
+            };
+
+            const auto options = createCommandMenu (commandManager, "Options");
+            capture (options, "language-options-menu");
+
+            for (juce::PopupMenu::MenuItemIterator it (options); it.next();)
+                if (it.getItem().text == "Language / Dil" && it.getItem().subMenu != nullptr)
+                    capture (*it.getItem().subMenu, "language-submenu");
+
+            f.invoke (getInstalledUILanguage() == "tr" ? cmd::uiLanguageEnglish : cmd::uiLanguageTurkish);
+            juce::MessageManager::getInstance()->runDispatchLoopUntil (100);
+
+            if (auto* toasts = findTypeOrOnDesktop<Toasts> (main))
+                write (*toasts, "language-relaunch-toast");
+
+            commandManager.setFirstCommandTarget (nullptr);
+        }
+
+        juce::LookAndFeel::setDefaultLookAndFeel (nullptr);
+        installUILanguage (f.uiFiles, "en");
+    }
+};
+
+static LanguageSnapshot languageSnapshot;
 
 } // namespace resamper::test
