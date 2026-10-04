@@ -58,7 +58,7 @@ scripts/lint.sh               # lines changed since origin/main; run before perc
 
 It needs `brew install llvm` and `uv tool install semgrep`, and a configured `build/` (for `compile_commands.json`). CI runs it on every pull request.
 
-- **Semgrep** (`.semgrep/resamper.yml`) fails on literal colours in `Source/UI` (use a Theme entry), literal sample rates, a deferred callback (`callAsync`, `callAfterDelay`) capturing `this`, `&` or `=`, and explicit `delete`. A justified exception carries its reason on the line: `// nosemgrep: <rule-id> -- <why>`.
+- **Semgrep** (`.semgrep/resamper.yml`) fails on literal colours in `Source/UI` (use a Theme entry), literal sample rates, a deferred callback (`callAsync`, `callAfterDelay`) capturing `this`, `&` or `=`, and explicit `delete`. On changed lines only, it fails on a string literal passed to `setText`, `setButtonText`, `setTooltip` or `addItem` in `Source/UI` (use `TRANS` or `tr` from `Source/UI/Localisation.h`, ADR-0015). A justified exception carries its reason on the line: `// nosemgrep: <rule-id> -- <why>`.
 - **clang-tidy** (`.clang-tidy`) fails on bugprone and performance findings in the lines you changed; stage a new file (`git add`) so it is checked.
 
 A rule a pattern can decide belongs here, not in perch: it is exact, free and needs no model. perch keeps the rules that need judgement.

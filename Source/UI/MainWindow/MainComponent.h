@@ -43,6 +43,9 @@ namespace cmd
     inline constexpr CommandRef<> pluginWindowCloseFocused { "pluginWindow.closeFocused" };     ///< Mod+W
     inline constexpr CommandRef<> pluginWindowToggleAutoOpen { "pluginWindow.toggleAutoOpen" }; ///< a preference
     inline constexpr CommandRef<> pluginWindowToggleSelectedTrackOnly { "pluginWindow.toggleSelectedTrackOnly" }; ///< a preference
+    inline constexpr CommandRef<> uiLanguageSystem { "ui.language.system" };     ///< the UI Language: a preference
+    inline constexpr CommandRef<> uiLanguageEnglish { "ui.language.en" };        ///< "en"
+    inline constexpr CommandRef<> uiLanguageTurkish { "ui.language.tr" };        ///< "tr"
 }
 
 /** The MainWindow's content (PRD §5–6): the top bar, then the view the shell
@@ -79,9 +82,13 @@ public:
     void bindUpdateCheck (UpdateCheck&);
 
     /** The first launch of a version opens the completion dialog. `then` runs
-        when it closes or when there is nothing to show. `relaunch` runs from Restart. */
-    void presentLaunchNotes (const juce::String& current, const std::function<void()>& then, const std::function<void()>& relaunch);
+        when it closes or when there is nothing to show. Restart runs onRelaunch. */
+    void presentLaunchNotes (const juce::String& current, const std::function<void()>& then);
     ~MainComponent() override;
+
+    /** Quits and opens the app again: the completion dialog's Restart, and
+        Relaunch now after a UI Language change. */
+    std::function<void()> onRelaunch;
 
     /** The plug-in windows and their rules (PRD §9.6). */
     PluginWindows& getPluginWindows() noexcept   { return pluginWindows; }
@@ -159,6 +166,8 @@ private:
 
     void updateStatusBar();
     void registerPluginWindowCommands();
+    void registerLanguageCommands();
+    void chooseLanguage (const juce::String& preference);
     void registerArrangementZoomCommands();
     void registerEscapeCommand();
     void registerDeveloperOverlayCommand();

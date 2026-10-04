@@ -1,0 +1,6 @@
+language: Turkish
+countries: tr
+
+"The new language shows after Resamper relaunches." = "Yeni dil, Resamper yeniden başlatıldığında görünür."
+"Relaunch now" = "Şimdi yeniden başlat"
+"Later" = "Sonra"

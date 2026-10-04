@@ -286,6 +286,10 @@ _Avoid_: Skin, look-and-feel
 **Layout Metrics**:
 UI geometry: track height, header widths, toolbar heights. Distinct from Theme: geometry is not style.
 
+**UI Language**:
+The language Resamper's own text is shown in: System (the OS language) or one the user picks. Applied at launch. Domain terms in this glossary, numbers and units stay as written here in every UI Language.
+_Avoid_: locale (numbers and units are not localised), translation (that is one entry in a language file)
+
 ### Architecture
 
 **Application Model**:

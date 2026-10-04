@@ -9,6 +9,7 @@ namespace
     const juce::Identifier pluginWindowsForSelectedTrackOnly ("pluginWindowsForSelectedTrackOnly");
     const juce::Identifier skippedUpdateVersion ("skippedUpdateVersion");
     const juce::Identifier lastLaunchedVersion ("lastLaunchedVersion");
+    const juce::Identifier language ("language");
 }
 
 Preferences::Preferences()
@@ -74,6 +75,16 @@ juce::String Preferences::getLastLaunchedVersion() const
 void Preferences::setLastLaunchedVersion (const juce::String& version)
 {
     state.setProperty (lastLaunchedVersion, version, nullptr);
+}
+
+juce::String Preferences::getLanguage() const
+{
+    return state.getProperty (language, systemLanguage).toString();
+}
+
+void Preferences::setLanguage (const juce::String& code)
+{
+    state.setProperty (language, code, nullptr);
 }
 
 void Preferences::save() const

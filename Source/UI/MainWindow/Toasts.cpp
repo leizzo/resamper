@@ -37,6 +37,15 @@ void Toasts::show (const juce::String& message, std::vector<Action> actions, boo
     startTimer (100);
 }
 
+void Toasts::dismiss (const juce::String& message)
+{
+    if (std::erase_if (toasts, [&message] (const Toast& t) { return t.message == message; }) == 0)
+        return;
+
+    followHost();
+    repaint();
+}
+
 juce::StringArray Toasts::getMessages() const
 {
     juce::StringArray messages;

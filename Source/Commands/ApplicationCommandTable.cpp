@@ -14,11 +14,19 @@ namespace
     constexpr int alt = MK::altModifier;
     using KP = juce::KeyPress;
 
-    /** One menu: its title and its Commands, in order. */
+    /** A submenu: its title and its Commands, in order. */
+    struct CommandSubmenu
+    {
+        const char* name;
+        std::span<const char* const> commandIds;
+    };
+
+    /** One menu: its title, its Commands, then its submenus, in order. */
     struct CommandMenu
     {
         const char* name;
         std::span<const char* const> commandIds;
+        std::span<const CommandSubmenu> submenus = {};
     };
 
     const char* const fileMenu[]
@@ -101,6 +109,19 @@ namespace
         "session.recordToArrangement",
     };
 
+    const char* const languageMenu[]
+    {
+        "ui.language.system",
+        "ui.language.en",
+        "ui.language.tr",
+    };
+
+    // The title is bilingual in every UI Language, so a wrong choice can be undone (ADR-0015).
+    const CommandSubmenu optionsSubmenus[]
+    {
+        { "Language / Dil", languageMenu },
+    };
+
     /** The menus and their items, in order (PRD §6.1). The ApplicationCommand
         IDs are derived from this order; nothing stores them. */
     const std::array menus
@@ -109,7 +130,7 @@ namespace
         CommandMenu { "Edit", editMenu },
         CommandMenu { "Create", createMenu },
         CommandMenu { "View", viewMenu },
-        CommandMenu { "Options", optionsMenu },
+        CommandMenu { "Options", optionsMenu, optionsSubmenus },
         CommandMenu { "Help", {} },
     };
 
@@ -122,9 +143,20 @@ namespace
         {
             std::vector<ApplicationCommandEntry> result;
 
+            auto add = [&result] (const char* commandId, const char* menu, const char* submenu)
+            {
+                result.push_back ({ firstApplicationCommandID + (juce::CommandID) result.size(), commandId, menu, submenu });
+            };
+
             for (auto& menu : menus)
+            {
                 for (auto* commandId : menu.commandIds)
-                    result.push_back ({ firstApplicationCommandID + (juce::CommandID) result.size(), commandId, menu.name });
+                    add (commandId, menu.name, nullptr);
+
+                for (auto& submenu : menu.submenus)
+                    for (auto* commandId : submenu.commandIds)
+                        add (commandId, menu.name, submenu.name);
+            }
 
             return result;
         }();
@@ -251,10 +283,27 @@ std::span<const char* const> getMenuNames()
 juce::PopupMenu createCommandMenu (juce::ApplicationCommandManager& manager, const juce::String& menuName)
 {
     juce::PopupMenu menu;
+    std::vector<std::pair<juce::String, juce::PopupMenu>> submenus;
 
     for (auto& entry : table())
-        if (menuName == entry.menu && manager.getCommandForID (entry.applicationCommandID) != nullptr)
+    {
+        if (menuName != entry.menu || manager.getCommandForID (entry.applicationCommandID) == nullptr)
+            continue;
+
+        if (entry.submenu == nullptr)
+        {
             menu.addCommandItem (&manager, entry.applicationCommandID);
+            continue;
+        }
+
+        if (submenus.empty() || submenus.back().first != entry.submenu)
+            submenus.emplace_back (entry.submenu, juce::PopupMenu());
+
+        submenus.back().second.addCommandItem (&manager, entry.applicationCommandID);
+    }
+
+    for (auto& [name, items] : submenus)
+        menu.addSubMenu (name, items);
 
     if (menuName == "Help")
         if (auto* app = juce::JUCEApplicationBase::getInstance())

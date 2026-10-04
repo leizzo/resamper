@@ -1,5 +1,6 @@
 #include "MainComponent.h"
 #include "App/ResamperApp.h"
+#include "App/UILanguage.h"
 #include "Commands/AppCommands.h"
 #include "Commands/ApplicationCommandTable.h"
 #include "UI/Developer/DeveloperCommands.h"
@@ -49,6 +50,7 @@ MainComponent::MainComponent (ResamperApp& a, juce::ApplicationCommandManager& c
     registerEscapeCommand();
     registerPianoRollCommands();
     registerPluginWindowCommands();
+    registerLanguageCommands();
 
     if (uiFiles.isDevMode())
         registerDeveloperOverlayCommand();
@@ -201,6 +203,45 @@ void MainComponent::registerPluginWindowCommands()
                       [&prefs] { prefs.setPluginWindowsForSelectedTrackOnly (! prefs.getPluginWindowsForSelectedTrackOnly()); });
 }
 
+void MainComponent::registerLanguageCommands()
+{
+    // Never translated: each language is named in itself, so a wrong choice can be undone.
+    auto add = [this] (CommandRef<> ref, const juce::String& name, const char* preference)
+    {
+        commands.add (ref, { name, {}, [this, preference] { return preferences.getLanguage() == preference; } },
+                      [this, preference] { chooseLanguage (preference); });
+    };
+
+    add (cmd::uiLanguageSystem, "System", Preferences::systemLanguage);
+    add (cmd::uiLanguageEnglish, "English", "en");
+    add (cmd::uiLanguageTurkish, juce::String (juce::CharPointer_UTF8 ("T\xc3\xbcrk\xc3\xa7" "e")), "tr");
+}
+
+void MainComponent::chooseLanguage (const juce::String& preference)
+{
+    if (preference == preferences.getLanguage())
+        return;
+
+    preferences.setLanguage (preference);
+
+    // The mapping is read once, at launch: a change shows after a relaunch.
+    const auto offer = TRANS ("The new language shows after Resamper relaunches.");
+    toasts.dismiss (offer);
+
+    if (resolveUILanguage (preference, juce::SystemStats::getUserLanguage()) == getInstalledUILanguage())
+        return;
+
+    std::vector<Toasts::Action> actions;
+    actions.push_back ({ TRANS ("Relaunch now"), [this] (bool)
+    {
+        if (onRelaunch != nullptr)
+            onRelaunch();
+    }, std::nullopt });
+    actions.push_back ({ TRANS ("Later"), [] (bool) {}, std::nullopt });
+
+    toasts.show (offer, std::move (actions));
+}
+
 void MainComponent::registerDeveloperOverlayCommand()
 {
     commands.add (cmd::devToggleOverlay, { "Developer Overlay" }, [this] { toggleDeveloperOverlay(); });
@@ -272,7 +313,7 @@ void MainComponent::bindUpdateCheck (UpdateCheck& check)
     updatePrompt.onFailed = [this] (const juce::String& message) { showToast (message, false, true); };
 }
 
-void MainComponent::presentLaunchNotes (const juce::String& current, const std::function<void()>& then, const std::function<void()>& relaunch)
+void MainComponent::presentLaunchNotes (const juce::String& current, const std::function<void()>& then)
 {
     auto items = notesForLaunch (preferences, current);
 
@@ -292,12 +333,12 @@ void MainComponent::presentLaunchNotes (const juce::String& current, const std::
                                   if (then != nullptr)
                                       then();
                               },
-                              [prefs = &preferences, current, relaunch]
+                              [this, current]
                               {
-                                  prefs->setLastLaunchedVersion (current);
+                                  preferences.setLastLaunchedVersion (current);
 
-                                  if (relaunch != nullptr)
-                                      relaunch();
+                                  if (onRelaunch != nullptr)
+                                      onRelaunch();
                               });
 }
 
