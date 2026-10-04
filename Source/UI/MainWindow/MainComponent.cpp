@@ -1,5 +1,6 @@
 #include "MainComponent.h"
 #include "App/ResamperApp.h"
+#include "App/UILanguage.h"
 #include "Commands/AppCommands.h"
 #include "Commands/ApplicationCommandTable.h"
 #include "UI/Developer/DeveloperCommands.h"
@@ -49,6 +50,7 @@ MainComponent::MainComponent (ResamperApp& a, juce::ApplicationCommandManager& c
     registerEscapeCommand();
     registerPianoRollCommands();
     registerPluginWindowCommands();
+    registerLanguageCommands();
 
     if (uiFiles.isDevMode())
         registerDeveloperOverlayCommand();
@@ -199,6 +201,42 @@ void MainComponent::registerPluginWindowCommands()
                       { "Show Plug-in Windows for Selected Track Only", {},
                         [&prefs] { return prefs.getPluginWindowsForSelectedTrackOnly(); } },
                       [&prefs] { prefs.setPluginWindowsForSelectedTrackOnly (! prefs.getPluginWindowsForSelectedTrackOnly()); });
+}
+
+void MainComponent::registerLanguageCommands()
+{
+    // Each language is named in itself, so a user who picked the wrong one finds the way back (ADR-0015).
+    auto add = [this] (CommandRef<> ref, const juce::String& name, const char* preference)
+    {
+        commands.add (ref, { name, {}, [this, preference] { return preferences.getLanguage() == preference; } },
+                      [this, preference] { chooseLanguage (preference); });
+    };
+
+    add (cmd::uiLanguageSystem, "System", Preferences::systemLanguage);
+    add (cmd::uiLanguageEnglish, "English", "en");
+    add (cmd::uiLanguageTurkish, juce::String (juce::CharPointer_UTF8 ("T\xc3\xbcrk\xc3\xa7" "e")), "tr");
+}
+
+void MainComponent::chooseLanguage (const juce::String& preference)
+{
+    if (preference == preferences.getLanguage())
+        return;
+
+    preferences.setLanguage (preference);
+
+    // The mapping is read once, at launch: a change shows after a relaunch.
+    if (resolveUILanguage (preference, juce::SystemStats::getUserLanguage()) == getInstalledUILanguage())
+        return;
+
+    std::vector<Toasts::Action> actions;
+    actions.push_back ({ TRANS ("Relaunch now"), [this] (bool)
+    {
+        if (onRelaunch != nullptr)
+            onRelaunch();
+    }, std::nullopt });
+    actions.push_back ({ TRANS ("Later"), [] (bool) {}, std::nullopt });
+
+    toasts.show (TRANS ("The new language shows after Resamper relaunches."), std::move (actions));
 }
 
 void MainComponent::registerDeveloperOverlayCommand()

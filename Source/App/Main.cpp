@@ -1,5 +1,6 @@
 #include "App/AppUpdate.h"
 #include "App/ResamperApp.h"
+#include "App/UILanguage.h"
 #include "Commands/PluginCommands.h"
 #include "Commands/ProductionCommands.h"
 #include "Engine/EngineManager.h"
@@ -67,6 +68,7 @@ public:
         app = std::make_unique<ResamperApp> (*engine, theme);
         app->preferences.setFile (juce::File::getSpecialLocation (juce::File::userApplicationDataDirectory)
                                       .getChildFile ("Resamper").getChildFile ("preferences.xml"));
+        installUILanguage (uiFiles, resolveUILanguage (app->preferences.getLanguage(), juce::SystemStats::getUserLanguage()));
         wireCommandHost();
         mainWindow = std::make_unique<MainWindow> (getApplicationName(), *app);
 
@@ -90,22 +92,25 @@ public:
         if (auto* content = dynamic_cast<MainComponent*> (mainWindow->getContentComponent()))
         {
             content->bindUpdateCheck (*updateCheck);
+            content->onRelaunch = [this] { relaunch(); };
             content->presentLaunchNotes (getApplicationVersion(),
                                          [check = juce::WeakReference<UpdateCheck> (updateCheck.get())]
                                          {
                                              if (check != nullptr)
                                                  check->start();
                                          },
-                                         [this]
-                                         {
-                                             scheduleRelaunch();
-
-                                             if (app != nullptr)
-                                                 app->commands.invoke (cmd::projectAutosave);
-
-                                             quit();
-                                         });
+                                         [this] { relaunch(); });
         }
+    }
+
+    void relaunch()
+    {
+        scheduleRelaunch();
+
+        if (app != nullptr)
+            app->commands.invoke (cmd::projectAutosave);
+
+        quit();
     }
 
     void shutdown() override

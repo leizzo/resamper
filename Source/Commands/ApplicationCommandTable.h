@@ -15,6 +15,7 @@ struct ApplicationCommandEntry
     juce::CommandID applicationCommandID;
     const char* commandId;      ///< Command registry string ID
     const char* menu;           ///< the menu the item appears in
+    const char* submenu;        ///< the submenu of menu it sits in, or nullptr
 };
 
 /** Where a shortcut applies (PRD §17): everywhere, or only while a view shows,

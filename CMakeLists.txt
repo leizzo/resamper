@@ -113,7 +113,7 @@ function(resamper_use_engine_without_tracktion target)
 endfunction()
 
 # ------------------------------------------------------------------------------
-# UI resources: themes and fonts embedded for production builds.
+# UI resources: themes, fonts and translations embedded for production builds.
 # Debug builds read the same files from the source tree (dev-mode override).
 # ------------------------------------------------------------------------------
 juce_add_binary_data(resamper_resources
@@ -128,6 +128,7 @@ juce_add_binary_data(resamper_resources
         UI/fonts/IBMPlexMono-Regular.ttf
         UI/fonts/IBMPlexMono-Medium.ttf
         UI/fonts/IBMPlexMono-SemiBold.ttf
+        UI/translations/tr.txt
         CHANGELOG.md)
 
 set_target_properties(resamper_resources PROPERTIES POSITION_INDEPENDENT_CODE ON)
@@ -166,6 +167,7 @@ add_library(resamper_ui STATIC
     Source/UI/Controls/Menus.cpp
     Source/UI/MainWindow/Toasts.cpp
     Source/UI/Theme/UIFileSource.cpp
+    Source/UI/Localisation.cpp
     Source/UI/Developer/DeveloperCommands.cpp
     Source/UI/Developer/DeveloperOverlay.cpp
     Source/UI/Developer/StatusBar.cpp
@@ -209,7 +211,8 @@ add_library(resamper_ui STATIC
     Source/UI/MainWindow/MainWindow.cpp
     # The headless app the window is built from; tests build it too.
     Source/App/ResamperApp.cpp
-    Source/App/AppUpdate.cpp)
+    Source/App/AppUpdate.cpp
+    Source/App/UILanguage.cpp)
 resamper_use_engine_without_tracktion(resamper_ui)
 target_link_libraries(resamper_ui PUBLIC resamper_commands PRIVATE resamper_resources)
 target_compile_definitions(resamper_ui PRIVATE
@@ -286,6 +289,7 @@ target_sources(ResamperTests PRIVATE
     Tests/WaveformTests.cpp
     Tests/ClipViewTests.cpp
     Tests/AudioImportTests.cpp
+    Tests/LocalisationTests.cpp
     Tests/Snapshots.cpp)
 
 # Tests may reach into the engine to verify rendered audio, so they get the
@@ -293,7 +297,9 @@ target_sources(ResamperTests PRIVATE
 target_include_directories(ResamperTests PRIVATE ${resamper_module_includes} Tests)
 target_compile_definitions(ResamperTests PRIVATE
     ${resamper_module_definitions}
-    RESAMPER_ENGINE_INTERNAL=1)
+    RESAMPER_ENGINE_INTERNAL=1
+    # The missing-translation test reads the sources and UI/translations from here.
+    RESAMPER_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
 target_link_libraries(ResamperTests PRIVATE
     resamper_ui
     juce::juce_recommended_config_flags

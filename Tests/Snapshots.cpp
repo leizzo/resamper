@@ -1,4 +1,5 @@
 #include "App/AppUpdate.h"
+#include "App/UILanguage.h"
 #include "TestFixture.h"
 #include "UI/MainWindow/AppUpdatePrompt.h"
 #include "UI/MainWindow/MainComponent.h"
@@ -7,6 +8,15 @@
 
 namespace resamper::test
 {
+
+namespace
+{
+    /** SNAPSHOT_LANG=tr renders in that UI Language; unset, English, as the tests run. */
+    void installSnapshotLanguage (const UIFileSource& files)
+    {
+        installUILanguage (files, resolveUILanguage (juce::SystemStats::getEnvironmentVariable ("SNAPSHOT_LANG", "en"), {}));
+    }
+}
 
 /** Not a test: renders the whole window offscreen to PNGs in /tmp/resamper-snapshots,
     one per view, for eyeballing against the design. Run with
@@ -20,6 +30,7 @@ struct Snapshots : juce::UnitTest
         beginTest ("Render every view");
 
         Fixture f;
+        installSnapshotLanguage (f.uiFiles);
         expect (f.theme.load().wasOk());
         juce::LookAndFeel::setDefaultLookAndFeel (&f.theme.getLookAndFeel());
 
@@ -73,6 +84,7 @@ struct Snapshots : juce::UnitTest
         }
 
         juce::LookAndFeel::setDefaultLookAndFeel (nullptr);
+        installUILanguage (f.uiFiles, "en");
     }
 };
 
@@ -109,6 +121,7 @@ struct WhatsNewSnapshot : juce::UnitTest
         };
 
         UIFileSource source;
+        installSnapshotLanguage (source);
         ThemeManager themes { source, "themes/dark.json" };
         expect (themes.load().wasOk());
         juce::LookAndFeel::setDefaultLookAndFeel (&themes.getLookAndFeel());
@@ -148,6 +161,7 @@ struct WhatsNewSnapshot : juce::UnitTest
         write ("whats-new.png");
 
         juce::LookAndFeel::setDefaultLookAndFeel (nullptr);
+        installUILanguage (source, "en");
     }
 };
 

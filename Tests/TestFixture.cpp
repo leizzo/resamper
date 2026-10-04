@@ -1,4 +1,5 @@
 #include "TestFixture.h"
+#include "App/UILanguage.h"
 
 #include <juce_audio_formats/juce_audio_formats.h>
 #include <tracktion_engine/tracktion_engine.h>
@@ -70,6 +71,8 @@ juce::File writeSineFlac (const juce::File& file, double seconds, int numChannel
 
 Fixture::Fixture()
 {
+    // Tests run in English (ADR-0015); a snapshot installs its language after this.
+    installUILanguage (uiFiles, "en");
     scratchDir().createDirectory();
 
     auto pick = [] (juce::File& chosen)

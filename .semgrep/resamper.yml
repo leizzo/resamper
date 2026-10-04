@@ -2,7 +2,24 @@
 # never need a model. Rules that need judgement live in .perch/rules/.
 # Rules use the regex and generic modes: Semgrep's C++ parser does not read
 # JUCE-style code reliably. Run with scripts/lint.sh. Silence one line with `// nosemgrep: <id> -- <reason>`.
+# A rule with `metadata: { changed-lines-only: true }` reports only lines the
+# branch changed, for a rule the existing code is still being migrated to.
 rules:
+  - id: ui-text-translated
+    languages: [regex]
+    severity: ERROR
+    message: >-
+      UI text is in the UI Language (ADR-0015): wrap the English in TRANS ("...")
+      or a template from Source/UI/Localisation.h (tr ("Track %1", n)), and add
+      its entry to UI/translations/tr.txt. Text that is never translated (a
+      plug-in's own name, a unit) carries `// nosemgrep: ui-text-translated -- <why>`.
+    metadata:
+      changed-lines-only: true
+    paths:
+      include: ["/Source/UI/**"]
+    pattern-regex: \b(setText|setButtonText|setTooltip|addItem)\s*\(\s*(?:[^,;()"]+,\s*)?(?:juce::String\s*\(\s*)?"(?!")
+
+
   - id: ui-colour-from-theme
     languages: [regex]
     severity: ERROR

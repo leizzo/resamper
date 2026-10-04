@@ -39,6 +39,12 @@ public:
     juce::String getLastLaunchedVersion() const;
     void setLastLaunchedVersion (const juce::String&);
 
+    /** The UI Language (ADR-0015): systemLanguage, the default, follows the OS;
+        otherwise a language code ("en", "tr"). The app reads it at launch. */
+    static constexpr const char* systemLanguage = "system";
+    juce::String getLanguage() const;
+    void setLanguage (const juce::String&);
+
     /** True when setFile read an existing preferences file. */
     bool hadSavedPreferences() const noexcept   { return loadedFromFile; }
 

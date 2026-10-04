@@ -7,7 +7,8 @@
 # clang-tidy looks only at the lines changed since <base-ref> (staged new files
 # included), so existing code is never re-litigated; it reads
 # build/compile_commands.json, which any configured build has. Semgrep checks
-# every file: Source/ has no matches left except marked exceptions.
+# every file: Source/ has no matches left except marked exceptions. A rule
+# still being migrated to (metadata changed-lines-only) checks changed lines only.
 #
 # There is no clang-format step: no clang-format setting reproduces the JUCE
 # lambda braces and hand-aligned lists in Source/, so it would push the wrong style.
@@ -31,7 +32,8 @@ merge_base="$(git merge-base "$base" HEAD)" || { echo "lint: unknown ref $base";
 failed=0
 
 echo "== semgrep (.semgrep/)"
-semgrep scan --config .semgrep --error --metrics=off --disable-version-check --quiet . || failed=1
+semgrep scan --config .semgrep --json --metrics=off --disable-version-check --quiet . \
+    | python3 scripts/semgrep-changed-lines.py "$merge_base" || failed=1
 
 echo "== clang-tidy (changed lines since $base)"
 if [ ! -f build/compile_commands.json ]; then
