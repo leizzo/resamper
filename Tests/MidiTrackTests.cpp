@@ -76,13 +76,13 @@ struct MidiTrackTests : juce::UnitTest
             f.invoke (cmd::trackAddMidi);
             const auto id = f.model.getTracks()[0].id;
 
-            f.invoke (cmd::trackSetVolume, { id, -6.0 });
+            f.invoke (cmd::trackSetVolume, { id, Decibels (-6.0) });
             f.invoke (cmd::trackSetPan, { id, 0.5 });
             f.invoke (cmd::trackToggleMute, { id });
             f.invoke (cmd::trackToggleSolo, { id });
 
             auto track = f.model.getTracks()[0];
-            expectWithinAbsoluteError (track.volumeDb, -6.0, 1e-3);
+            expectWithinAbsoluteError (track.volume.value, -6.0, 1e-3);
             expectWithinAbsoluteError (track.pan, 0.5, 1e-6);
             expect (track.muted && track.solo);
 
@@ -93,7 +93,7 @@ struct MidiTrackTests : juce::UnitTest
             expect (track.muted && track.solo);
 
             f.invoke (cmd::editUndo);
-            expectWithinAbsoluteError (f.model.getTracks()[0].volumeDb, 0.0, 1e-3);
+            expectWithinAbsoluteError (f.model.getTracks()[0].volume.value, 0.0, 1e-3);
 
             f.invoke (cmd::trackRemove);
             expectEquals (f.numTracks(), 0);

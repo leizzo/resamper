@@ -1,5 +1,7 @@
 #pragma once
 
+#include "EngineInternal.h"
+#ifdef RESAMPER_ENGINE_INTERNAL
 #include "ApplicationModel.h"
 
 #include <tracktion_engine/tracktion_engine.h>
@@ -48,3 +50,4 @@ int colourOf (const tracktion::Track&);
 bool isReturnTrack (const tracktion::AudioTrack&);
 
 } // namespace resamper
+#endif

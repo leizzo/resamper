@@ -1,5 +1,7 @@
 #pragma once
 
+#include "EngineInternal.h"
+#ifdef RESAMPER_ENGINE_INTERNAL
 #include "PluginHosting.h"
 
 #include <tracktion_engine/tracktion_engine.h>
@@ -35,3 +37,4 @@ namespace render
 }
 
 } // namespace resamper
+#endif

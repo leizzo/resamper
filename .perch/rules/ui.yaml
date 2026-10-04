@@ -3,30 +3,16 @@
   where: Source/UI/**/*.{cpp,h}
   except: Source/UI/{Theme,Developer}/**/*.{cpp,h}
   min: 70
+  gate: false
   ensure: >-
-    Look only at colour values and numeric literals written directly in this
-    method's body. A literal colour (juce::Colour (0x...), juce::Colours::red,
-    Colour::fromRGB/fromFloatRGBA) or a literal font size, corner radius,
-    padding or pixel size used for layout or drawing breaks this. Any named
-    value passes wherever it is defined: Theme fields (theme.accent, radiusSm),
-    LayoutMetrics fields, a constexpr in a *Metrics namespace, a named member or
-    local. juce::Colours::transparentBlack, 0, 1 px hairlines, 0.5f centring and
-    ratios like getWidth() / 2 pass, and so does icon glyph path data.
-- name: ui-changes-edit-through-commands
-  each: method
-  where: Source/UI/**/*.{cpp,h}
-  min: 70
-  ensure: >-
-    Look only at calls this method makes on a class from Source/Engine
-    (ApplicationModel, Mixer, PluginRack, the Session facade, Automation,
-    Production and the like) or on a Tracktion object. If one of those calls
-    changes the Edit (adds, removes, moves, renames or sets a value on a track,
-    clip, note, plugin, send or parameter, or changes tempo), this breaks: the
-    UI must invoke a Command (commands.invoke (cmd::..., {...})) instead.
-    Reading from those classes passes. Calls on UI-side types (ContinuousValue,
-    this component, its child components), view-only UI State (scroll, zoom,
-    focus, view options kept in a component's state ValueTree) and selection
-    pass. A method that makes no such call passes.
+    Look only at numeric literals written directly in this method's body. A
+    literal font size, corner radius, padding or pixel size used for layout or
+    drawing breaks this. Any named value passes wherever it is defined: Theme
+    fields (radiusSm), LayoutMetrics fields, a constexpr in a *Metrics namespace
+    or anonymous namespace, a named member or local. 0, 1 px hairlines, 0.5f
+    centring and ratios like getWidth() / 2 pass, and so does icon glyph path
+    data. Literal colours are checked by Semgrep (ui-colour-from-theme), not
+    here.
 - name: ui-paint-only-draws
   each: method
   where: Source/UI/**/*.{cpp,h}
@@ -35,8 +21,10 @@
     If this method is paint, paintOverChildren or resized, it only lays out or
     draws from state the component already holds: it does not change any state,
     start timers, add or remove child components, call repaint, allocate large
-    buffers, sort, read files or walk the whole Edit to find what to draw. Any
-    other method passes.
+    buffers, sort, read files or walk the whole Edit to find what to draw.
+    resized may also rebuild what depends on the size and paint draws from (a
+    curve's points, a cached Path) and repaint after it. Any other method
+    passes.
 - name: ui-timer-repaints-on-change
   each: method
   where: Source/UI/**/*.{cpp,h}

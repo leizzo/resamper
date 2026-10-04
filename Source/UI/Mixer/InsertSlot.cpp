@@ -14,7 +14,7 @@ namespace
     const TypeStyle nameStyle { 10.0f, false, 400 }, formatStyle { 7.0f, true, 400 };
 }
 
-InsertSlot::InsertSlot (ThemeManager& tm, PluginHosting& h, int i) : themeManager (tm), hosting (h), index (i)
+InsertSlot::InsertSlot (ThemeManager& tm, const PluginHosting& h, int i) : themeManager (tm), hosting (h), index (i)
 {
     setRepaintsOnMouseActivity (true);
     setTitle ("Insert " + juce::String (i + 1));

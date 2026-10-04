@@ -114,7 +114,7 @@ struct IconTests : juce::UnitTest
 
         beginTest ("Sizes by role come from Layout Metrics: 10 chips, 12 controls, 14 sections, 16 transport / toolbar");
         {
-            LayoutSource source;
+            UIFileSource source;
             ThemeManager themes { source, "themes/dark.json" };
             expect (themes.load().wasOk());
             auto& m = themes.getMetrics();
@@ -126,7 +126,7 @@ struct IconTests : juce::UnitTest
 
         beginTest ("Colours by role are Theme tokens");
         {
-            LayoutSource source;
+            UIFileSource source;
             ThemeManager themes { source, "themes/dark.json" };
             expect (themes.load().wasOk());
             auto& t = themes.getTheme();

@@ -14,7 +14,7 @@ namespace
     const char* const flowStages[] = { "Track chain", "Inserts", "Sends", "Fader" };
 }
 
-MixerView::MixerView (ApplicationModel& m, Mixer& mx, PluginRack& p, PluginHosting& h, CommandRegistry& c, ThemeManager& tm,
+MixerView::MixerView (const ApplicationModel& m, const Mixer& mx, const PluginRack& p, const PluginHosting& h, CommandRegistry& c, ThemeManager& tm,
                       juce::ValueTree uiState)
     : model (m), mixer (mx), plugins (p), hosting (h), commands (c), themeManager (tm), state (std::move (uiState)),
       meterMode (tm, { "Peak", "RMS", "LUFS" }, Segmented::Style::sunken),

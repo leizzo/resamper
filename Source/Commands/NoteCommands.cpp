@@ -51,6 +51,8 @@ void registerNoteCommands (CommandRegistry& registry, ApplicationModel& model)
             model.moveNotes (a.clipId, selected, 0.0, a.semitones);
     });
 
+    registry.add (cmd::noteSelect, { "Select Notes" }, [&model] (const NoteSelectArgs& a) { model.selectNotes (a.noteIds); });
+
     // Mod+A in the Piano Roll.
     registry.add (cmd::noteSelectAll, { "Select All Notes" }, [&model] (const ClipArgs& a)
     {

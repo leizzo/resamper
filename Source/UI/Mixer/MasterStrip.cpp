@@ -17,16 +17,16 @@ MasterStrip::MasterStrip (CommandRegistry& c, ThemeManager& tm)
     : commands (c), themeManager (tm), faderSection (tm, faderGeometry)
 {
     setTitle ("Master");
-    faderSection.onVolumeChange = [this] (double db, bool continues)
+    faderSection.onVolumeChange = [this] (Decibels volume, bool continues)
     {
-        commands.invoke (cmd::mixerSetMasterVolume, { db, continues });
+        commands.invoke (cmd::mixerSetMasterVolume, { volume, continues });
     };
     addAndMakeVisible (faderSection);
 }
 
 void MasterStrip::setMaster (const MasterInfo& info)
 {
-    faderSection.setVolume (info.volumeDb, themeManager.getTheme().accent);
+    faderSection.setVolume (info.volume, themeManager.getTheme().accent);
 }
 
 void MasterStrip::paint (juce::Graphics& g)

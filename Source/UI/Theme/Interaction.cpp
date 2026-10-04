@@ -75,7 +75,7 @@ namespace
                 if (target != nullptr)
                     target->setTopLeftPosition (home);
 
-                delete this;
+                delete this;   // nosemgrep: no-explicit-delete -- a fire-and-forget timer that owns itself
                 return;
             }
 

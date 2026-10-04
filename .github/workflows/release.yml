@@ -77,7 +77,7 @@ jobs:
 
       - name: Fetch dependencies
         run: |
-          git submodule update --init external/gin external/tracktion_engine
+          git submodule update --init external/gin external/melatonin_inspector external/tracktion_engine
           git -C external/tracktion_engine config submodule.modules/juce.url https://github.com/juce-framework/JUCE.git
           git -C external/tracktion_engine submodule update --init modules/juce
           brew install ninja

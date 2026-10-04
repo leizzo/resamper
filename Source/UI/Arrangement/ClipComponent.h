@@ -14,7 +14,7 @@ class ThemeManager;
 class ClipComponent : public juce::Component
 {
 public:
-    ClipComponent (ApplicationModel&, ThemeManager&, const ClipInfo&);
+    ClipComponent (const ApplicationModel&, ThemeManager&, const ClipInfo&);
 
     const ClipInfo& getClip() const noexcept   { return clip; }
     void setClip (const ClipInfo&);
@@ -29,7 +29,7 @@ public:
     void paint (juce::Graphics&) override;
 
 private:
-    ApplicationModel& model;
+    const ApplicationModel& model;
     ThemeManager& themeManager;
     ClipInfo clip;
     juce::Colour colour;

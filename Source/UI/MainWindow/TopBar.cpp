@@ -57,7 +57,7 @@ namespace
     }
 }
 
-TopBar::TopBar (ApplicationModel& m, CommandRegistry& c, ThemeManager& tm, ShellState& s)
+TopBar::TopBar (const ApplicationModel& m, CommandRegistry& c, ThemeManager& tm, ShellState& s)
     : model (m), commands (c), themeManager (tm), shell (s),
       tempo (tm, tempoSpec()),
       signature (tm, "4 / 4"),

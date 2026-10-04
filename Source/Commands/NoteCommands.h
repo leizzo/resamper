@@ -7,6 +7,12 @@
 namespace resamper
 {
 
+/** The notes to select in the open MIDI clip; empty selects none. */
+struct NoteSelectArgs
+{
+    juce::StringArray noteIds;
+};
+
 /** A new note. Times are seconds from the clip's start. */
 struct NoteAddArgs
 {
@@ -65,6 +71,7 @@ namespace cmd
     inline constexpr CommandRef<NoteQuantizeArgs> noteQuantize { "note.quantize" };
     inline constexpr CommandRef<NoteTransposeArgs> noteTransposeSelected { "note.transposeSelected" };
     inline constexpr CommandRef<ClipArgs> noteSelectAll { "note.selectAll" };          ///< never undoable
+    inline constexpr CommandRef<NoteSelectArgs> noteSelect { "note.select" };          ///< never undoable
 }
 
 /** Registers the note Commands above. */

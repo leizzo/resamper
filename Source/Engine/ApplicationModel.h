@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ClipWaveform.h"
+#include "Decibels.h"
 
 #include <juce_gui_basics/juce_gui_basics.h>
 #include <memory>
@@ -56,7 +57,7 @@ struct TrackInfo
     TrackKind kind = TrackKind::audio;
     bool selected = false;
     int colourIndex = 0;   ///< into the track palette (clip-drums .. clip-fx)
-    double volumeDb = 0;   ///< ApplicationModel::minVolumeDb is silence
+    Decibels volume;       ///< ApplicationModel::minVolume is silence
     double pan = 0;        ///< -1 (left) to 1 (right)
     bool muted = false;
     bool solo = false;
@@ -147,13 +148,13 @@ public:
         Returns false if there is no track to remove. */
     bool removeTrack();
 
-    /** Sets a track's volume, clamped to [minVolumeDb, maxVolumeDb]. The fader,
+    /** Sets a track's volume, clamped to [minVolume, maxVolume]. The fader,
         pan, mute and solo setters take a Bus's id as well as an audio track's.
 
         With continuesGesture, the change joins the undo step of the previous call
         if that was a volume change on the same track with nothing undoable in
         between — so a whole fader drag is one undo step. Otherwise it starts one. */
-    bool setTrackVolume (const juce::String& trackId, double db, bool continuesGesture = false);
+    bool setTrackVolume (const juce::String& trackId, Decibels volume, bool continuesGesture = false);
 
     /** Sets a track's pan, clamped to [-1, 1]; continuesGesture as for setTrackVolume. */
     bool setTrackPan (const juce::String& trackId, double pan, bool continuesGesture = false);
@@ -196,8 +197,8 @@ public:
         plays what comes in through its instrument. */
     bool setTrackArmed (const juce::String& trackId, bool armed);
 
-    /** The engine's fader range; minVolumeDb is silence. */
-    static constexpr double minVolumeDb = -100.0, maxVolumeDb = 6.0;
+    /** The engine's fader range; minVolume is silence. */
+    static constexpr Decibels minVolume { -100.0 }, maxVolume { 6.0 };
 
     /** MIDI velocity written by note.add when a gesture doesn't choose one. */
     static constexpr int defaultNoteVelocity = 100;
@@ -419,8 +420,8 @@ public:
         Returns nullptr if the track isn't recording. */
     std::unique_ptr<ClipWaveform> createRecordingWaveform (const juce::String& trackId) const;
 
-    void addListener (Listener*);
-    void removeListener (Listener*);
+    void addListener (Listener*) const;
+    void removeListener (Listener*) const;
 
 private:
     struct Impl;

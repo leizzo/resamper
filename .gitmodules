@@ -4,3 +4,6 @@
 [submodule "external/gin"]
 	path = external/gin
 	url = https://github.com/FigBug/Gin.git
+[submodule "external/melatonin_inspector"]
+	path = external/melatonin_inspector
+	url = https://github.com/sudara/melatonin_inspector.git

@@ -4,7 +4,7 @@
 
 - C++20 (`CMAKE_CXX_STANDARD 20`, extensions off), CMake ≥ 3.22, Ninja.
 - macOS: Apple Clang from the Xcode command-line tools; deployment target 10.15.
-- Dependencies are pinned git submodules under `external/` (JUCE, Tracktion Engine, GIN). Never edit them; see README "For developers" for the init commands.
+- Dependencies are pinned git submodules under `external/` (JUCE, Tracktion Engine, GIN, melatonin_inspector). Never edit them; see README "For developers" for the init commands.
 
 ### Build
 
@@ -29,17 +29,39 @@ Tests are headless `juce::UnitTest` suites in category `"Resamper"`, built on `T
 
 Only `resamper_engine` (`Source/Engine/`) sees Tracktion headers. `Source/UI`, `Source/Commands` and `Source/App` are compiled without Tracktion on the include path, so including one there is a compile error — add a facade method in `Source/Engine` instead. Tests may include Tracktion.
 
-JUCE and GIN modules are INTERFACE targets that compile their sources into every target that links them, so only `resamper_engine` links them — each module is built once. Other targets get the headers through `resamper_use_engine_without_tracktion`; never add a `juce::juce_*` or `gin*` module to their `target_link_libraries`. GIN has no Tracktion dependency, so `Source/UI` may include `<gin/...>` directly. Register only the GIN modules the code uses: a new one goes in both `juce_add_module(...)` and `resamper_engine`'s link list. GIN must build against the JUCE that Tracktion pins; recheck that whenever either submodule moves.
+`Source/UI` holds the Engine classes (`ApplicationModel`, `Mixer`, `PluginRack`, `PluginHosting`, `NativeDevices`) by `const&`, so a UI call that changes the Edit — selection included — is a compile error: invoke a Command (`commands.invoke (cmd::..., {...})`) instead, adding one in `Source/Commands` if none fits. `MainComponent` keeps those same const references, not the whole `ResamperApp`, so the window cannot reach `ProjectManager` or a non-const facade either. On those classes `const` means "leaves the Edit alone", not "changes no bits": listeners, meter and analyser reads, the meter mode, plug-in editors and touch watchers are `const`. Keep that true when marking an Engine method `const` (perch `engine-const-leaves-edit-alone`).
+
+A header that includes `EngineInternal.h` is engine-private. UI, Commands and the app fail at that include: use the facade the area already has. The EQ graph's band types and Q-width ratio are `EqBand.h`; the filter design stays in `NativeDeviceDsp.h`. A facade header forward-declares `ProjectManager` (as `Mixer` and `PluginRack` do) so it does not hand out `getEdit()`.
+
+JUCE, GIN and melatonin_inspector modules are INTERFACE targets that compile their sources into every target that links them, so only `resamper_engine` links them — each module is built once. Other targets get the headers through `resamper_use_engine_without_tracktion`; never add a `juce::juce_*`, `gin*` or `melatonin_inspector` module to their `target_link_libraries`. GIN and melatonin_inspector have no Tracktion dependency, so `Source/UI` may include `<gin/...>` and `<melatonin_inspector/...>` directly. Register only the GIN modules the code uses: a new one goes in both `juce_add_module(...)` and `resamper_engine`'s link list. GIN must build against the JUCE that Tracktion pins; recheck that whenever either submodule moves.
+
+### Reuse before building
+
+Before writing an infrastructure piece (a widget, a watcher, a modulation source, a scanner, a host), search Tracktion Engine, JUCE and GIN for an equivalent, then read the ADRs in `docs/adr/` that touch the area. Build on what exists; write new code only for what none of them covers. The PR description names what was searched and why the existing piece was used or passed over. `docs/analysis/gin-and-ready-made-solutions.md` maps what each dependency already offers.
 
 ### Style
 
-There is no `.clang-format` or `.clang-tidy` in the repo; match the surrounding code, which follows JUCE style:
+There is no `.clang-format`: no clang-format setting reproduces the JUCE lambda braces and hand-aligned lists below, so match the surrounding code, which follows JUCE style:
 
 - 4-space indent, Allman braces, space before the parenthesis of calls and declarations: `foo (a, b)`, `if (! x)`.
 - `namespace resamper`; file-local helpers in an anonymous namespace; `namespace te = tracktion;` in `.cpp` files.
 - camelCase functions and variables, PascalCase types, no member prefixes; `juce::String` / `juce::Result` at API boundaries.
+- A level that crosses the Engine, Commands or UI boundary is a `Decibels` (`Source/Engine/Decibels.h`), never a bare `double`; DSP code reads `.value` where it does the maths.
 - `/** ... */` doc comments on public types and methods; `#pragma once` in headers.
 - Warnings come from `juce::juce_recommended_warning_flags`; keep builds warning-free.
+
+### Deterministic lint
+
+```sh
+scripts/lint.sh               # lines changed since origin/main; run before perch
+```
+
+It needs `brew install llvm` and `uv tool install semgrep`, and a configured `build/` (for `compile_commands.json`). CI runs it on every pull request.
+
+- **Semgrep** (`.semgrep/resamper.yml`) fails on literal colours in `Source/UI` (use a Theme entry), literal sample rates, a deferred callback (`callAsync`, `callAfterDelay`) capturing `this`, `&` or `=`, and explicit `delete`. A justified exception carries its reason on the line: `// nosemgrep: <rule-id> -- <why>`.
+- **clang-tidy** (`.clang-tidy`) fails on bugprone and performance findings in the lines you changed; stage a new file (`git add`) so it is checked.
+
+A rule a pattern can decide belongs here, not in perch: it is exact, free and needs no model. perch keeps the rules that need judgement.
 
 ### Semantic lint (perch)
 
@@ -54,7 +76,7 @@ perch close <issue-id> --reason "..."              # set aside a false positive,
 
 `check` and `scan` exit 3 while something is still wrong. Results live in `.perch/`; only `closed.jsonl` and `rules/` there are committed. Custom rules go in `perch.yaml` or `.perch/rules/*.yaml` (`perch rules add ...`).
 
-When the user asks to open a pull request, run the unfiltered `ResamperTests` before creating it. On `N FAILURE(S)`, explain each failed test from the log and stop. On `ALL TESTS PASSED`, continue in this order: `perch scan --since origin/main` exits 0 (fix or `close` every finding) → run the `code-review` skill against `main` → attach test evidence. perch covers method-level defects, code-review covers repo standards and the spec; neither replaces the other, and perch goes first so the review sees final code. Evidence is a screenshot when one frame shows the result, a video when the result is motion or a sequence, or one sentence when the change never draws. See `docs/agents/pr-evidence.md`.
+When the user asks to open a pull request, run the unfiltered `ResamperTests` before creating it. On `N FAILURE(S)`, explain each failed test from the log and stop. On `ALL TESTS PASSED`, continue in this order: `scripts/lint.sh` exits 0 → `perch scan --since origin/main` exits 0 (fix or `close` every finding) → run the `code-review` skill against `main` → attach test evidence. perch covers method-level defects, code-review covers repo standards and the spec; neither replaces the other, and perch goes first so the review sees final code. Evidence is a screenshot when one frame shows the result, a video when the result is motion or a sequence, or one sentence when the change never draws. See `docs/agents/pr-evidence.md`.
 
 ## Agent skills
 

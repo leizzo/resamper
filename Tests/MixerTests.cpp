@@ -93,20 +93,20 @@ struct MixerTests : juce::UnitTest
             expectEquals ((int) f.mixer.getSends (f.sourceId).size(), 1);
             expectEquals (f.mixer.getSends (f.sourceId)[0].bus, 0);
 
-            f.invoke (cmd::mixerSetSendGain, { f.sourceId, f.sendId, -12.0 });
-            expectWithinAbsoluteError (f.mixer.getSends (f.sourceId)[0].gainDb, -12.0, 1.0e-2);
+            f.invoke (cmd::mixerSetSendGain, { f.sourceId, f.sendId, Decibels (-12.0) });
+            expectWithinAbsoluteError (f.mixer.getSends (f.sourceId)[0].gain.value, -12.0, 1.0e-2);
 
             f.invoke (cmd::editUndo);
-            expectWithinAbsoluteError (f.mixer.getSends (f.sourceId)[0].gainDb, 0.0, 1.0e-2);
+            expectWithinAbsoluteError (f.mixer.getSends (f.sourceId)[0].gain.value, 0.0, 1.0e-2);
             expectEquals ((int) f.mixer.getSends (f.sourceId).size(), 1);
 
-            f.invoke (cmd::mixerSetSendGain, { f.sourceId, f.sendId, -1.0 });
-            f.invoke (cmd::mixerSetSendGain, { f.sourceId, f.sendId, -3.0, true });
-            f.invoke (cmd::mixerSetSendGain, { f.sourceId, f.sendId, -9.0, true });
-            expectWithinAbsoluteError (f.mixer.getSends (f.sourceId)[0].gainDb, -9.0, 1.0e-2);
+            f.invoke (cmd::mixerSetSendGain, { f.sourceId, f.sendId, Decibels (-1.0) });
+            f.invoke (cmd::mixerSetSendGain, { f.sourceId, f.sendId, Decibels (-3.0), true });
+            f.invoke (cmd::mixerSetSendGain, { f.sourceId, f.sendId, Decibels (-9.0), true });
+            expectWithinAbsoluteError (f.mixer.getSends (f.sourceId)[0].gain.value, -9.0, 1.0e-2);
 
             f.invoke (cmd::editUndo);
-            expectWithinAbsoluteError (f.mixer.getSends (f.sourceId)[0].gainDb, 0.0, 1.0e-2);
+            expectWithinAbsoluteError (f.mixer.getSends (f.sourceId)[0].gain.value, 0.0, 1.0e-2);
             expectEquals ((int) f.mixer.getSends (f.sourceId).size(), 1);
         }
 
@@ -226,17 +226,17 @@ struct MixerTests : juce::UnitTest
         beginTest ("A Strip carries its fader, sends and inserts, and follows undo");
         {
             SendFixture f;
-            f.invoke (cmd::trackSetVolume, { f.sourceId, -6.0, false });
+            f.invoke (cmd::trackSetVolume, { f.sourceId, Decibels (-6.0), false });
 
             const auto strip = f.strip (f.sourceId);
             expectEquals (strip.id, f.sourceId);
-            expectWithinAbsoluteError (strip.volumeDb, -6.0, 1.0e-2);
+            expectWithinAbsoluteError (strip.volume.value, -6.0, 1.0e-2);
             expectEquals ((int) strip.sends.size(), 1);
             expectEquals (strip.sends[0].id, f.sendId);
             expect (strip.inserts.empty());
 
             f.invoke (cmd::editUndo);
-            expectWithinAbsoluteError (f.strip (f.sourceId).volumeDb, 0.0, 1.0e-2);
+            expectWithinAbsoluteError (f.strip (f.sourceId).volume.value, 0.0, 1.0e-2);
         }
 
         beginTest ("The track fader, pan, mute and solo Commands work on a Bus; the fader is one undo step and re-syncs");
@@ -245,14 +245,14 @@ struct MixerTests : juce::UnitTest
             f.invoke (cmd::mixerAddBus, { "Drums" });
             const auto bus = f.busId ("Drums");
 
-            f.invoke (cmd::trackSetVolume, { bus, -6.0, false });
-            f.invoke (cmd::trackSetVolume, { bus, -9.0, true });
+            f.invoke (cmd::trackSetVolume, { bus, Decibels (-6.0), false });
+            f.invoke (cmd::trackSetVolume, { bus, Decibels (-9.0), true });
             f.invoke (cmd::trackSetPan, { bus, 0.5, false });
             f.invoke (cmd::trackToggleMute, { bus });
             f.invoke (cmd::trackToggleSolo, { bus });
 
             auto strip = f.strip (bus);
-            expectWithinAbsoluteError (strip.volumeDb, -9.0, 1.0e-2);
+            expectWithinAbsoluteError (strip.volume.value, -9.0, 1.0e-2);
             expectWithinAbsoluteError (strip.pan, 0.5, 1.0e-3);
             expect (strip.muted);
             expect (strip.solo);
@@ -260,7 +260,7 @@ struct MixerTests : juce::UnitTest
             f.invoke (cmd::editUndo);   // the pan
             f.invoke (cmd::editUndo);   // the whole fader drag
             strip = f.strip (bus);
-            expectWithinAbsoluteError (strip.volumeDb, 0.0, 1.0e-2);
+            expectWithinAbsoluteError (strip.volume.value, 0.0, 1.0e-2);
             expectWithinAbsoluteError (strip.pan, 0.0, 1.0e-3);
             expect (strip.muted);   // mute and solo are never undo steps
 
@@ -295,7 +295,7 @@ struct MixerTests : juce::UnitTest
             expectEquals ((int) strip.sends.size(), 1);
             expectEquals (strip.colourIndex, 4);   // its first child's
             expectEquals (strip.childCount, 2);
-            expectWithinAbsoluteError (f.mixer.getTrackLevel (bus).left, (float) ApplicationModel::minVolumeDb, 1.0e-3f);
+            expectWithinAbsoluteError (f.mixer.getTrackLevel (bus).left, (float) ApplicationModel::minVolume.value, 1.0e-3f);
 
             // The Send sits before the Bus fader, so the fader doesn't move it.
             auto* folder = tracktion::findTrackForID (f.projects.getEdit(), tracktion::EditItemID::fromString (bus));
@@ -316,21 +316,21 @@ struct MixerTests : juce::UnitTest
             MixerFixture f;
             f.invoke (cmd::trackAdd);
             const auto trackId = f.model.getTracks()[0].id;
-            expectWithinAbsoluteError (f.model.getTracks()[0].volumeDb, 0.0, 1.0e-3);
+            expectWithinAbsoluteError (f.model.getTracks()[0].volume.value, 0.0, 1.0e-3);
 
             // The engine's Edit starts the master fader at -3 dB, not 0.
-            const auto initialMaster = f.mixer.getMaster().volumeDb;
+            const auto initialMaster = f.mixer.getMaster().volume.value;
 
-            f.invoke (cmd::mixerSetMasterVolume, { -6.0 });
-            f.invoke (cmd::mixerSetMasterVolume, { -9.0, true });
-            f.invoke (cmd::mixerSetMasterVolume, { -12.0, true });
+            f.invoke (cmd::mixerSetMasterVolume, { Decibels (-6.0) });
+            f.invoke (cmd::mixerSetMasterVolume, { Decibels (-9.0), true });
+            f.invoke (cmd::mixerSetMasterVolume, { Decibels (-12.0), true });
 
-            expectWithinAbsoluteError (f.mixer.getMaster().volumeDb, -12.0, 1.0e-2);
-            expectWithinAbsoluteError (f.model.getTracks()[0].volumeDb, 0.0, 1.0e-3);
+            expectWithinAbsoluteError (f.mixer.getMaster().volume.value, -12.0, 1.0e-2);
+            expectWithinAbsoluteError (f.model.getTracks()[0].volume.value, 0.0, 1.0e-3);
 
             f.invoke (cmd::editUndo);
-            expectWithinAbsoluteError (f.mixer.getMaster().volumeDb, initialMaster, 1.0e-2);
-            expectWithinAbsoluteError (f.model.getTracks()[0].volumeDb, 0.0, 1.0e-3);
+            expectWithinAbsoluteError (f.mixer.getMaster().volume.value, initialMaster, 1.0e-2);
+            expectWithinAbsoluteError (f.model.getTracks()[0].volume.value, 0.0, 1.0e-3);
             expectEquals (f.model.getTracks()[0].id, trackId);
         }
 
@@ -372,9 +372,9 @@ struct MixerTests : juce::UnitTest
             MixerFixture f;
             f.invoke (cmd::trackAdd);
             const auto level = f.mixer.getTrackLevel (f.model.getTracks()[0].id);
-            expectWithinAbsoluteError ((double) level.left, ApplicationModel::minVolumeDb, 1.0e-3);
-            expectWithinAbsoluteError ((double) level.right, ApplicationModel::minVolumeDb, 1.0e-3);
-            expectWithinAbsoluteError ((double) f.mixer.getMasterLevel().left, ApplicationModel::minVolumeDb, 1.0e-3);
+            expectWithinAbsoluteError ((double) level.left, ApplicationModel::minVolume.value, 1.0e-3);
+            expectWithinAbsoluteError ((double) level.right, ApplicationModel::minVolume.value, 1.0e-3);
+            expectWithinAbsoluteError ((double) f.mixer.getMasterLevel().left, ApplicationModel::minVolume.value, 1.0e-3);
         }
 
         beginTest ("Send mute is one undo step, because the engine records the gain");
@@ -385,7 +385,7 @@ struct MixerTests : juce::UnitTest
 
             f.invoke (cmd::editUndo);
             expect (! f.mixer.getSends (f.sourceId)[0].muted);
-            expectWithinAbsoluteError (f.mixer.getSends (f.sourceId)[0].gainDb, 0.0, 1.0e-2);
+            expectWithinAbsoluteError (f.mixer.getSends (f.sourceId)[0].gain.value, 0.0, 1.0e-2);
             expectEquals ((int) f.mixer.getSends (f.sourceId).size(), 1);
         }
     }

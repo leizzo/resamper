@@ -7,6 +7,7 @@ namespace resamper
 {
 
 class ArrangementViewState;
+class CommandRegistry;
 
 /** The piano roll's keyboard: one row per MIDI pitch, black keys inset,
     scrolling with the note grid. A click clears the note selection, so Quantize
@@ -14,13 +15,13 @@ class ArrangementViewState;
 class PianoKeyboard : public juce::Component
 {
 public:
-    PianoKeyboard (ApplicationModel&, ThemeManager&, ArrangementViewState&);
+    PianoKeyboard (CommandRegistry&, ThemeManager&, ArrangementViewState&);
 
     void paint (juce::Graphics&) override;
     void mouseDown (const juce::MouseEvent&) override;
 
 private:
-    ApplicationModel& model;
+    CommandRegistry& commands;
     ThemeManager& themeManager;
     ArrangementViewState& view;
 };

@@ -12,6 +12,24 @@
     change to the Edit breaks this. Building a detached ValueTree that is added
     to the Edit afterwards with the UndoManager passes, and so does a method
     that changes nothing in the Edit.
+- name: engine-const-leaves-edit-alone
+  each: method
+  where: Source/Engine/**/*.{cpp,h}
+  min: 70
+  ensure: >-
+    If this is a const member function of an Engine class, it does not change
+    the Edit: it does not add, remove, move or rename a track, clip, note,
+    plugin, send or automation point, set a parameter or property on one, change
+    tempo or the selection. Calling a non-const method of another Engine object
+    it holds (model, rack, mixer, projects' model) breaks it too, unless that
+    method only reads: its name says it sets, adds, removes, moves, pins,
+    selects or renames something. The UI
+    holds these classes by const reference, so a const method that changes the
+    Edit lets the UI bypass Commands. A plug-in's live measurements are not
+    part of the Edit: draining a meter, analyser or detector the audio thread
+    fills (take(), update(), a LevelMeasurer client, setMode on a measurer)
+    passes, and so do registering a listener, opening a plug-in's editor and
+    watching parameter touches. A method that is not const passes.
 - name: tracktion-lookups-checked
   each: method
   where: Source/Engine/**/*.{cpp,h}
@@ -22,5 +40,7 @@
     EditItemID parsed from a string — is checked before it is dereferenced, and
     the not-found case returns a juce::Result, nullptr or std::nullopt the
     caller can see. Dereferencing one unchecked, or turning not-found into a
-    silent success, breaks this.
+    silent success, breaks this. An index into a list this code built from the
+    same plug-in list, and a method with no Tracktion lookup (POSIX, JUCE or
+    std calls only), pass.
   min: 70

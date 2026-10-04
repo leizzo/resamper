@@ -218,7 +218,7 @@ FaderSection::FaderSection (ThemeManager& tm, Geometry g)
 {
     setInterceptsMouseClicks (false, true);
 
-    auto changeVolume = [this] (double db, bool continues) { if (onVolumeChange) onVolumeChange (db, continues); };
+    auto changeVolume = [this] (double db, bool continues) { if (onVolumeChange) onVolumeChange (Decibels (db), continues); };
     fader.onChange = changeVolume;
     gain.onChange = changeVolume;
     gain.setTitle ("Gain");
@@ -232,11 +232,11 @@ FaderSection::FaderSection (ThemeManager& tm, Geometry g)
         addAndMakeVisible (child);
 }
 
-void FaderSection::setVolume (double db, juce::Colour colour)
+void FaderSection::setVolume (Decibels volume, juce::Colour colour)
 {
-    fader.setValue (db);
+    fader.setValue (volume.value);
     fader.setColour (colour);
-    gain.setValue (db);
+    gain.setValue (volume.value);
 }
 
 void FaderSection::setLevel (StereoLevel level, double elapsedSeconds)

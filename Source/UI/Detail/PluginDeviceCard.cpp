@@ -132,7 +132,7 @@ private:
 };
 
 //==============================================================================
-PluginDeviceCard::PluginDeviceCard (CommandRegistry& c, PluginRack& r, PluginHosting& h, ThemeManager& tm,
+PluginDeviceCard::PluginDeviceCard (CommandRegistry& c, const PluginRack& r, const PluginHosting& h, ThemeManager& tm,
                                     const juce::String& track, const PluginInfo& info)
     : DeviceCard (c, r, tm, track, info),
       hosting (h),

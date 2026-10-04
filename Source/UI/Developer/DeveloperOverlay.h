@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Inspector.h"
+#include "UI/Theme/ThemeManager.h"
 
 namespace resamper
 {
@@ -15,7 +15,6 @@ public:
     ~DeveloperOverlay() override;
 
     void setStatusText (const juce::String&);
-    Inspector& getInspector() noexcept   { return inspector; }
 
     void paint (juce::Graphics&) override;
     void resized() override;
@@ -23,7 +22,6 @@ public:
 private:
     ThemeManager& themes;
     juce::Label status;
-    Inspector inspector;
 
     void themeChanged() override;
     void applyTheme();

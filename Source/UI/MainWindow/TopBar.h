@@ -19,7 +19,7 @@ class TopBar : public juce::Component,
                private juce::ValueTree::Listener
 {
 public:
-    TopBar (ApplicationModel&, CommandRegistry&, ThemeManager&, ShellState&);
+    TopBar (const ApplicationModel&, CommandRegistry&, ThemeManager&, ShellState&);
     ~TopBar() override;
 
     /** A menu title was clicked; show that menu under area (screen coordinates). */
@@ -30,7 +30,7 @@ public:
     void mouseDown (const juce::MouseEvent&) override;
 
 private:
-    ApplicationModel& model;
+    const ApplicationModel& model;
     CommandRegistry& commands;
     ThemeManager& themeManager;
     ShellState& shell;

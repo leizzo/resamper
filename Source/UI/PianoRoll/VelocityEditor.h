@@ -17,7 +17,7 @@ class ThemeManager;
 class VelocityEditor : public juce::Component
 {
 public:
-    VelocityEditor (ApplicationModel&, CommandRegistry&, ThemeManager&, ArrangementViewState&);
+    VelocityEditor (const ApplicationModel&, CommandRegistry&, ThemeManager&, ArrangementViewState&);
 
     void setClip (const ClipInfo&);
 
@@ -27,7 +27,7 @@ public:
     void mouseUp (const juce::MouseEvent&) override;
 
 private:
-    ApplicationModel& model;
+    const ApplicationModel& model;
     CommandRegistry& commands;
     ThemeManager& themeManager;
     ArrangementViewState& view;

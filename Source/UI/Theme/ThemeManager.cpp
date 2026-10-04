@@ -1,5 +1,5 @@
 #include "ThemeManager.h"
-#include "UI/Layout/LayoutSource.h"
+#include "UI/Theme/UIFileSource.h"
 
 namespace resamper
 {
@@ -281,7 +281,7 @@ struct ThemeManager::Fonts
         { true, 600, "fonts/IBMPlexMono-SemiBold.ttf", {} },
     };
 
-    juce::Result load (const LayoutSource& files)
+    juce::Result load (const UIFileSource& files)
     {
         for (auto& face : faces)
         {
@@ -316,7 +316,7 @@ struct ThemeManager::Fonts
     }
 };
 
-ThemeManager::ThemeManager (const LayoutSource& s, juce::String file)
+ThemeManager::ThemeManager (const UIFileSource& s, juce::String file)
     : source (s), themeFile (std::move (file)),
       fonts (std::make_unique<Fonts>()),
       lookAndFeel (std::make_unique<ResamperLookAndFeel> (*this))
@@ -383,6 +383,7 @@ juce::Result ThemeManager::parse (const juce::String& text, Theme& t, LayoutMetr
         { "mute", &Theme::mute }, { "solo", &Theme::solo }, { "armed", &Theme::armed },
         { "recording", &Theme::recording }, { "loop", &Theme::loop },
         { "clip", &Theme::clip }, { "clipSelected", &Theme::clipSelected }, { "clipText", &Theme::clipText }, { "waveform", &Theme::waveform },
+        { "clipOutlineSelected", &Theme::clipOutlineSelected },
         { "midiClip", &Theme::midiClip }, { "midiClipSelected", &Theme::midiClipSelected }, { "midiNote", &Theme::midiNote },
         { "pianoWhite", &Theme::pianoWhite }, { "pianoBlack", &Theme::pianoBlack },
         { "noteSelected", &Theme::noteSelected }, { "gridLine", &Theme::gridLine }, { "velocity", &Theme::velocity },

@@ -64,12 +64,12 @@ struct EngineUndoTests : juce::UnitTest
         beginTest ("A track volume drag never joins a plug-in step made during it");
         {
             UndoFixture f;
-            f.invoke (cmd::trackSetVolume, { f.trackId, -3.0 });
+            f.invoke (cmd::trackSetVolume, { f.trackId, Decibels (-3.0) });
             f.invoke (cmd::pluginSetBypassed, { f.trackId, f.pluginId, true });
-            f.invoke (cmd::trackSetVolume, { f.trackId, -6.0, true });
+            f.invoke (cmd::trackSetVolume, { f.trackId, Decibels (-6.0), true });
 
             f.invoke (cmd::editUndo);
-            expectWithinAbsoluteError (f.model.getTracks()[0].volumeDb, -3.0, 1e-3);
+            expectWithinAbsoluteError (f.model.getTracks()[0].volume.value, -3.0, 1e-3);
             expect (f.bypassed(), "the bypass step survives");
         }
 
@@ -91,12 +91,12 @@ struct EngineUndoTests : juce::UnitTest
         beginTest ("A master volume drag never joins a plug-in step made during it");
         {
             UndoFixture f;
-            f.invoke (cmd::mixerSetMasterVolume, { -3.0 });
+            f.invoke (cmd::mixerSetMasterVolume, { Decibels (-3.0) });
             f.invoke (cmd::pluginSetBypassed, { f.trackId, f.pluginId, true });
-            f.invoke (cmd::mixerSetMasterVolume, { -6.0, true });
+            f.invoke (cmd::mixerSetMasterVolume, { Decibels (-6.0), true });
 
             f.invoke (cmd::editUndo);
-            expectWithinAbsoluteError (f.mixer.getMaster().volumeDb, -3.0, 1e-3);
+            expectWithinAbsoluteError (f.mixer.getMaster().volume.value, -3.0, 1e-3);
             expect (f.bypassed(), "the bypass step survives");
         }
 

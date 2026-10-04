@@ -1,6 +1,6 @@
 #include "TestFixture.h"
 
-#include "UI/Layout/LayoutSource.h"
+#include "UI/Theme/UIFileSource.h"
 #include "UI/Theme/ThemeManager.h"
 
 namespace resamper::test
@@ -13,7 +13,7 @@ struct ThemeTests : juce::UnitTest
 
     struct Setup
     {
-        LayoutSource source;
+        UIFileSource source;
         ThemeManager themes { source, "themes/dark.json" };
         juce::Result loaded { themes.load() };
     };
@@ -67,7 +67,7 @@ struct ThemeTests : juce::UnitTest
         beginTest ("An unknown $token fails loudly");
         {
             juce::String json;
-            LayoutSource source;
+            UIFileSource source;
             expect (source.read ("themes/dark.json", json).wasOk());
             json = json.replace ("\"$bg-deep\"", "\"$no-such-token\"");
 
@@ -81,7 +81,7 @@ struct ThemeTests : juce::UnitTest
         beginTest ("A colour with a non-hex digit fails loudly");
         {
             juce::String json;
-            LayoutSource source;
+            UIFileSource source;
             expect (source.read ("themes/dark.json", json).wasOk());
             json = json.replace ("\"#141416\"", "\"#14141g\"");
 

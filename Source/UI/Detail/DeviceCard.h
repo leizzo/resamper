@@ -31,7 +31,7 @@ public:
     static constexpr int height = 164;
 
     /** The card for info's contract. A plug-in's card follows its Hosting State. */
-    static std::unique_ptr<DeviceCard> create (CommandRegistry&, PluginRack&, PluginHosting&, ThemeManager&,
+    static std::unique_ptr<DeviceCard> create (CommandRegistry&, const PluginRack&, const PluginHosting&, ThemeManager&,
                                                const juce::String& trackId, const PluginInfo&);
 
     const PluginInfo& getPlugin() const noexcept   { return plugin; }
@@ -56,10 +56,10 @@ public:
     void mouseDrag (const juce::MouseEvent&) override;
 
 protected:
-    DeviceCard (CommandRegistry&, PluginRack&, ThemeManager&, const juce::String& trackId, const PluginInfo&);
+    DeviceCard (CommandRegistry&, const PluginRack&, ThemeManager&, const juce::String& trackId, const PluginInfo&);
 
     CommandRegistry& commands;
-    PluginRack& rack;
+    const PluginRack& rack;
     ThemeManager& themeManager;
     juce::String trackId;
     PluginInfo plugin;

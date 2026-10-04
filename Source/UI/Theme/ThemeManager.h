@@ -8,7 +8,7 @@
 namespace resamper
 {
 
-class LayoutSource;
+class UIFileSource;
 
 /** One type token (PRD §15.2): size in px, family (Inter, or IBM Plex Mono
     when mono), weight, case and tracking in px. */
@@ -74,6 +74,7 @@ struct Theme
                  recording,   ///< a recording in progress in its lane
                  loop,        ///< the loop range on the ruler
                  clip, clipSelected, clipText, waveform,
+                 clipOutlineSelected,   ///< the outline round a selected clip
                  midiClip, midiClipSelected, midiNote,
                  pianoWhite, pianoBlack, noteSelected, gridLine, velocity,
                  ruler, error;
@@ -146,7 +147,7 @@ public:
         virtual void themeChanged() = 0;   ///< repaint
     };
 
-    ThemeManager (const LayoutSource&, juce::String themeFile);
+    ThemeManager (const UIFileSource&, juce::String themeFile);
     ~ThemeManager();
 
     /** Reads Theme and Layout Metrics. Called once at startup. */
@@ -164,8 +165,8 @@ public:
     const LayoutMetrics& getMetrics() const noexcept        { return metrics; }
     juce::LookAndFeel& getLookAndFeel() noexcept            { return *lookAndFeel; }
 
-    /** Where the Theme, and the layouts beside it, are read from. */
-    const LayoutSource& getLayoutSource() const noexcept    { return source; }
+    /** Where the Theme, and the fonts beside it, are read from. */
+    const UIFileSource& getUIFileSource() const noexcept    { return source; }
 
     /** The legacy body font, scaled. Prefer font (TypeStyle). */
     juce::Font getFont (float scale = 1.0f) const;
@@ -187,7 +188,7 @@ public:
 private:
     struct Fonts;
 
-    const LayoutSource& source;
+    const UIFileSource& source;
     juce::String themeFile;
     Theme theme;
     LayoutMetrics metrics;

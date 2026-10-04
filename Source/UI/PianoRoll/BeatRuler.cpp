@@ -7,7 +7,7 @@
 namespace resamper
 {
 
-BeatRuler::BeatRuler (ApplicationModel& m, CommandRegistry& c, ThemeManager& tm, ArrangementViewState& v)
+BeatRuler::BeatRuler (const ApplicationModel& m, CommandRegistry& c, ThemeManager& tm, ArrangementViewState& v)
     : model (m), commands (c), themeManager (tm), view (v)
 {
 }

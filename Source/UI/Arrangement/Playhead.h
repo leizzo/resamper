@@ -16,7 +16,7 @@ class Playhead : public juce::Component,
                  private juce::Timer
 {
 public:
-    Playhead (ApplicationModel&, ThemeManager&, ArrangementViewState&);
+    Playhead (const ApplicationModel&, ThemeManager&, ArrangementViewState&);
 
     /** Re-reads the position now (after zoom/scroll). */
     void update();
@@ -24,7 +24,7 @@ public:
     void paint (juce::Graphics&) override;
 
 private:
-    ApplicationModel& model;
+    const ApplicationModel& model;
     ThemeManager& themeManager;
     ArrangementViewState& view;
     int lastX = -1;

@@ -98,9 +98,9 @@ public:
     FaderSection (ThemeManager&, Geometry);
 
     /** A fader drag or a typed gain; continues joins the drag's undo step. */
-    std::function<void (double db, bool continues)> onVolumeChange;
+    std::function<void (Decibels, bool continues)> onVolumeChange;
 
-    void setVolume (double db, juce::Colour);
+    void setVolume (Decibels, juce::Colour);
     void setLevel (StereoLevel, double elapsedSeconds);
     void resetPeaks();
     void setMeterMode (MeterMode m)   { meter.setMode (m); }

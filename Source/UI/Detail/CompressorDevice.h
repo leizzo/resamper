@@ -91,7 +91,7 @@ class CompressorDevice : public DeviceBody
 public:
     static constexpr int compactWidth = 520;
 
-    CompressorDevice (CommandRegistry&, PluginRack&, ThemeManager&, const juce::String& pluginId);
+    CompressorDevice (CommandRegistry&, const PluginRack&, ThemeManager&, const juce::String& pluginId);
 
     int getPreferredWidth (bool expanded, int dockedWidth) const override;
     void focusFirstControl() override;

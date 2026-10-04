@@ -22,7 +22,7 @@ class InsertSlot : public juce::Component,
                    private PluginHosting::Listener
 {
 public:
-    InsertSlot (ThemeManager&, PluginHosting&, int index);
+    InsertSlot (ThemeManager&, const PluginHosting&, int index);
     ~InsertSlot() override;
 
     int getIndex() const noexcept                              { return index; }
@@ -47,7 +47,7 @@ public:
 
 private:
     ThemeManager& themeManager;
-    PluginHosting& hosting;
+    const PluginHosting& hosting;
     int index;
     std::optional<PluginInfo> plugin;
     HostingState hostingState;

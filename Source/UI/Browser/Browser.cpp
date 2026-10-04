@@ -53,7 +53,7 @@ namespace
     }
 }
 
-Browser::Browser (CommandRegistry& c, PluginRack& r, ApplicationModel& m, ThemeManager& tm, SamplePreview& p, juce::File root)
+Browser::Browser (CommandRegistry& c, const PluginRack& r, const ApplicationModel& m, ThemeManager& tm, SamplePreview& p, juce::File root)
     : commands (c), rack (r), model (m), themeManager (tm), preview (p),
       library ([&r] { return r.getCatalogue(); }, std::move (root)),
       scan (tm, "Scan", Button::Variant::ghost)

@@ -1,16 +1,17 @@
 #pragma once
 
-#include "Engine/ProjectManager.h"
-
+#include <juce_core/juce_core.h>
 #include <vector>
 
 namespace resamper
 {
 
+class ProjectManager;
+
 /** One breakpoint on a parameter's automation curve.
 
     value is the parameter's native unit: dB for "volume" and for
-    "send:<sendId>" (ApplicationModel::minVolumeDb..maxVolumeDb), -1..1 for "pan",
+    "send:<sendId>" (ApplicationModel::minVolume..maxVolume, in dB), -1..1 for "pan",
     and 0..1 for a plug-in parameter.
 */
 struct AutomationPointInfo

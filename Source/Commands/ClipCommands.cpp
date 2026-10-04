@@ -19,6 +19,8 @@ void registerClipCommands (CommandRegistry& registry, ApplicationModel& model, A
 
     registry.add (cmd::clipAddMidi, { "Add MIDI Clip" }, [&model, &host] { host.report (model.insertMidiClip()); });
 
+    registry.add (cmd::clipSelect, { "Select Clip" }, [&model] (const ClipSelectArgs& a) { model.selectClip (a.clipId, a.mode); });
+
     // A drag in the Arrangement.
     registry.add (cmd::clipMove, { "Move Clip" }, [&model] (const ClipMoveArgs& a)
     {

@@ -38,7 +38,7 @@ class NativeDeviceCard : public DeviceCard
 public:
     static constexpr int headerHeight = 28, foldedWidth = 28, maxCompactControls = 4;
 
-    NativeDeviceCard (CommandRegistry&, PluginRack&, ThemeManager&, const juce::String& trackId, const PluginInfo&);
+    NativeDeviceCard (CommandRegistry&, const PluginRack&, ThemeManager&, const juce::String& trackId, const PluginInfo&);
 
     void setState (const PluginInfo&) override;
 

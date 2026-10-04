@@ -11,7 +11,7 @@ namespace
     constexpr int tipSize = 10;
 }
 
-Playhead::Playhead (ApplicationModel& m, ThemeManager& tm, ArrangementViewState& v)
+Playhead::Playhead (const ApplicationModel& m, ThemeManager& tm, ArrangementViewState& v)
     : model (m), themeManager (tm), view (v)
 {
     setInterceptsMouseClicks (false, false);

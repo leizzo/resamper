@@ -5,7 +5,7 @@
 namespace resamper
 {
 
-NativeDeviceWindow::NativeDeviceWindow (PluginRack& rack, CommandRegistry& commands, ThemeManager& tm, const PluginInfo& info,
+NativeDeviceWindow::NativeDeviceWindow (const PluginRack& rack, CommandRegistry& commands, ThemeManager& tm, const PluginInfo& info,
                                         const juce::String& track)
     : FloatingDeviceWindow (tm, info, track, "NativeDeviceWindow"),
       card (std::make_unique<NativeDeviceCard> (commands, rack, tm, info.trackId, info))

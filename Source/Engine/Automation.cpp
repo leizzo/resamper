@@ -1,6 +1,7 @@
 #include "Automation.h"
 #include "ApplicationModel.h"
 #include "EditTracks.h"
+#include "ProjectManager.h"
 
 #include <tracktion_engine/tracktion_engine.h>
 
@@ -93,8 +94,8 @@ namespace
     {
         if (key == "volume" || isSendKey (key))
         {
-            const auto db = juce::jlimit ((float) ApplicationModel::minVolumeDb,
-                                          (float) ApplicationModel::maxVolumeDb, value);
+            const auto db = juce::jlimit ((float) ApplicationModel::minVolume.value,
+                                          (float) ApplicationModel::maxVolume.value, value);
             return te::decibelsToVolumeFaderPosition (db);
         }
 

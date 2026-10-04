@@ -1,23 +1,30 @@
 #pragma once
 
-#include "App/ResamperApp.h"
+#include "Commands/AppCommandHost.h"
+#include "Commands/CommandRegistry.h"
 #include "UI/Arrangement/ArrangementView.h"
-#include "UI/Layout/LayoutManager.h"
 #include "UI/Mixer/MixerView.h"
 #include "UI/PianoRoll/PianoRollView.h"
 #include "UI/Detail/DetailView.h"
 #include "UI/Browser/Browser.h"
 #include "UI/Plugins/PluginWindows.h"
 #include "UI/Developer/DeveloperOverlay.h"
-#include "UI/Developer/LayoutWatcher.h"
+#include "UI/Developer/StatusBar.h"
+#include "UI/Developer/ThemeWatcher.h"
 #include "UI/State/ShellState.h"
 #include "Toasts.h"
 #include "TopBar.h"
 
+namespace melatonin
+{
+    class Inspector;
+}
+
 namespace resamper
 {
 
-class LayoutSource;
+struct ResamperApp;
+class UIFileSource;
 
 /** The Commands of the window's views: they act on the view in front. */
 namespace cmd
@@ -41,8 +48,9 @@ namespace cmd
     shows. Session and Arrange sit between the Browser (left) and the detail
     view (bottom); Mixer, Piano Roll and Editor fill the window. Views are kept
     alive while hidden, so each keeps its scroll and zoom. In Developer Mode,
-    dev.toggleOverlay shows a JSON status bar and the developer overlay at the
-    bottom; they are off by default, as the design has neither. Also the
+    dev.toggleOverlay shows a status bar and the developer overlay at the
+    bottom and opens the component inspector (melatonin_inspector) in its own
+    window; they are off by default, as the design has none of them. Also the
     ApplicationCommandTarget that routes menus and keyboard shortcuts into the
     Command registry. */
 class MainComponent : public juce::Component,
@@ -80,15 +88,25 @@ public:
     bool perform (const InvocationInfo&) override;
 
 private:
-    ResamperApp& app;
-    const LayoutSource& layoutSource;
+    /** The engine facades the window may read. A change to the Edit goes
+        through commands; these references cannot call a setter. */
+    const ApplicationModel& model;
+    const Mixer& mixer;
+    const PluginRack& plugins;
+    const PluginHosting& hosting;
+    SamplePreview& preview;
+    CommandRegistry& commands;
+    ThemeManager& themeManager;
+    UIStateStore& uiState;
+    Preferences& preferences;
+    AppCommandHost& host;
+
+    const UIFileSource& uiFiles;
     const juce::String audioDeviceDescription;
     juce::ApplicationCommandManager& commandManager;
 
     ShellState shell;
-    ComponentFactory factory;
-    LayoutManager layouts;
-    LayoutHost statusBarHost { "statusbar", "layouts/statusbar.json" };
+    StatusBar statusBar;
     TopBar topBar;
     ArrangementView arrangement;
     PianoRollView pianoRoll;
@@ -126,9 +144,9 @@ private:
     void registerPianoRollCommands();
     // Its own window, so a tip over a plug-in window's chrome stays above that plug-in's sandboxed UI.
     juce::TooltipWindow tooltips { nullptr, 600 };
-    std::unique_ptr<LayoutWatcher> layoutWatch;
-    std::unique_ptr<LayoutWatcher> themeWatch;
+    std::unique_ptr<ThemeWatcher> themeWatch;
     PluginWindows pluginWindows;
+    std::unique_ptr<melatonin::Inspector> inspector;
 
     void updateStatusBar();
     void registerPluginWindowCommands();
@@ -136,9 +154,9 @@ private:
     void registerEscapeCommand();
     void registerDeveloperOverlayCommand();
     void toggleDeveloperOverlay();
+    void setInspectorOpen (bool);
     void showMenu (const juce::String& name, juce::Rectangle<int> screenArea);
     void openPianoRollForSelection();
-    void mouseDown (const juce::MouseEvent&) override;
     void valueTreePropertyChanged (juce::ValueTree&, const juce::Identifier&) override;
 
     void modelChanged() override;

@@ -482,8 +482,8 @@ bool PluginHosting::waitForLoads()
     return impl->sandbox.waitForLoads();
 }
 
-void PluginHosting::addListener (Listener* l)      { impl->listeners.add (l); }
-void PluginHosting::removeListener (Listener* l)   { impl->listeners.remove (l); }
+void PluginHosting::addListener (Listener* l) const      { impl->listeners.add (l); }
+void PluginHosting::removeListener (Listener* l) const   { impl->listeners.remove (l); }
 
 PluginHosting::Impl& PluginHosting::getImpl() noexcept
 {

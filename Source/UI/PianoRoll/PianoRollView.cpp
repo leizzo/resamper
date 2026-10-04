@@ -14,9 +14,9 @@ namespace
     const juce::Identifier clipIdProperty ("clipId");
 }
 
-PianoRollView::PianoRollView (ApplicationModel& m, CommandRegistry& c, ThemeManager& tm, UIStateStore& uiState)
+PianoRollView::PianoRollView (const ApplicationModel& m, CommandRegistry& c, ThemeManager& tm, UIStateStore& uiState)
     : model (m), commands (c), themeManager (tm), view (uiState.getState (componentId)),
-      keyboard (m, tm, view), ruler (m, c, tm, view), grid (m, c, tm, view), velocity (m, c, tm, view),
+      keyboard (c, tm, view), ruler (m, c, tm, view), grid (m, c, tm, view), velocity (m, c, tm, view),
       playhead (m, tm, view)
 {
     setComponentID (componentId);

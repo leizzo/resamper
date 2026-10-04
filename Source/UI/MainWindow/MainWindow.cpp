@@ -1,4 +1,5 @@
 #include "MainWindow.h"
+#include "App/ResamperApp.h"
 #include "Commands/ApplicationCommandTable.h"
 
 namespace resamper

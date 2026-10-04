@@ -1,0 +1,50 @@
+# Deterministic lint: rules a pattern can decide, so they are exact, free and
+# never need a model. Rules that need judgement live in .perch/rules/.
+# Rules use the regex and generic modes: Semgrep's C++ parser does not read
+# JUCE-style code reliably. Run with scripts/lint.sh. Silence one line with `// nosemgrep: <id> -- <reason>`.
+rules:
+  - id: ui-colour-from-theme
+    languages: [regex]
+    severity: ERROR
+    message: >-
+      UI colours come from the Theme (themeManager.getTheme().<token>, see
+      Source/UI/Theme/ThemeManager.h). Add a semantic entry to the Theme and
+      UI/themes/dark.json instead of a literal colour.
+    paths:
+      include: ["/Source/UI/**"]
+      exclude: ["/Source/UI/Theme/**", "/Source/UI/Developer/**"]
+    pattern-regex: >-
+      juce::Colours::(?!transparent(Black|White)\b)[a-z]\w*|juce::Colour\s*\(\s*0x|juce::Colour::from(RGB|RGBA|FloatRGBA|HSV|HSL)\b
+
+  - id: no-hardcoded-sample-rate
+    languages: [regex]
+    severity: ERROR
+    message: >-
+      Use the sample rate the engine hands over in prepareToPlay/initialise
+      (or the current Edit/device rate), never a literal one.
+    paths:
+      include: ["/Source/**"]
+    pattern-regex: \b(22050|44100|48000|88200|96000|176400|192000)(\.0*f?)?\b
+
+  - id: deferred-callback-guards-lifetime
+    languages: [regex]
+    severity: ERROR
+    message: >-
+      A deferred callback can run after this object is deleted. Capture a
+      juce::Component::SafePointer or juce::WeakReference and return early when
+      it is null, instead of capturing this, & or =.
+    paths:
+      include: ["/Source/**"]
+    pattern-regex: (callAsync|callAfterDelay)\s*\(\s*(\d+\s*,\s*)?\[\s*(?:[^\]]*,\s*)?(this|&|=)\s*(?:,[^\]]*)?\]
+
+  - id: no-explicit-delete
+    languages: [generic]
+    severity: ERROR
+    message: >-
+      Express ownership with std::unique_ptr, juce::OwnedArray or a member
+      object instead of an explicit delete.
+    paths:
+      include: ["/Source/**"]
+    pattern-either:
+      - pattern: delete $X;
+      - pattern: delete[] $X;

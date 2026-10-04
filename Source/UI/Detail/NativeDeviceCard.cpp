@@ -31,7 +31,7 @@ namespace
     const char* modsTooltip = "Modulators: the Mods Drawer is coming";
 }
 
-NativeDeviceCard::NativeDeviceCard (CommandRegistry& c, PluginRack& r, ThemeManager& tm, const juce::String& track,
+NativeDeviceCard::NativeDeviceCard (CommandRegistry& c, const PluginRack& r, ThemeManager& tm, const juce::String& track,
                                     const PluginInfo& info)
     : DeviceCard (c, r, tm, track, info),
       power (tm, DevicePowerButton::Style::native),

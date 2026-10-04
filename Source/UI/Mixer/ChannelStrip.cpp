@@ -55,11 +55,11 @@ struct ChannelStrip::SendRow : juce::Component
     {
         auto& theme = themeManager.getTheme();
         auto badge = getLocalBounds().removeFromLeft (14).withSizeKeepingCentre (14, 14);
-        g.setColour (send.muted || send.gainDb <= ApplicationModel::minVolumeDb ? theme.textDim : theme.returnColours[0]);
+        g.setColour (send.muted || send.gain <= ApplicationModel::minVolume ? theme.textDim : theme.returnColours[0]);
         g.fillRoundedRectangle (badge.toFloat(), theme.radiusSm);
         drawStyledText (g, themeManager, letter, TypeStyle { 8.0f, false, 700 }, badge, juce::Justification::centred,
                         theme.textOnAccent);
-        drawNumber (g, themeManager, send.muted ? juce::String ("off") : juce::String (send.gainDb, 1),
+        drawNumber (g, themeManager, send.muted ? juce::String ("off") : juce::String (send.gain.value, 1),
                     TypeStyle { 9.0f, true, 400 }, getLocalBounds().removeFromRight (30), juce::Justification::centredRight,
                     theme.textSecondary);
     }
@@ -83,7 +83,7 @@ struct ChannelStrip::SendRow : juce::Component
 };
 
 //==============================================================================
-ChannelStrip::ChannelStrip (CommandRegistry& c, PluginHosting& hosting, ThemeManager& tm, StripRole role)
+ChannelStrip::ChannelStrip (CommandRegistry& c, const PluginHosting& hosting, ThemeManager& tm, StripRole role)
     : commands (c), themeManager (tm),
       pan (tm, panKnobSpec(), "Pan", true), faderSection (tm, role == StripRole::bus ? busFaderGeometry : faderGeometry),
       mute (tm, TrackButton::Kind::mute), solo (tm, TrackButton::Kind::solo), arm (tm, TrackButton::Kind::arm)
@@ -102,9 +102,9 @@ ChannelStrip::ChannelStrip (CommandRegistry& c, PluginHosting& hosting, ThemeMan
     pan.setReadoutBeside (true);
     pan.onChange = [this] (double v, bool continues) { commands.invoke (cmd::trackSetPan, { state.strip.id, v, continues }); };
 
-    faderSection.onVolumeChange = [this] (double db, bool continues)
+    faderSection.onVolumeChange = [this] (Decibels volume, bool continues)
     {
-        commands.invoke (cmd::trackSetVolume, { state.strip.id, db, continues });
+        commands.invoke (cmd::trackSetVolume, { state.strip.id, volume, continues });
     };
 
     mute.onClick = [this] { commands.invoke (cmd::trackToggleMute, { state.strip.id }); };
@@ -322,7 +322,7 @@ void ChannelStrip::setState (const StripState& next)
     input.setEnabled (! state.isReturn() && ! state.isBus());
 
     pan.setValue (state.strip.pan);
-    faderSection.setVolume (state.strip.volumeDb, colour);
+    faderSection.setVolume (state.strip.volume, colour);
 
     mute.setToggleState (state.strip.muted, juce::dontSendNotification);
     solo.setToggleState (state.strip.solo, juce::dontSendNotification);
@@ -349,7 +349,7 @@ void ChannelStrip::rebuildSends()
             row->level.onChange = [this, i] (double db, bool continues)
             {
                 if (i < state.strip.sends.size())
-                    commands.invoke (cmd::mixerSetSendGain, { state.strip.id, state.strip.sends[i].id, db, continues });
+                    commands.invoke (cmd::mixerSetSendGain, { state.strip.id, state.strip.sends[i].id, Decibels (db), continues });
             };
             addAndMakeVisible (*row);
             sendRows.push_back (std::move (row));
@@ -362,7 +362,7 @@ void ChannelStrip::rebuildSends()
         row.send = state.strip.sends[i];
         row.trackId = state.strip.id;
         row.letter = returnLetterFor (state.strip.sends[i].bus);
-        row.level.setValue (state.strip.sends[i].gainDb);
+        row.level.setValue (state.strip.sends[i].gain.value);
         row.repaint();
     }
 }

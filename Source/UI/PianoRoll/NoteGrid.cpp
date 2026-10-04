@@ -34,7 +34,7 @@ namespace
     }
 }
 
-NoteGrid::NoteGrid (ApplicationModel& m, CommandRegistry& c, ThemeManager& tm, ArrangementViewState& v)
+NoteGrid::NoteGrid (const ApplicationModel& m, CommandRegistry& c, ThemeManager& tm, ArrangementViewState& v)
     : model (m), commands (c), themeManager (tm), view (v)
 {
 }
@@ -219,7 +219,7 @@ void NoteGrid::mouseDown (const juce::MouseEvent& e)
                 if (note.selected != (note.id == info.id))
                     ids.add (note.id);
 
-            model.selectNotes (ids);
+            commands.invoke (cmd::noteSelect, { ids });
             reload();
             return;
         }
@@ -234,7 +234,7 @@ void NoteGrid::mouseDown (const juce::MouseEvent& e)
         }
         else
         {
-            model.selectNotes ({ info.id });
+            commands.invoke (cmd::noteSelect, { { info.id } });
             info.selected = true;
             moving.add (info.id);
         }

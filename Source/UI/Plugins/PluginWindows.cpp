@@ -16,7 +16,7 @@ namespace
     const juce::String middleDot (juce::CharPointer_UTF8 ("\xc2\xb7"));
 }
 
-PluginWindows::PluginWindows (ApplicationModel& m, PluginRack& r, PluginHosting& h, CommandRegistry& c, ThemeManager& tm,
+PluginWindows::PluginWindows (const ApplicationModel& m, const PluginRack& r, const PluginHosting& h, CommandRegistry& c, ThemeManager& tm,
                               Preferences& p)
     : model (m), rack (r), hosting (h), commands (c), themeManager (tm), preferences (p)
 {

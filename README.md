@@ -119,7 +119,7 @@ $5 a month, or $10 once. Names land here.
 
 Resamper's own source code is released under the [MIT License](LICENSE). That grant covers those files on their own.
 
-A build of the app also contains [JUCE](https://juce.com/legal/juce-8-licence/) (AGPLv3, or a commercial JUCE licence) and [Tracktion Engine](https://engine.tracktion.com/agreement) (GPLv3, or a commercial Tracktion licence). GIN is BSD-3-Clause. The MIT licence does not sublicense JUCE or Tracktion.
+A build of the app also contains [JUCE](https://juce.com/legal/juce-8-licence/) (AGPLv3, or a commercial JUCE licence) and [Tracktion Engine](https://engine.tracktion.com/agreement) (GPLv3, or a commercial Tracktion licence). GIN is BSD-3-Clause and melatonin_inspector is MIT. The MIT licence does not sublicense JUCE or Tracktion.
 
 You may run the app, including for paid work. You may also share and sell a build when that distribution stays under the AGPL and the GPL and the corresponding source is offered. A closed-source build needs your own JUCE licence and your own Tracktion Engine licence. Each is bought from that vendor, and one does not include the other. Both can be taken out before any sale.
 
@@ -143,13 +143,14 @@ Resamper is built on [JUCE](https://juce.com) + [Tracktion Engine](https://githu
 | `external/tracktion_engine` | Tracktion Engine 3.5.0, commit `964583ee` (3.5.0 plus an upstream fix for a null ProjectItem crash when saving an Edit outside a Tracktion project) |
 | `external/tracktion_engine/modules/juce` | JUCE 8.0.13 (`8.0.13-7-g37c894f8`), pinned by Tracktion |
 | `external/gin` | GIN, commit `ea795541`; only the `gin` module is built (other modules are added when code needs them) |
+| `external/melatonin_inspector` | melatonin_inspector, commit `9c483f86` (module 1.4.0); the Developer Mode component inspector |
 
 ## Build (macOS)
 
 Requires CMake ≥ 3.22, Ninja and Xcode command-line tools (C++20).
 
 ```sh
-git submodule update --init external/gin external/tracktion_engine
+git submodule update --init external/gin external/melatonin_inspector external/tracktion_engine
 # Tracktion's .gitmodules points JUCE at an SSH URL; use HTTPS unless you have GitHub SSH keys:
 git -C external/tracktion_engine config submodule.modules/juce.url https://github.com/juce-framework/JUCE.git
 git -C external/tracktion_engine submodule update --init modules/juce
@@ -166,9 +167,9 @@ cmake --build build
 ```
 Source/Engine/    EngineManager, ProjectManager, ApplicationModel facade — the only code that sees Tracktion
 Source/Commands/  Command registry, model Commands, ApplicationCommand ↔ Command ID table
-Source/UI/        Theme, JSON layouts (ComponentFactory/LayoutManager), UI State, Arrangement, MainWindow
+Source/UI/        Theme, UI State, Arrangement, Mixer, Detail View, MainWindow, Developer Mode tools
 Source/App/       Application entry point
-UI/layouts, UI/themes   Declarative UI files (embedded in Release; read from the source tree in Debug)
+UI/themes, UI/fonts   Theme and font files (embedded in Release; read from the source tree in Debug)
 Tests/            Headless tests over the Command registry / Application Model seam
 ```
 
@@ -177,11 +178,10 @@ Tests/            Headless tests over the Command registry / Application Model s
 
 ## Developer Mode
 
-In Debug builds, layouts and theme are read from `UI/` in the source tree. Edit a file, then:
+In Debug builds, the theme is read from `UI/` in the source tree. Saving a theme file re-styles the app; so does:
 
-- **Reload Layout** — Cmd+Alt+Shift+L: rebuilds only the regions whose layout file changed
 - **Reload Theme** — Cmd+Alt+Shift+T: re-styles in place
-- **Developer Overlay** — Cmd+Alt+Shift+D: shows the status bar and component inspector (hidden by default; the design has neither)
+- **Developer Overlay** — Cmd+Alt+Shift+D: shows the status bar and opens [melatonin_inspector](https://github.com/sudara/melatonin_inspector) in its own window (hidden by default; the design has neither)
 
 ## Contributing
 
@@ -205,4 +205,4 @@ DMG, and the commit list from [git-cliff](https://git-cliff.org) (`cliff.toml`; 
 
 ## License
 
-Resamper's own code is [MIT](LICENSE). A binary also contains JUCE (AGPLv3 or a commercial JUCE licence) and Tracktion Engine (GPLv3 or a commercial Tracktion licence); GIN is BSD-3-Clause. The embedded [lucide](https://lucide.dev) icons are ISC / MIT (`Source/UI/Controls/Lucide-LICENSE.txt`). What that means for distribution is in the public [License](#license) section.
+Resamper's own code is [MIT](LICENSE). A binary also contains JUCE (AGPLv3 or a commercial JUCE licence) and Tracktion Engine (GPLv3 or a commercial Tracktion licence); GIN is BSD-3-Clause and melatonin_inspector is MIT. The embedded [lucide](https://lucide.dev) icons are ISC / MIT (`Source/UI/Controls/Lucide-LICENSE.txt`). What that means for distribution is in the public [License](#license) section.

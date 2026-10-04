@@ -12,12 +12,12 @@ namespace resamper
 
 class ProjectManager;
 
-/** One aux send on a track. gainDb uses the track fader range; -100 is silence. */
+/** One aux send on a track. gain uses the track fader range; ApplicationModel::minVolume is silence. */
 struct SendInfo
 {
     juce::String id;
     int bus = 0;
-    double gainDb = 0;
+    Decibels gain;
     bool muted = false;
 };
 
@@ -57,7 +57,7 @@ struct Strip
     juce::String returnLetter;              ///< A..D on a Return
     int colourIndex = 0;
     bool selected = false;
-    double volumeDb = 0;                    ///< ApplicationModel::minVolumeDb is silence
+    Decibels volume;                        ///< ApplicationModel::minVolume is silence
     double pan = 0;                         ///< -1 (left) to 1 (right)
     bool muted = false, solo = false;
     juce::String input;                     ///< the input it records from, or empty
@@ -75,7 +75,7 @@ juce::String returnLetterFor (int bus);
 /** The Edit's master fader, not any track in ApplicationModel::getTracks(). */
 struct MasterInfo
 {
-    double volumeDb = 0;
+    Decibels volume;
 };
 
 /** Facade over the current Edit's returns, sends, submix buses and master fader,
@@ -108,9 +108,9 @@ public:
         nothing, when the track or the bus's return is missing. */
     juce::Result addSend (const juce::String& fromTrackId, int bus);
 
-    /** Clamped to ApplicationModel::minVolumeDb .. maxVolumeDb. continuesGesture
+    /** Clamped to ApplicationModel::minVolume .. maxVolume. continuesGesture
         as for ApplicationModel::setTrackVolume. */
-    bool setSendGain (const juce::String& trackId, const juce::String& sendId, double gainDb, bool continuesGesture = false);
+    bool setSendGain (const juce::String& trackId, const juce::String& sendId, Decibels gain, bool continuesGesture = false);
 
     /** One undo step when it changes something. See the class note. */
     bool setSendMuted (const juce::String& trackId, const juce::String& sendId, bool muted);
@@ -133,18 +133,18 @@ public:
     MasterInfo getMaster() const;
 
     /** Peaks of the track's level meter since the last read, left and right,
-        in dB. Silence (minVolumeDb) when the track has no meter or the meter has
+        in dB. Silence (ApplicationModel::minVolume) when the track has no meter or the meter has
         not seen audio. A mono signal reads the same on both sides. */
-    StereoLevel getTrackLevel (const juce::String& trackId);
+    StereoLevel getTrackLevel (const juce::String& trackId) const;
 
     /** The master track's meter. Same silence rule. */
-    StereoLevel getMasterLevel();
+    StereoLevel getMasterLevel() const;
 
     /** Whether the meters measure RMS (the mixer's RMS and LUFS modes) rather than peak. */
-    void setMeasuringRms (bool);
+    void setMeasuringRms (bool) const;
 
     /** Master fader, not a track fader. continuesGesture as for setSendGain. */
-    bool setMasterVolume (double db, bool continuesGesture = false);
+    bool setMasterVolume (Decibels volume, bool continuesGesture = false);
 
 private:
     struct MeterState;
@@ -153,11 +153,11 @@ private:
     const ApplicationModel& model;
     const PluginRack& plugins;
     std::unique_ptr<MeterState> meters;
-    bool measuringRms = false;
+    mutable bool measuringRms = false;   ///< how the meters read, not part of the Edit
 
     /** meterPlugin is a tracktion::LevelMeterPlugin*. Kept as void* so this
         header stays free of Tracktion types. */
-    StereoLevel levelOf (const juce::String& slotId, void* meterPlugin);
+    StereoLevel levelOf (const juce::String& slotId, void* meterPlugin) const;
 
     JUCE_DECLARE_NON_COPYABLE (Mixer)
 };

@@ -21,7 +21,7 @@ namespace
     constexpr float rowRadius = 3.0f, toggleRadius = 4.0f, solidToggleRadius = 2.0f, hairline = 1.0f;
 }
 
-ContinuousValue::Spec parameterSpec (PluginRack& rack, const juce::String& pluginId, const PluginParameter& p)
+ContinuousValue::Spec parameterSpec (const PluginRack& rack, const juce::String& pluginId, const PluginParameter& p)
 {
     ContinuousValue::Spec spec;
     spec.minimum = p.minimum;
@@ -49,7 +49,7 @@ juce::String designMinus (const juce::String& text)
 }
 
 //==============================================================================
-std::unique_ptr<DeviceBody> DeviceBody::create (CommandRegistry& c, PluginRack& r, ThemeManager& tm, const PluginInfo& info)
+std::unique_ptr<DeviceBody> DeviceBody::create (CommandRegistry& c, const PluginRack& r, ThemeManager& tm, const PluginInfo& info)
 {
     if (info.external)
         return {};
@@ -63,7 +63,7 @@ std::unique_ptr<DeviceBody> DeviceBody::create (CommandRegistry& c, PluginRack& 
     return {};
 }
 
-DeviceBody::DeviceBody (CommandRegistry& c, PluginRack& r, ThemeManager& tm, const juce::String& id)
+DeviceBody::DeviceBody (CommandRegistry& c, const PluginRack& r, ThemeManager& tm, const juce::String& id)
     : commands (c), rack (r), themeManager (tm), pluginId (id)
 {
     startTimerHz (readingsHz);

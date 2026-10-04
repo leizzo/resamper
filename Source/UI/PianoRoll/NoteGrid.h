@@ -22,7 +22,7 @@ class CommandRegistry;
 class NoteGrid : public juce::Component
 {
 public:
-    NoteGrid (ApplicationModel&, CommandRegistry&, ThemeManager&, ArrangementViewState&);
+    NoteGrid (const ApplicationModel&, CommandRegistry&, ThemeManager&, ArrangementViewState&);
 
     void setClip (const ClipInfo&);
     void layoutNotes();
@@ -45,7 +45,7 @@ private:
         int grabPitch = 0;
     };
 
-    ApplicationModel& model;
+    const ApplicationModel& model;
     CommandRegistry& commands;
     ThemeManager& themeManager;
     ArrangementViewState& view;

@@ -15,7 +15,7 @@ class CommandRegistry;
 /** A control's range and text for one of a plug-in's parameters, as the
     plug-in shows it: travel follows the parameter's range (a frequency's is
     logarithmic) and a choice steps by one. */
-ContinuousValue::Spec parameterSpec (PluginRack&, const juce::String& pluginId, const PluginParameter&);
+ContinuousValue::Spec parameterSpec (const PluginRack&, const juce::String& pluginId, const PluginParameter&);
 
 /** A value's text in the design's typography: a leading "-" becomes a minus sign (−4.0 dB). */
 juce::String designMinus (const juce::String&);
@@ -34,7 +34,7 @@ class DeviceBody : public juce::Component,
 {
 public:
     /** The body for a v2 device (EQ Eight, Compressor v2); empty for any other. */
-    static std::unique_ptr<DeviceBody> create (CommandRegistry&, PluginRack&, ThemeManager&, const PluginInfo&);
+    static std::unique_ptr<DeviceBody> create (CommandRegistry&, const PluginRack&, ThemeManager&, const PluginInfo&);
 
     ~DeviceBody() override;
 
@@ -50,10 +50,10 @@ public:
     void refreshReadings()   { readingsChanged(); }
 
 protected:
-    DeviceBody (CommandRegistry&, PluginRack&, ThemeManager&, const juce::String& pluginId);
+    DeviceBody (CommandRegistry&, const PluginRack&, ThemeManager&, const juce::String& pluginId);
 
     CommandRegistry& commands;
-    PluginRack& rack;
+    const PluginRack& rack;
     ThemeManager& themeManager;
     const juce::String pluginId;
     juce::Colour colour;
