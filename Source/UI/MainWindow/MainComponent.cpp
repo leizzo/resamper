@@ -205,7 +205,7 @@ void MainComponent::registerPluginWindowCommands()
 
 void MainComponent::registerLanguageCommands()
 {
-    // Each language is named in itself, so a user who picked the wrong one finds the way back (ADR-0015).
+    // Never translated: each language is named in itself, so a wrong choice can be undone.
     auto add = [this] (CommandRef<> ref, const juce::String& name, const char* preference)
     {
         commands.add (ref, { name, {}, [this, preference] { return preferences.getLanguage() == preference; } },
@@ -310,7 +310,7 @@ void MainComponent::bindUpdateCheck (UpdateCheck& check)
     updatePrompt.onFailed = [this] (const juce::String& message) { showToast (message, false, true); };
 }
 
-void MainComponent::presentLaunchNotes (const juce::String& current, const std::function<void()>& then, const std::function<void()>& relaunch)
+void MainComponent::presentLaunchNotes (const juce::String& current, const std::function<void()>& then)
 {
     auto items = notesForLaunch (preferences, current);
 
@@ -330,12 +330,12 @@ void MainComponent::presentLaunchNotes (const juce::String& current, const std::
                                   if (then != nullptr)
                                       then();
                               },
-                              [prefs = &preferences, current, relaunch]
+                              [this, current]
                               {
-                                  prefs->setLastLaunchedVersion (current);
+                                  preferences.setLastLaunchedVersion (current);
 
-                                  if (relaunch != nullptr)
-                                      relaunch();
+                                  if (onRelaunch != nullptr)
+                                      onRelaunch();
                               });
 }
 

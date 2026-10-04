@@ -283,32 +283,27 @@ std::span<const char* const> getMenuNames()
 juce::PopupMenu createCommandMenu (juce::ApplicationCommandManager& manager, const juce::String& menuName)
 {
     juce::PopupMenu menu;
-    auto registered = [&manager] (const ApplicationCommandEntry& entry)
-    {
-        return manager.getCommandForID (entry.applicationCommandID) != nullptr;
-    };
+    std::vector<std::pair<juce::String, juce::PopupMenu>> submenus;
 
     for (auto& entry : table())
-        if (menuName == entry.menu && entry.submenu == nullptr && registered (entry))
-            menu.addCommandItem (&manager, entry.applicationCommandID);
-
-    for (auto& m : menus)
     {
-        if (menuName != m.name)
+        if (menuName != entry.menu || manager.getCommandForID (entry.applicationCommandID) == nullptr)
             continue;
 
-        for (auto& submenu : m.submenus)
+        if (entry.submenu == nullptr)
         {
-            juce::PopupMenu items;
-
-            for (auto& entry : table())
-                if (entry.submenu == submenu.name && registered (entry))
-                    items.addCommandItem (&manager, entry.applicationCommandID);
-
-            if (items.getNumItems() > 0)
-                menu.addSubMenu (submenu.name, items);
+            menu.addCommandItem (&manager, entry.applicationCommandID);
+            continue;
         }
+
+        if (submenus.empty() || submenus.back().first != entry.submenu)
+            submenus.emplace_back (entry.submenu, juce::PopupMenu());
+
+        submenus.back().second.addCommandItem (&manager, entry.applicationCommandID);
     }
+
+    for (auto& [name, items] : submenus)
+        menu.addSubMenu (name, items);
 
     if (menuName == "Help")
         if (auto* app = juce::JUCEApplicationBase::getInstance())

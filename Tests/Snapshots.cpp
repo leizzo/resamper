@@ -14,7 +14,8 @@ namespace
     /** SNAPSHOT_LANG=tr renders in that UI Language; unset, English, as the tests run. */
     void installSnapshotLanguage (const UIFileSource& files)
     {
-        installUILanguage (files, resolveUILanguage (juce::SystemStats::getEnvironmentVariable ("SNAPSHOT_LANG", "en"), {}));
+        installUILanguage (files, resolveUILanguage (juce::SystemStats::getEnvironmentVariable ("SNAPSHOT_LANG", "en"),
+                                                     juce::SystemStats::getUserLanguage()));
     }
 }
 

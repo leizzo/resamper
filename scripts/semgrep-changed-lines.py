@@ -58,11 +58,12 @@ def main():
         findings += 1
 
     for result in report.get("results", []):
-        path, line = result["path"], result["start"]["line"]
+        path, line, last = result["path"], result["start"]["line"], result["end"]["line"]
 
+        # A match can span lines (a call broken across them): any changed line in it counts.
         if result["extra"].get("metadata", {}).get("changed-lines-only"):
             lines = changed.get(path, set())
-            if lines is not None and line not in lines:
+            if lines is not None and lines.isdisjoint(range(line, last + 1)):
                 continue
 
         rule = result["check_id"].rsplit(".", 1)[-1]

@@ -98,8 +98,7 @@ public:
                                          {
                                              if (check != nullptr)
                                                  check->start();
-                                         },
-                                         [this] { relaunch(); });
+                                         });
         }
     }
 
