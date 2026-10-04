@@ -16,7 +16,7 @@ struct Theme;
 enum class Icon
 {
     // Transport & audio
-    play, pause, square, circleDot, skipBack, repeat, rotateCcw, timer, metronome, crosshair, audioLines,
+    play, pause, square, circleDot, skipBack, repeat, rotateCcw, refreshCw, timer, metronome, crosshair, audioLines,
     audioWaveform, activity, waves, spline, chartSpline, piano, music, music2, volume2, drum,
     // Navigation & disclosure
     chevronDown, chevronRight, chevronLeft, arrowDown, arrowLeft, arrowRight, arrowUpRight, arrowLeftRight, cornerDownRight,
@@ -27,7 +27,7 @@ enum class Icon
     // Routing, racks & structure
     gitMerge, layers, network, folder, folderOpen, folderMinus, list, slidersHorizontal, slidersVertical, link2Off, unlink,
     // Files & visibility
-    file, fileMusic, fileCode, download, eye, eyeOff,
+    file, fileMusic, fileCode, fileText, download, eye, eyeOff,
     // Plug-ins & windows
     plug, appWindow, externalLink, pin, power, cpu, shieldCheck, save, redo2, moveDiagonal2, squareDashed, sparkles,
     package, box, puzzle,

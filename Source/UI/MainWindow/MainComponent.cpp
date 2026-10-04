@@ -38,6 +38,7 @@ MainComponent::MainComponent (ResamperApp& a, juce::ApplicationCommandManager& c
       pianoRollPlaceholder (themeManager, "Select a MIDI clip, or double-click one, to edit its notes."),
       developerOverlay (themeManager),
       toasts (themeManager),
+      updatePrompt (themeManager),
       pluginWindows (model, plugins, hosting, commands, themeManager, preferences)
 {
     // Looked up per call: the platform may fill in host.reportError after the app is built.
@@ -124,6 +125,8 @@ MainComponent::MainComponent (ResamperApp& a, juce::ApplicationCommandManager& c
         addChildComponent (c);
 
     addAndMakeVisible (toasts);
+    addAndMakeVisible (updatePrompt);
+    updatePrompt.setVisible (false);
 
     topBar.setVisible (true);
 
@@ -172,6 +175,9 @@ void MainComponent::registerEscapeCommand()
     // Esc (PRD §16.1): closes popovers and menus, cancels a drag, clears the selection.
     commands.add (cmd::uiEscape, { "Clear Selection" }, [this]
     {
+        if (updatePrompt.dismissModal())
+            return;
+
         juce::PopupMenu::dismissAllActiveMenus();
         arrangement.cancelDrag();
         commands.invoke (cmd::editDeselectAll);
@@ -260,12 +266,49 @@ void MainComponent::paint (juce::Graphics& g)
     g.fillAll (themeManager.getTheme().bgDeep);
 }
 
+void MainComponent::bindUpdateCheck (UpdateCheck& check)
+{
+    updatePrompt.bind (check);
+    updatePrompt.onFailed = [this] (const juce::String& message) { showToast (message, false, true); };
+}
+
+void MainComponent::presentLaunchNotes (const juce::String& current, std::function<void()> then, std::function<void()> relaunch)
+{
+    auto items = notesForLaunch (preferences, current);
+
+    if (items.empty())
+    {
+        if (then != nullptr)
+            then();
+
+        return;
+    }
+
+    updatePrompt.showWelcome (current, std::move (items),
+                              [prefs = &preferences, current, then]
+                              {
+                                  prefs->setLastLaunchedVersion (current);
+
+                                  if (then != nullptr)
+                                      then();
+                              },
+                              [prefs = &preferences, current, relaunch]
+                              {
+                                  prefs->setLastLaunchedVersion (current);
+
+                                  if (relaunch != nullptr)
+                                      relaunch();
+                              });
+}
+
 void MainComponent::resized()
 {
     using View = ShellState::View;
     auto& metrics = themeManager.getMetrics();
     auto r = getLocalBounds();
     toasts.followHost();
+    updatePrompt.setBounds (getLocalBounds());
+    updatePrompt.toFront (false);
     topBar.setBounds (r.removeFromTop (metrics.topBarHeight));
 
     if (statusBar.isVisible())

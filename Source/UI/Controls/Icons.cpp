@@ -45,6 +45,9 @@ namespace
             R"(<path d="M21 13v1a4 4 0 0 1-4 4H3"/>)" },
         { Icon::rotateCcw, "rotate-ccw",
             R"(<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/>)" },
+        { Icon::refreshCw, "refresh-cw",
+            R"(<path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/>)"
+            R"(<path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/>)" },
         { Icon::timer, "timer",
             R"(<line x1="10" x2="14" y1="2" y2="2"/><line x1="12" x2="15" y1="14" y2="11"/>)"
             R"(<circle cx="12" cy="14" r="8"/>)" },
@@ -223,6 +226,10 @@ namespace
             R"(<path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/>)"
             R"(<path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="M10 12.5 8 15l2 2.5"/>)"
             R"(<path d="m14 12.5 2 2.5-2 2.5"/>)" },
+        { Icon::fileText, "file-text",
+            R"(<path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/>)"
+            R"(<path d="M14 2v5a1 1 0 0 0 1 1h5"/>)"
+            R"(<path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/>)" },
         { Icon::download, "download",
             R"(<path d="M12 15V3"/><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>)"
             R"(<path d="m7 10 5 5 5-5"/>)" },

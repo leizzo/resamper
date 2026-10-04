@@ -12,6 +12,7 @@
 #include "UI/Developer/StatusBar.h"
 #include "UI/Developer/ThemeWatcher.h"
 #include "UI/State/ShellState.h"
+#include "AppUpdatePrompt.h"
 #include "Toasts.h"
 #include "TopBar.h"
 
@@ -73,6 +74,13 @@ public:
 
     /** A toast at the bottom centre (PRD §16.7). undoable offers Undo (edit.undo). */
     void showToast (const juce::String& message, bool undoable, bool isError = false);
+
+    /** The update button and the completion dialog follow this check. */
+    void bindUpdateCheck (UpdateCheck&);
+
+    /** The first launch of a version opens the completion dialog. `then` runs
+        when it closes or when there is nothing to show. `relaunch` runs from Restart. */
+    void presentLaunchNotes (const juce::String& current, std::function<void()> then, std::function<void()> relaunch);
     ~MainComponent() override;
 
     /** The plug-in windows and their rules (PRD §9.6). */
@@ -126,6 +134,7 @@ private:
     Placeholder sessionPlaceholder, editorPlaceholder, pianoRollPlaceholder;
     DeveloperOverlay developerOverlay;
     Toasts toasts;
+    AppUpdatePrompt updatePrompt;
 
     struct ShortcutListener : juce::KeyListener
     {

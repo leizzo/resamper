@@ -1,4 +1,6 @@
+#include "App/AppUpdate.h"
 #include "TestFixture.h"
+#include "UI/MainWindow/AppUpdatePrompt.h"
 #include "UI/MainWindow/MainComponent.h"
 
 #include <tracktion_engine/tracktion_engine.h>
@@ -75,5 +77,80 @@ struct Snapshots : juce::UnitTest
 };
 
 static Snapshots snapshots;
+
+/** The update button and the completion dialog, offscreen, for a version step 0.2.1 → 0.2.2. */
+struct WhatsNewSnapshot : juce::UnitTest
+{
+    WhatsNewSnapshot() : juce::UnitTest ("What's new", "Snapshot") {}
+
+    void runTest() override
+    {
+        beginTest ("Render the update button and the completion dialog");
+
+        struct Host : juce::Component
+        {
+            explicit Host (ThemeManager& tm) : themeManager (tm), prompt (tm)
+            {
+                addAndMakeVisible (prompt);
+            }
+
+            void paint (juce::Graphics& g) override
+            {
+                auto& theme = themeManager.getTheme();
+                g.fillAll (theme.bgDeep);
+                g.setColour (theme.bgPanel);
+                g.fillRect (0, 0, getWidth(), themeManager.getMetrics().topBarHeight);
+            }
+
+            void resized() override   { prompt.setBounds (getLocalBounds()); }
+
+            ThemeManager& themeManager;
+            AppUpdatePrompt prompt;
+        };
+
+        UIFileSource source;
+        ThemeManager themes { source, "themes/dark.json" };
+        expect (themes.load().wasOk());
+        juce::LookAndFeel::setDefaultLookAndFeel (&themes.getLookAndFeel());
+
+        const auto changelog = juce::File::getCurrentWorkingDirectory().getChildFile ("CHANGELOG.md").loadFileAsString();
+        expect (changelog.isNotEmpty(), "run from the repo root so CHANGELOG.md is found");
+        const auto items = releaseNoteItems (changelog, "0.2.1", "0.2.2");
+        expect (! items.empty());
+
+        const auto size = juce::Point<int> (juce::SystemStats::getEnvironmentVariable ("SNAPSHOT_W", "1600").getIntValue(),
+                                            juce::SystemStats::getEnvironmentVariable ("SNAPSHOT_H", "1000").getIntValue());
+        Host host (themes);
+        host.setSize (size.x, size.y);
+
+        AppRelease release;
+        release.version = "0.2.2";
+        release.tag = "v0.2.2";
+        host.prompt.showOffer (release, releaseSummary (changelog, "0.2.2"), true);
+        host.resized();
+
+        auto dir = juce::File ("/tmp/resamper-snapshots");
+        dir.createDirectory();
+
+        auto write = [&] (const juce::String& name)
+        {
+            auto image = host.createComponentSnapshot (host.getLocalBounds(), true, 2.0f);
+            auto file = dir.getChildFile (name);
+            file.deleteFile();
+            juce::FileOutputStream out (file);
+            expect (juce::PNGImageFormat().writeImageToStream (image, out));
+        };
+
+        write ("update-available.png");
+
+        host.prompt.showWelcome ("0.2.2", items, {}, {});
+        host.resized();
+        write ("whats-new.png");
+
+        juce::LookAndFeel::setDefaultLookAndFeel (nullptr);
+    }
+};
+
+static WhatsNewSnapshot whatsNewSnapshot;
 
 } // namespace resamper::test

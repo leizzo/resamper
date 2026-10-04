@@ -7,6 +7,8 @@ namespace
 {
     const juce::Identifier autoOpenPluginWindows ("autoOpenPluginWindows");
     const juce::Identifier pluginWindowsForSelectedTrackOnly ("pluginWindowsForSelectedTrackOnly");
+    const juce::Identifier skippedUpdateVersion ("skippedUpdateVersion");
+    const juce::Identifier lastLaunchedVersion ("lastLaunchedVersion");
 }
 
 Preferences::Preferences()
@@ -22,6 +24,7 @@ Preferences::~Preferences()
 void Preferences::setFile (const juce::File& f)
 {
     file = f;
+    loadedFromFile = file.existsAsFile();
 
     if (auto xml = juce::XmlDocument::parse (file))
     {
@@ -51,6 +54,26 @@ bool Preferences::getPluginWindowsForSelectedTrackOnly() const
 void Preferences::setPluginWindowsForSelectedTrackOnly (bool on)
 {
     state.setProperty (pluginWindowsForSelectedTrackOnly, on, nullptr);
+}
+
+juce::String Preferences::getSkippedUpdateVersion() const
+{
+    return state.getProperty (skippedUpdateVersion).toString();
+}
+
+void Preferences::setSkippedUpdateVersion (const juce::String& version)
+{
+    state.setProperty (skippedUpdateVersion, version, nullptr);
+}
+
+juce::String Preferences::getLastLaunchedVersion() const
+{
+    return state.getProperty (lastLaunchedVersion).toString();
+}
+
+void Preferences::setLastLaunchedVersion (const juce::String& version)
+{
+    state.setProperty (lastLaunchedVersion, version, nullptr);
 }
 
 void Preferences::save() const

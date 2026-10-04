@@ -1,3 +1,4 @@
+#include "App/AppUpdate.h"
 #include "App/ResamperApp.h"
 #include "Commands/PluginCommands.h"
 #include "Commands/ProductionCommands.h"
@@ -46,7 +47,8 @@ class ResamperApplication : public juce::JUCEApplication,
 {
 public:
     const juce::String getApplicationName() override       { return "Resamper"; }
-    const juce::String getApplicationVersion() override    { return "0.1.0"; }
+    // CMake project version. A hardcoded string here would offer an update for the copy already running.
+    const juce::String getApplicationVersion() override    { return RESAMPER_VERSION; }
     bool moreThanOneInstanceAllowed() override             { return false; }
 
     void initialise (const juce::String&) override
@@ -73,11 +75,43 @@ public:
 
         // In the background, each plug-in in its own worker: startup never waits (PRD §19).
         app->commands.invoke (cmd::pluginScan);
+
+        // Quiet when this copy is current or the check cannot reach GitHub.
+        // The check waits until the what's-new dialog has closed.
+        updateCheck = std::make_unique<UpdateCheck> (getApplicationVersion(),
+                                                      [this]
+                                                      {
+                                                          if (app != nullptr)
+                                                              app->commands.invoke (cmd::projectAutosave);
+
+                                                          quit();
+                                                      });
+
+        if (auto* content = dynamic_cast<MainComponent*> (mainWindow->getContentComponent()))
+        {
+            content->bindUpdateCheck (*updateCheck);
+            content->presentLaunchNotes (getApplicationVersion(),
+                                         [check = juce::WeakReference<UpdateCheck> (updateCheck.get())]
+                                         {
+                                             if (check != nullptr)
+                                                 check->start();
+                                         },
+                                         [this]
+                                         {
+                                             scheduleRelaunch();
+
+                                             if (app != nullptr)
+                                                 app->commands.invoke (cmd::projectAutosave);
+
+                                             quit();
+                                         });
+        }
     }
 
     void shutdown() override
     {
         stopTimer();
+        updateCheck.reset();
         mainWindow.reset();
         chooser.reset();
 
@@ -141,6 +175,7 @@ private:
     std::unique_ptr<ResamperApp> app;
     std::unique_ptr<juce::FileChooser> chooser;
     std::unique_ptr<MainWindow> mainWindow;
+    std::unique_ptr<UpdateCheck> updateCheck;
 
     void choose (const juce::String& title, const juce::String& patterns, int flags, AppCommandHost::FileCallback callback)
     {
