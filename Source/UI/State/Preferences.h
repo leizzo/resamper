@@ -31,9 +31,21 @@ public:
     bool getPluginWindowsForSelectedTrackOnly() const;
     void setPluginWindowsForSelectedTrackOnly (bool);
 
+    /** The release the user chose Later for. Empty until then. A newer release still asks. */
+    juce::String getSkippedUpdateVersion() const;
+    void setSkippedUpdateVersion (const juce::String&);
+
+    /** The version that opened last time. Empty until a launch has been recorded. */
+    juce::String getLastLaunchedVersion() const;
+    void setLastLaunchedVersion (const juce::String&);
+
+    /** True when setFile read an existing preferences file. */
+    bool hadSavedPreferences() const noexcept   { return loadedFromFile; }
+
 private:
     juce::ValueTree state { "Preferences" };
     juce::File file;
+    bool loadedFromFile = false;
 
     void save() const;
     void valueTreePropertyChanged (juce::ValueTree&, const juce::Identifier&) override;

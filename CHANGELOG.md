@@ -9,6 +9,13 @@ patch release; until then every release is published on GitHub as an alpha pre-r
 
 ## [Unreleased]
 
+### Added
+
+- On launch, a newer release shows an Update button and downloads in place. Restart swaps in the
+  signed app. A development build opens the release in the browser.
+- The first launch of a version opens a dialog of what was added and changed since the version
+  opened last time.
+
 ## [0.2.2] - 2026-10-04
 
 Fixes and layout internals on top of **M1.1 — Devices & Plug-ins**.

@@ -127,7 +127,8 @@ juce_add_binary_data(resamper_resources
         UI/fonts/Inter-Bold.ttf
         UI/fonts/IBMPlexMono-Regular.ttf
         UI/fonts/IBMPlexMono-Medium.ttf
-        UI/fonts/IBMPlexMono-SemiBold.ttf)
+        UI/fonts/IBMPlexMono-SemiBold.ttf
+        CHANGELOG.md)
 
 set_target_properties(resamper_resources PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
@@ -203,10 +204,12 @@ add_library(resamper_ui STATIC
     Source/UI/PianoRoll/VelocityEditor.cpp
     Source/UI/PianoRoll/PianoRollView.cpp
     Source/UI/MainWindow/TopBar.cpp
+    Source/UI/MainWindow/AppUpdatePrompt.cpp
     Source/UI/MainWindow/MainComponent.cpp
     Source/UI/MainWindow/MainWindow.cpp
     # The headless app the window is built from; tests build it too.
-    Source/App/ResamperApp.cpp)
+    Source/App/ResamperApp.cpp
+    Source/App/AppUpdate.cpp)
 resamper_use_engine_without_tracktion(resamper_ui)
 target_link_libraries(resamper_ui PUBLIC resamper_commands PRIVATE resamper_resources)
 target_compile_definitions(resamper_ui PRIVATE
@@ -231,6 +234,7 @@ juce_add_gui_app(Resamper
     NEEDS_WEB_BROWSER FALSE)
 
 target_sources(Resamper PRIVATE Source/App/Main.cpp)
+target_compile_definitions(Resamper PRIVATE "RESAMPER_VERSION=\"${PROJECT_VERSION}\"")
 resamper_use_engine_without_tracktion(Resamper)
 target_link_libraries(Resamper PRIVATE resamper_ui)
 
@@ -278,6 +282,7 @@ target_sources(ResamperTests PRIVATE
     Tests/ClipOperationTests.cpp
     Tests/ShortcutTests.cpp
     Tests/AppTests.cpp
+    Tests/AppUpdateTests.cpp
     Tests/WaveformTests.cpp
     Tests/ClipViewTests.cpp
     Tests/AudioImportTests.cpp
