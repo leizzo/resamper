@@ -1,5 +1,6 @@
 #include "ComponentSearch.h"
 #include "FakePlugin.h"
+#include "HostedAudio.h"
 #include "TestFixture.h"
 #include "TestPluginFormat.h"
 #include "Commands/ClipCommands.h"
@@ -14,6 +15,10 @@
 #include "UI/MainWindow/MainComponent.h"
 
 #include <tracktion_engine/tracktion_engine.h>
+
+#if JUCE_MAC
+ #include <objc/message.h>
+#endif
 
 namespace te = tracktion;
 
@@ -318,6 +323,21 @@ struct PluginSandboxTests : juce::UnitTest
         return nullptr;
     }
 
+    /** What AppKit does to a window clicked while key: brings it to the front of its
+        level, over another process's panel, and tells JUCE nothing. */
+    static void orderFrontNatively (juce::Component& c)
+    {
+        if (auto* peer = c.getTopLevelComponent()->getPeer())
+        {
+            auto* view = (id) peer->getNativeHandle();
+            auto window = ((id (*) (id, SEL)) objc_msgSend) (view, sel_registerName ("window"));
+            ((void (*) (id, SEL, id)) objc_msgSend) (window, sel_registerName ("orderFront:"), nil);
+        }
+
+        // The window server reorders a little later.
+        juce::MessageManager::getInstance()->runDispatchLoopUntil (300);
+    }
+
     /** The open preset menu: a temporary modal window, not a tooltip or a toast. */
     static juce::Component* findPresetMenu()
     {
@@ -379,6 +399,46 @@ struct PluginSandboxTests : juce::UnitTest
             plugin = info (f, id);
             expect (plugin.has_value() && plugin->latencySamples > 0,
                     "latency " + juce::String (plugin.has_value() ? plugin->latencySamples : -1));
+        }
+
+        beginTest ("A plug-in added to a Device Chain plays: live, sandboxed or in-process, the track's audio goes through it (#168)");
+        {
+            HostedAudio device;
+            Fixture f;
+            TestPlugin gain (f, "Sandbox Live Gain", "plugin Live Gain");
+            const auto track = addTrack (f);
+            f.audioFileToChoose = writeSineWav (f.scratchDir().getChildFile ("tone.wav"), 2.0);
+            f.invoke (cmd::clipInsertAt, { f.audioFileToChoose, track, 0.0 });
+
+            // The level the device plays once the transport has run a while.
+            auto playedPeak = [&]
+            {
+                f.projects.getEdit().dispatchPendingUpdatesSynchronously();
+                juce::MessageManager::getInstance()->runDispatchLoopUntil (100);
+                f.invoke (cmd::transportPlay);
+                device.process (0.3);
+                const auto peak = device.process (0.2);
+                f.invoke (cmd::transportStop);
+                return peak;
+            };
+
+            const auto dry = playedPeak();
+            expectGreaterThan (dry, 0.1f, "the track doesn't play");
+
+            const auto id = insert (f, track, gain.path());
+            setParameter (f, id, "Gain", 0.25f);
+            expect (is (f, id, HostingState::Kind::sandboxed));
+            expectWithinAbsoluteError (playedPeak(), dry * 0.25f, dry * 0.05f, "sandboxed");
+
+            f.invoke (cmd::pluginSetBypassed, { track, id, true });
+            expectWithinAbsoluteError (playedPeak(), dry, dry * 0.05f, "bypassed");
+            f.invoke (cmd::pluginSetBypassed, { track, id, false });
+
+            f.invoke (cmd::pluginSetRunInProcess, { id, true });
+            expect (loaded (f, id) && is (f, id, HostingState::Kind::inProcess));
+            // The new instance starts from the plug-in's saved state, which the Gain set above isn't in yet.
+            setParameter (f, id, "Gain", 0.25f);
+            expectWithinAbsoluteError (playedPeak(), dry * 0.25f, dry * 0.05f, "in-process");
         }
 
         beginTest ("A slow plug-in loads in the background: the insert returns, the window shows loading, then the plug-in, never Failed");
@@ -798,8 +858,87 @@ struct PluginSandboxTests : juce::UnitTest
             main.reset();
         }
 
+        beginTest ("A drag in a sandboxed plug-in's own UI isn't pulled back to values it has left (#168)");
+        {
+            Fixture f;
+            TestPlugin gain (f, "Sandbox Drag", "plugin Drag Gain");
+            f.theme.load();
+            const auto track = addTrack (f);
+            f.invoke (cmd::trackSelect, { track });
+            juce::ApplicationCommandManager commandManager;
+            auto main = std::make_unique<MainComponent> (f.app, commandManager);
+            main->setSize (1400, 900);
+
+            const auto id = insert (f, track, gain.path());
+            auto* window = main->getPluginWindows().getWindow (id);
+            expect (window != nullptr && dispatchUntil ([&] { return window->getStatus() == PluginWindow::Status::ready; }));
+            auto* instance = instanceOf (f, id);
+
+            if (window == nullptr || instance == nullptr)
+                return;
+
+            // The drag outlasts several of the host's reports: each comes back while it goes on.
+            PluginSandbox::pressKeyInOwnEditor (instance, juce::KeyPress (juce::KeyPress::upKey));
+            juce::MessageManager::getInstance()->runDispatchLoopUntil (TestPluginFormat::dragSteps * TestPluginFormat::dragStepMs * 3);
+
+            const auto dragged = 0.5f + TestPluginFormat::dragSteps * TestPluginFormat::dragStep;
+            expect (dispatchUntil ([&] { return std::abs (parameterValue (f, id, "Gain") - dragged) < 1.0e-3f; }),
+                    "Resamper doesn't end where the drag did: " + juce::String (parameterValue (f, id, "Gain")));
+
+            prepare (*instance);
+            expectWithinAbsoluteError (processOnes (*instance), dragged, 1.0e-3f, "the plug-in itself was pulled back");
+            main.reset();
+        }
+
         // The macOS window list can see the host's panel. Elsewhere that order is manual QA.
 #if JUCE_MAC
+        beginTest ("A sandboxed plug-in's window brought over its own UI (a click in it, Bypass say) gets the UI back on top (#168)");
+        {
+            Fixture f;
+            TestPlugin gain (f, "Sandbox Click", "plugin Click Gain");
+            f.theme.load();
+            const auto track = addTrack (f);
+            f.invoke (cmd::trackSelect, { track });
+            juce::ApplicationCommandManager commandManager;
+            auto main = std::make_unique<MainComponent> (f.app, commandManager);
+            main->setSize (1400, 900);
+
+            const auto id = insert (f, track, gain.path());
+            auto* window = main->getPluginWindows().getWindow (id);
+            expect (window != nullptr && dispatchUntil ([&] { return window->getStatus() == PluginWindow::Status::ready; }));
+            auto* instance = instanceOf (f, id);
+
+            if (window == nullptr || instance == nullptr || window->getVendorComponent() == nullptr)
+                return;
+
+            auto ownUi = [&] { return PluginSandbox::getOwnEditorScreenBounds (instance); };
+            auto uiInFront = [&]
+            {
+                return ownUi() == window->getVendorComponent()->getScreenBounds() && ! sandboxdock::isInFrontOf (*window, ownUi());
+            };
+
+            // Back within a moment, not whenever something else happens to move the window.
+            auto backSoon = [&]
+            {
+                for (int i = 0; i < 50 && ! uiInFront(); ++i)
+                    juce::MessageManager::getInstance()->runDispatchLoopUntil (20);
+
+                return uiInFront();
+            };
+
+            expect (dispatchUntil (uiInFront), "the plug-in UI isn't up");
+
+            orderFrontNatively (*window);
+            expect (backSoon(), "the window stays over the plug-in's UI");
+
+            f.invoke (cmd::pluginSetBypassed, { track, id, true });
+            orderFrontNatively (*window);
+            expect (backSoon(), "bypassed, the window stays over the plug-in's UI");
+
+            main->getPluginWindows().close (id);
+            main.reset();
+        }
+
         beginTest ("Popups over a sandboxed plug-in's window show above its own UI");
         {
             Fixture f;
@@ -1077,5 +1216,6 @@ struct PluginSandboxTests : juce::UnitTest
 };
 
 static PluginSandboxTests pluginSandboxTests;
+
 
 } // namespace resamper::test

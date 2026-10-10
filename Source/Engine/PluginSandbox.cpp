@@ -707,6 +707,15 @@ private:
             text = t;
         }
 
+        /** The plug-in changed the value itself (its UI): mirrored and announced, never sent
+            back to it. Sent back, it would arrive while a drag goes on, and pull the control
+            back to where it was when reported (#168). */
+        void setFromPlugin (float newValue)
+        {
+            value.store (newValue);
+            sendValueChangedMessageToListeners (newValue);
+        }
+
         /** Whether the host set this value lately: a report of an older value from the plug-in is stale then. */
         bool setByHostLately() const
         {
@@ -840,7 +849,7 @@ private:
         parameter->setText (v, p[msg::text].toString());
 
         if ((bool) p[msg::fromPlugin] && ! parameter->setByHostLately() && ! juce::approximatelyEqual (v, parameter->getValue()))
-            parameter->setValueNotifyingHost (v);
+            parameter->setFromPlugin (v);
     }
 
     /** On the pipe's thread: what the host tells unasked. */
@@ -1616,6 +1625,11 @@ namespace
         {
             // Stopped, no audio blocks come: what the stand-in set still reaches the plug-in.
             applyPendingParameters();
+
+            // A click in its window brings that window to the front, over the UI, and nothing
+            // tells the stand-in: the UI shows black there until it is put back above (#168).
+            if (panel != nullptr)
+                panel->keepAbove();
 
             juce::ValueTree report (msg::parameters);
 

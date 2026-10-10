@@ -14,7 +14,8 @@ namespace resamper::test
     "plugin <name>" finds an effect that can be created: a gain (its "Gain"
     parameter, 0.5 at first, is its state) reporting pluginLatency samples of
     latency, whose "Crash" parameter, once on, kills the process at its next
-    audio block, and whose editor is editorWidth x editorHeight. "sandboxcrash <name>" is the same, except that it kills a
+    audio block, and whose editor is editorWidth x editorHeight; Up typed in the
+    editor drags Gain up by dragSteps x dragStep, as a mouse drag would. "sandboxcrash <name>" is the same, except that it kills a
     sandbox host while loading (inSandboxHost) and loads in-process. */
 class TestPluginFormat : public juce::AudioPluginFormat
 {
@@ -24,6 +25,8 @@ public:
     static constexpr const char* formatName = "ResamperTest";
     static constexpr const char* fileExtension = ".resampertest";
     static constexpr int pluginLatency = 64, editorWidth = 300, editorHeight = 160, sluggishLoadMs = 1500;
+    static constexpr int dragSteps = 30, dragStepMs = 20;
+    static constexpr float dragStep = 0.01f;   ///< Gain's own step: smaller ones snap back
 
     /** The folder the format registerWith adds scans: one per run. */
     static juce::File scanFolder();

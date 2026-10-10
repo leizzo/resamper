@@ -64,14 +64,48 @@ namespace
         }
 
     private:
-        struct Editor final : juce::AudioProcessorEditor
+        /** Up drags Gain up, as a mouse drag in it does: dragSteps steps of dragStep, one
+            every dragStepMs, each from the value Gain has then, in one gesture. */
+        struct Editor final : juce::AudioProcessorEditor, private juce::Timer
         {
-            explicit Editor (TestPlugin& p) : juce::AudioProcessorEditor (p)
+            explicit Editor (TestPlugin& p) : juce::AudioProcessorEditor (p), plugin (p)
             {
                 setSize (TestPluginFormat::editorWidth, TestPluginFormat::editorHeight);
             }
 
+            ~Editor() override   { stopTimer(); }
+
             void paint (juce::Graphics& g) override   { g.fillAll (juce::Colours::darkorange); }
+
+            bool keyPressed (const juce::KeyPress& key) override
+            {
+                if (key != juce::KeyPress::upKey)
+                    return false;
+
+                if (stepsLeft == 0)
+                {
+                    plugin.gain->beginChangeGesture();
+                    stepsLeft = TestPluginFormat::dragSteps;
+                    startTimer (TestPluginFormat::dragStepMs);
+                }
+
+                return true;
+            }
+
+            void timerCallback() override
+            {
+                auto& parameter = *plugin.gain;
+                parameter = parameter.get() + TestPluginFormat::dragStep;
+
+                if (--stepsLeft == 0)
+                {
+                    stopTimer();
+                    parameter.endChangeGesture();
+                }
+            }
+
+            TestPlugin& plugin;
+            int stepsLeft = 0;
         };
 
         juce::PluginDescription desc;

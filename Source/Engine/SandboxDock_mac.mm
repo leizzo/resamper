@@ -41,6 +41,7 @@ struct Panel::Impl
     juce::Component* content = nullptr;
     NSPanel* panel = nil;
     id monitor = nil;
+    juce::int64 above = 0;   ///< the window place() put the panel just above
 };
 
 Panel::Panel (juce::Component& content, std::function<void()> onClicked)
@@ -99,6 +100,13 @@ void Panel::place (juce::Rectangle<int> area, bool visible, WindowRef above)
     const auto level = juce::jmin (above.level, (int) NSFloatingWindowLevel);
     [panel setLevel: level];
     [panel orderWindow: NSWindowAbove relativeTo: (NSInteger) above.number];
+    impl->above = above.number;
+}
+
+void Panel::keepAbove()
+{
+    if ([impl->panel isVisible] && impl->above != 0)
+        [impl->panel orderWindow: NSWindowAbove relativeTo: (NSInteger) impl->above];
 }
 
 juce::Rectangle<int> Panel::getScreenBounds() const

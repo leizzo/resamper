@@ -1,6 +1,7 @@
 #include "PluginHostingImpl.h"
 
 #include <algorithm>
+#include <optional>
 #include <utility>
 
 namespace te = tracktion;
@@ -36,6 +37,14 @@ namespace
     void createAgain (te::ExternalPlugin& plugin)
     {
         const auto hadInstance = plugin.getAudioPluginInstance() != nullptr;
+
+        // Playback that has the plug-in initialised never prepares a new instance: it
+        // would skip the plug-in, and the track would play dry (#168). Freed for the swap,
+        // playback initialises it afresh once it is back (as the engine does for a bus layout).
+        std::optional<te::Edit::ScopedRenderStatus> playbackFreed;
+
+        if (! plugin.baseClassNeedsInitialising())
+            playbackFreed.emplace (plugin.edit, true);
 
         // Processing off deletes the instance; neither change is an undo step.
         if (hadInstance)
