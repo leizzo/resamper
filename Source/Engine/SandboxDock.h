@@ -43,6 +43,10 @@ namespace sandboxdock
             dialog, tooltip or toast stays above the panel. */
         void place (juce::Rectangle<int> screenArea, bool visible, WindowRef above);
 
+        /** Puts the panel back just above the window place() last gave, if it shows: something
+            may have brought that window to the front since (a click in it). */
+        void keepAbove();
+
         /** Where the panel is on the desktop; empty while hidden. */
         juce::Rectangle<int> getScreenBounds() const;
 

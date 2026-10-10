@@ -118,6 +118,11 @@ void Panel::place (juce::Rectangle<int> area, bool visible, WindowRef above)
     content.setVisible (show);
 }
 
+void Panel::keepAbove()
+{
+    // Here the panel is always on top of the window it covers.
+}
+
 juce::Rectangle<int> Panel::getScreenBounds() const
 {
     return impl->content.isVisible() ? impl->content.getScreenBounds() : juce::Rectangle<int>();
