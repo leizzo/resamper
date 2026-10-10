@@ -88,8 +88,7 @@ struct MasterInfo
     gesture. A call that changes nothing returns false and opens no undo step.
 
     Send mute follows AuxSendPlugin, which writes the send gain through the
-    UndoManager, so mute is one undo step — unlike track mute, which the engine
-    keeps out of undo.
+    UndoManager, so mute is one undo step, as track mute is.
 */
 class Mixer
 {

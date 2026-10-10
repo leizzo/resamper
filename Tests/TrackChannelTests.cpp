@@ -150,7 +150,7 @@ struct TrackChannelTests : juce::UnitTest
         }
 
         //==============================================================================
-        beginTest ("track.toggleMute and track.toggleSolo flip one track and are never undoable");
+        beginTest ("track.toggleMute and track.toggleSolo flip one track, each as one undo step");
         {
             ChannelFixture f;
             f.invoke (cmd::trackToggleMute, { f.trackId (1) });
@@ -161,12 +161,36 @@ struct TrackChannelTests : juce::UnitTest
             expect (f.track (0).solo);
             expect (! f.track (1).solo);
 
-            f.invoke (cmd::editUndo);   // undoes the second track.add, not mute or solo
-            expectEquals (f.numTracks(), 1);
+            f.invoke (cmd::editUndo);   // the solo
+            expect (! f.track (0).solo);
+            expect (f.track (1).muted);
+
+            f.invoke (cmd::editUndo);   // the mute
+            expect (! f.track (1).muted);
+            expectEquals (f.numTracks(), 2);
+
+            f.invoke (cmd::editRedo);
+            f.invoke (cmd::editRedo);
+            expect (f.track (1).muted);
             expect (f.track (0).solo);
 
-            f.invoke (cmd::trackToggleSolo, { f.trackId (0) });
+            f.invoke (cmd::trackToggleSolo, { f.trackId (0) });   // toggling back is a step of its own
             expect (! f.track (0).solo);
+            f.invoke (cmd::editUndo);
+            expect (f.track (0).solo);
+        }
+
+        beginTest ("Mute and solo that change nothing record no undo step");
+        {
+            ChannelFixture f;
+            f.undoOnce();   // one track left; its track.add is the only step
+            expect (! f.model.setTrackMuted (f.trackId(), false));
+            expect (! f.model.setTrackSolo (f.trackId(), false));
+            expect (! f.model.setTrackMuted ("unknown", true));
+
+            expect (f.undoOnce());
+            expectEquals (f.numTracks(), 0);
+            expect (! f.model.canUndo());
         }
 
         beginTest ("Removing and restoring a track keeps its channel settings");
