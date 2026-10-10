@@ -96,8 +96,8 @@ Turkish suffixes attach to them with an apostrophe: "Clip'i sil", "Track'e ekle"
 | Vendor | Üretici |
 | Slot | Yuva |
 | Loading | Yükleniyor |
+| Not loaded (a Failed plug-in) | Başarısız |
 | In-process / Out-of-process | Süreç içi / Süreç dışı |
-| Not loaded | Yüklenmedi |
 | UI scale | Arayüz ölçeği |
 | Sounds / Instruments / Samples | Sesler / Enstrümanlar / Sample'lar |
 | Drums / Bass / Chords / Vocal (track colours) | Davul / Bas / Akorlar / Vokal |

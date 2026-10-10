@@ -60,7 +60,7 @@ struct ChannelStrip::SendRow : juce::Component
         g.fillRoundedRectangle (badge.toFloat(), theme.radiusSm);
         drawStyledText (g, themeManager, letter, TypeStyle { 8.0f, false, 700 }, badge, juce::Justification::centred,
                         theme.textOnAccent);
-        drawNumber (g, themeManager, send.muted ? juce::String ("off") : juce::String (send.gain.value, 1),
+        drawNumber (g, themeManager, send.muted ? TRANS ("off") : juce::String (send.gain.value, 1),
                     TypeStyle { 9.0f, true, 400 }, getLocalBounds().removeFromRight (30), juce::Justification::centredRight,
                     theme.textSecondary);
     }

@@ -27,8 +27,6 @@ namespace
     {
         return columns > 0 ? columns * knobWidth + (columns - 1) * knobGap : 0;
     }
-
-    const char* modsTooltip = NEEDS_TRANS ("Modulators: the Mods Drawer is coming");
 }
 
 NativeDeviceCard::NativeDeviceCard (CommandRegistry& c, const PluginRack& r, ThemeManager& tm, const juce::String& track,
@@ -37,7 +35,7 @@ NativeDeviceCard::NativeDeviceCard (CommandRegistry& c, const PluginRack& r, The
       power (tm, DevicePowerButton::Style::native),
       preset (tm, TRANS ("Preset: presets are coming with the preset browser"), DeviceHeaderButton::Kind::preset),
       ab (tm, TRANS ("A/B compare is coming"), DeviceHeaderButton::Kind::abCompare),
-      mods (tm, TRANS (modsTooltip), DeviceHeaderButton::Kind::mods),
+      mods (tm, TRANS ("Modulators: the Mods Drawer is coming"), DeviceHeaderButton::Kind::mods),
       fold (tm, TRANS ("Fold"), DeviceHeaderButton::Kind::icon, Icon::foldVertical),
       expand (tm, TRANS ("Expand"), DeviceHeaderButton::Kind::icon, Icon::maximize2),
       options (tm, TRANS ("Options"), DeviceHeaderButton::Kind::icon, Icon::ellipsis)
