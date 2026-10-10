@@ -154,6 +154,7 @@
     "h-plugin-titlebar": 36,
     "h-plugin-toolbar": 38,
     "h-plugin-footer": 26,
+    "h-plugin-parameters-min": 320,
     "window-cascade": 24
   }
 }

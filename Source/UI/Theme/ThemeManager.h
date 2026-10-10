@@ -123,6 +123,7 @@ struct LayoutMetrics
     int pluginTitleBarHeight = 0;    ///< a plug-in window's title bar (§9.6)
     int pluginToolbarHeight = 0;     ///< a plug-in window's host toolbar
     int pluginFooterHeight = 0;      ///< a plug-in window's host footer
+    int pluginParametersMinHeight = 0;  ///< the least vendor area a plug-in window gives its Parameters panel
     int windowCascade = 0;           ///< how far each further floating window steps down-right
 };
 

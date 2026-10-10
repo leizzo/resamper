@@ -367,6 +367,7 @@ void PluginWindow::showParameters (bool shouldShow)
 
     parameters->setToggleState (parameterPanel != nullptr, juce::dontSendNotification);
     parameters->setTitle (parameterPanel != nullptr ? TRANS ("Parameters (shown)") : TRANS ("Parameters"));
+    updateSize();
     resized();
 }
 
@@ -459,7 +460,10 @@ void PluginWindow::updateSize()
     auto& metrics = themeManager.getMetrics();
     const auto content = vendorSize();
     const auto width = juce::jmax (minFrameWidth, content.x);
-    setFrameSize (width, metrics.pluginTitleBarHeight + metrics.pluginToolbarHeight + content.y + metrics.pluginFooterHeight);
+
+    // The Parameters panel takes the vendor area: a small vendor UI leaves it at least readable.
+    const auto height = isShowingParameters() ? juce::jmax (content.y, metrics.pluginParametersMinHeight) : content.y;
+    setFrameSize (width, metrics.pluginTitleBarHeight + metrics.pluginToolbarHeight + height + metrics.pluginFooterHeight);
 }
 
 juce::Rectangle<int> PluginWindow::toolbar() const
