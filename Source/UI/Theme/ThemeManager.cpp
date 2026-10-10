@@ -432,7 +432,8 @@ juce::Result ThemeManager::parse (const juce::String& text, Theme& t, LayoutMetr
         { "velocityLaneHeight", &LayoutMetrics::velocityLaneHeight },
         { "gridEighthPixels", &LayoutMetrics::gridEighthPixels }, { "gridSixteenthPixels", &LayoutMetrics::gridSixteenthPixels },
         { "h-plugin-titlebar", &LayoutMetrics::pluginTitleBarHeight }, { "h-plugin-toolbar", &LayoutMetrics::pluginToolbarHeight },
-        { "h-plugin-footer", &LayoutMetrics::pluginFooterHeight }, { "window-cascade", &LayoutMetrics::windowCascade },
+        { "h-plugin-footer", &LayoutMetrics::pluginFooterHeight }, { "h-plugin-parameters-min", &LayoutMetrics::pluginParametersMinHeight },
+        { "window-cascade", &LayoutMetrics::windowCascade },
     };
 
     Theme newTheme;

@@ -270,6 +270,44 @@ struct PluginWindowTests : juce::UnitTest
                                                                        + 2 * FakePlugin::editorHeight + metrics.pluginFooterHeight);
         }
 
+        beginTest ("Parameters grows a small vendor area to the readable minimum, and off restores it, in place (#132)");
+        {
+            Windows f;
+            const auto id = f.insert (pinboard);
+            auto* window = f.windows().getWindow (id);
+            expect (window != nullptr && dispatchUntil ([&] { return window->getStatus() == PluginWindow::Status::ready; }));
+
+            if (window == nullptr || window->getStatus() != PluginWindow::Status::ready)
+                return;
+
+            auto& metrics = f.theme.getMetrics();
+            const auto chrome = metrics.pluginTitleBarHeight + metrics.pluginToolbarHeight + metrics.pluginFooterHeight;
+            expect (FakePlugin::editorHeight < metrics.pluginParametersMinHeight, "the vendor UI isn't small enough to test");
+
+            const auto where = window->getFrameScreenBounds().getPosition();
+            const auto saved = f.plugins.getWindowState (id);
+            auto* parametersButton = findOne (*window, "parameters");
+            expect (parametersButton != nullptr);
+
+            click (parametersButton);
+            expect (dispatchUntil ([&] { return window->isShowingParameters(); }), "Parameters doesn't show");
+            expectEquals (window->getFrameScreenBounds().getHeight(), chrome + metrics.pluginParametersMinHeight);
+
+            if (auto* panel = findType<juce::GenericAudioProcessorEditor> (*window))
+                expectEquals (panel->getHeight(), metrics.pluginParametersMinHeight);
+            else
+                expect (false, "Parameters shows no parameters");
+
+            expect (window->getFrameScreenBounds().getPosition() == where, window->getFrameScreenBounds().getPosition().toString());
+
+            click (parametersButton);
+            expect (dispatchUntil ([&] { return ! window->isShowingParameters(); }), "Parameters doesn't go off");
+            expectEquals (window->getFrameScreenBounds().getHeight(), chrome + FakePlugin::editorHeight);
+            expect (window->getFrameScreenBounds().getPosition() == where, window->getFrameScreenBounds().getPosition().toString());
+
+            expect (f.plugins.getWindowState (id) == saved, "Parameters changed the saved window state");
+        }
+
         beginTest ("Window state, preset name and A/B slot round-trip through the project");
         {
             Windows f;
