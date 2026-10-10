@@ -1,5 +1,6 @@
 #include "ComponentSearch.h"
 #include "FakePlugin.h"
+#include "HostedAudio.h"
 #include "TestFixture.h"
 #include "TestPluginFormat.h"
 #include "Commands/ClipCommands.h"
@@ -379,6 +380,46 @@ struct PluginSandboxTests : juce::UnitTest
             plugin = info (f, id);
             expect (plugin.has_value() && plugin->latencySamples > 0,
                     "latency " + juce::String (plugin.has_value() ? plugin->latencySamples : -1));
+        }
+
+        beginTest ("A plug-in added to a Device Chain plays: live, sandboxed or in-process, the track's audio goes through it (#168)");
+        {
+            HostedAudio device;
+            Fixture f;
+            TestPlugin gain (f, "Sandbox Live Gain", "plugin Live Gain");
+            const auto track = addTrack (f);
+            f.audioFileToChoose = writeSineWav (f.scratchDir().getChildFile ("tone.wav"), 2.0);
+            f.invoke (cmd::clipInsertAt, { f.audioFileToChoose, track, 0.0 });
+
+            // The level the device plays once the transport has run a while.
+            auto playedPeak = [&]
+            {
+                f.projects.getEdit().dispatchPendingUpdatesSynchronously();
+                juce::MessageManager::getInstance()->runDispatchLoopUntil (100);
+                f.invoke (cmd::transportPlay);
+                device.process (0.3);
+                const auto peak = device.process (0.2);
+                f.invoke (cmd::transportStop);
+                return peak;
+            };
+
+            const auto dry = playedPeak();
+            expectGreaterThan (dry, 0.1f, "the track doesn't play");
+
+            const auto id = insert (f, track, gain.path());
+            setParameter (f, id, "Gain", 0.25f);
+            expect (is (f, id, HostingState::Kind::sandboxed));
+            expectWithinAbsoluteError (playedPeak(), dry * 0.25f, dry * 0.05f, "sandboxed");
+
+            f.invoke (cmd::pluginSetBypassed, { track, id, true });
+            expectWithinAbsoluteError (playedPeak(), dry, dry * 0.05f, "bypassed");
+            f.invoke (cmd::pluginSetBypassed, { track, id, false });
+
+            f.invoke (cmd::pluginSetRunInProcess, { id, true });
+            expect (loaded (f, id) && is (f, id, HostingState::Kind::inProcess));
+            // The new instance starts from the plug-in's saved state, which the Gain set above isn't in yet.
+            setParameter (f, id, "Gain", 0.25f);
+            expectWithinAbsoluteError (playedPeak(), dry * 0.25f, dry * 0.05f, "in-process");
         }
 
         beginTest ("A slow plug-in loads in the background: the insert returns, the window shows loading, then the plug-in, never Failed");
