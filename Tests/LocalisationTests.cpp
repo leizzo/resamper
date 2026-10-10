@@ -2,6 +2,7 @@
 #include "TestFixture.h"
 #include "App/UILanguage.h"
 #include "Commands/ApplicationCommandTable.h"
+#include "UI/Controls/Menus.h"
 #include "UI/Localisation.h"
 #include "UI/MainWindow/MainComponent.h"
 
@@ -306,6 +307,57 @@ struct LocalisationTests : juce::UnitTest
             const auto file = emptyTurkish + "\"Save\" = \"Kaydet\"\n\"Track %1\" = \"Track %1\"\n\"%1 clip\" = \"%1 Clip\"\n"
                                              "\"%1 clips\" = \"%1 Clip\"\n\"Say \\\"hi\\\"\" = \"Selam\"\n";
             expect (missingTranslations (source, file).isEmpty(), missingTranslations (source, file).joinIntoString (" | "));
+        }
+
+        beginTest ("Menus show Command names in the UI Language; Commands keep the English");
+        {
+            Fixture f;
+            expect (f.theme.load().wasOk());
+
+            // After the Fixture, which installs English.
+            const auto zoomIn = juce::String::fromUTF8 ("Yak\xc4\xb1nla\xc5\x9ft\xc4\xb1r");
+            ScopedMapping mapping (emptyTurkish + "\"Zoom In\" = \"" + zoomIn + "\"\n");
+
+            juce::ApplicationCommandManager commandManager;
+            MainComponent main (f.app, commandManager);
+            commandManager.registerAllCommandsForTarget (&main);
+
+            expectEquals (f.commands.find (cmd::arrangeZoomIn.id)->getName(), juce::String ("Zoom In"));
+            expectEquals (commandItem (f.commands, cmd::arrangeZoomIn).text, zoomIn);
+
+            const auto viewMenu = createCommandMenu (commandManager, "View");
+            bool found = false;
+
+            for (juce::PopupMenu::MenuItemIterator it (viewMenu); it.next();)
+                found = found || it.getItem().text == zoomIn;
+
+            expect (found, "the View menu has no translated Zoom In");
+
+            // The language names stay as each language writes itself.
+            expectEquals (commandItem (f.commands, cmd::uiLanguageTurkish).text, juce::String::fromUTF8 ("T\xc3\xbcrk\xc3\xa7" "e"));
+        }
+
+        beginTest ("Every Command name has an entry in tr.txt");
+        {
+            const auto languageFile = juce::File (RESAMPER_SOURCE_DIR).getChildFile ("UI/translations/tr.txt").loadFileAsString();
+            const juce::LocalisedStrings strings (languageFile, false);
+
+            Fixture f;
+            expect (f.theme.load().wasOk());
+            juce::ApplicationCommandManager commandManager;
+            MainComponent main (f.app, commandManager);
+
+            juce::StringArray missing;
+
+            for (auto& id : f.commands.getIds())
+                if (const auto& name = f.commands.find (id)->getName(); ! strings.getMappings().containsKey (name))
+                    missing.add (id + ": \"" + name + "\"");
+
+            for (auto* name : getMenuNames())
+                if (! strings.getMappings().containsKey (name))
+                    missing.add (juce::String ("menu: \"") + name + "\"");
+
+            expect (missing.isEmpty(), "no entry in UI/translations/tr.txt for:\n" + missing.joinIntoString ("\n"));
         }
 
         beginTest ("Every TRANS / tr key under Source/UI and Source/App has an entry in tr.txt");

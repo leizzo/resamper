@@ -17,7 +17,7 @@ MainWindow::MainWindow (const juce::String& title, ResamperApp& app)
     addKeyListener (&content->getShortcutListener());
 
     for (auto* name : getMenuNames())
-        menuNames.add (name);
+        menuNames.add (TRANS (name));
 
     setApplicationCommandManagerToWatch (&commandManager);
 
@@ -63,9 +63,10 @@ void MainWindow::closeButtonPressed()
     juce::JUCEApplication::getInstance()->systemRequestedQuit();
 }
 
-juce::PopupMenu MainWindow::getMenuForIndex (int, const juce::String& name)
+juce::PopupMenu MainWindow::getMenuForIndex (int index, const juce::String&)
 {
-    return createCommandMenu (commandManager, name);
+    // The title shown is translated; the menu's English name picks its Commands.
+    return createCommandMenu (commandManager, getMenuNames()[(size_t) index]);
 }
 
 } // namespace resamper

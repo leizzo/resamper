@@ -241,7 +241,8 @@ void Chip::paintButton (juce::Graphics& g, bool, bool down)
 
 //==============================================================================
 TrackButton::TrackButton (ThemeManager& tm, Kind k)
-    : ThemedButton (tm, k == Kind::mute ? "Mute" : k == Kind::solo ? "Solo" : k == Kind::arm ? "Arm" : "Automation"),
+    : ThemedButton (tm, k == Kind::mute ? TRANS ("Mute") : k == Kind::solo ? TRANS ("Solo")
+                      : k == Kind::arm ? TRANS ("Arm") : TRANS ("Automation")),
       kind (k)
 {
     setTooltip (getName());
@@ -282,6 +283,7 @@ void TrackButton::paintButton (juce::Graphics& g, bool, bool down)
     {
         g.setColour (glyphColour);
         g.setFont (themeManager.font (TypeStyle { theme.caption.size + 0.5f, false, 700 }));
+        // The glyphs stay M and S in every UI Language, as on a console.
         g.drawText (kind == Kind::mute ? "M" : "S", getLocalBounds(), juce::Justification::centred, false);
     }
 

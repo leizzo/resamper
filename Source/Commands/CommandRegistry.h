@@ -111,6 +111,9 @@ public:
     const Command* find (const juce::String& commandId) const;
     bool contains (const juce::String& commandId) const    { return find (commandId) != nullptr; }
 
+    /** Every registered Command's ID, in ID order. */
+    juce::StringArray getIds() const;
+
 private:
     void add (const char* id, CommandInfo, std::type_index argsType, std::function<void (const std::any&)> body);
 

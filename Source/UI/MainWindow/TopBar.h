@@ -42,7 +42,8 @@ private:
 
     struct MenuTitle
     {
-        juce::String name;
+        juce::String name;      ///< the menu's English name, which picks its Commands
+        juce::String title;     ///< the name shown, in the UI Language
         juce::Rectangle<int> bounds;
     };
 

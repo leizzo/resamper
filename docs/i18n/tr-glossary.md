@@ -11,7 +11,7 @@ How Resamper's UI reads in Turkish (ADR-0015). Translations go in `UI/translatio
 
 ## Kept in English
 
-Domain terms from `CONTEXT.md` keep their English spelling, as Turkish producers know them: Clip, Audio Clip, MIDI Clip, Track, Audio Track, MIDI Track, Send, Return, Bus, Master, Insert, Mixer Insert, Device, Device Chain, Native Device, Plug-in, Rack, Rack Chain, Pad, Macro, Modulator, LFO, Sidechain, Tap, Pre-FX, Pre-Fader, Post-Fader, Strip, Folder, Scene, Slot Clip, Warp, Warp Marker, Transient, Fade, Clip Gain, Take, Loop, Cue, Session View, Arrangement, Mixer, Detail View, Piano Roll, Audio Editor, Automation Lane, Breakpoint, Clip Envelope, Read, Touch, Latch, Write, Sandbox, Theme. Units and abbreviations (dB, Hz, ms, BPM, M/S, Ø) stay as they are.
+Domain terms from `CONTEXT.md`, and the studio words Turkish producers use as they are (Shaper, Preset, Velocity, Bounce, Tap Tempo), keep their English spelling: Clip, Audio Clip, MIDI Clip, Track, Audio Track, MIDI Track, Send, Return, Bus, Master, Insert, Mixer Insert, Device, Device Chain, Native Device, Plug-in, Rack, Rack Chain, Pad, Macro, Modulator, LFO, Sidechain, Tap, Pre-FX, Pre-Fader, Post-Fader, Strip, Folder, Scene, Slot Clip, Warp, Warp Marker, Transient, Fade, Clip Gain, Take, Loop, Cue, Session View, Arrangement, Mixer, Detail View, Piano Roll, Audio Editor, Automation Lane, Breakpoint, Clip Envelope, Read, Touch, Latch, Write, Sandbox, Theme, Shaper, Preset, Velocity, Bounce, Tap Tempo. Units and abbreviations (dB, Hz, ms, BPM, M/S, Ø) stay as they are.
 
 Turkish suffixes attach to them with an apostrophe: "Clip'i sil", "Track'e ekle", "Send'ler".
 
@@ -50,5 +50,43 @@ Turkish suffixes attach to them with an apostrophe: "Clip'i sil", "Track'e ekle"
 | Later | Sonra |
 | Update available | Güncelleme var |
 | What's new | Yenilikler |
+| File / Edit / Create / View / Options / Help | Dosya / Düzen / Oluştur / Görünüm / Seçenekler / Yardım |
+| Menu | Menü |
+| Template | Şablon |
+| Export | Dışa aktar |
+| Recover | Kurtar |
+| Autosave | Otomatik kaydet |
+| Freeze / Unfreeze | Dondur / Çöz |
+| Consolidate | Birleştir |
+| Reverse | Ters çevir |
+| Split | Böl |
+| Note | Nota |
+| Quantize | Kuantize et |
+| Transpose | Transpoze et |
+| Automation | Otomasyon |
+| Parameter | Parametre |
+| Playhead | Oynatma imleci |
+| Time signature | Ölçü rakamı |
+| Count-in | Ön sayım |
+| Gain | Kazanç (Clip Gain stays English) |
+| Scan | Tara |
+| Locate | Bul |
+| Developer | Geliştirici |
+| Song | Şarkı |
+| Metronome | Metronom |
+| Follow | Takip et |
+| Browser | Tarayıcı |
+| Zoom In / Zoom Out | Yakınlaştır / Uzaklaştır |
+| Selection | Seçim |
+| Update / Updated | Güncelle / Güncellendi |
+| Update complete | Güncelleme tamamlandı |
+| Release notes | Sürüm notları |
+| Changelog | Değişiklik günlüğü |
+| Restart | Yeniden başlat |
+| Downloading / Installing | İndiriliyor / Yükleniyor |
 
-"Record" is always "Kayıt", never "Kaydet": "Kaydet" is Save.
+A percentage keeps the English form, `%1%` ("İndiriliyor 40%"), as numbers and units are not localised (ADR-0015).
+
+"Record" is always "Kayıt", never "Kaydet": "Kaydet" is Save ("Record into Arrangement" is "Arrangement'a kayıt yap").
+
+A language's own name ("English", "Türkçe") has an entry equal to its key: it reads the same in every UI Language.
