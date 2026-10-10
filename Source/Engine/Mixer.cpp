@@ -347,9 +347,9 @@ bool Mixer::setSendMuted (const juce::String& trackId, const juce::String& sendI
 
     // AuxSendPlugin::setMute is not a separate flag. It stores the previous
     // gain and then drives the send to silence (or back) through the gain
-    // parameter, and that write goes through the UndoManager. Track mute does
-    // not. So a send mute that changes something is one undo step; we do not
-    // try to keep it out of undo. A no-op opens no transaction.
+    // parameter, and that write goes through the UndoManager. So a send mute
+    // that changes something is one undo step, like track mute. A no-op opens
+    // no transaction.
     pinDefault (send->gainLevel);
 
     if (send->gain != nullptr)

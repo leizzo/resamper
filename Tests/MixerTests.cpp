@@ -239,7 +239,7 @@ struct MixerTests : juce::UnitTest
             expectWithinAbsoluteError (f.strip (f.sourceId).volume.value, 0.0, 1.0e-2);
         }
 
-        beginTest ("The track fader, pan, mute and solo Commands work on a Bus; the fader is one undo step and re-syncs");
+        beginTest ("The track fader, pan, mute and solo Commands work on a Bus, each one undo step; the fader re-syncs");
         {
             MixerFixture f;
             f.invoke (cmd::mixerAddBus, { "Drums" });
@@ -257,16 +257,52 @@ struct MixerTests : juce::UnitTest
             expect (strip.muted);
             expect (strip.solo);
 
+            f.invoke (cmd::editUndo);   // the solo
+            strip = f.strip (bus);
+            expect (strip.muted && ! strip.solo);
+
+            f.invoke (cmd::editUndo);   // the mute
+            expect (! f.strip (bus).muted);
+
             f.invoke (cmd::editUndo);   // the pan
             f.invoke (cmd::editUndo);   // the whole fader drag
             strip = f.strip (bus);
             expectWithinAbsoluteError (strip.volume.value, 0.0, 1.0e-2);
             expectWithinAbsoluteError (strip.pan, 0.0, 1.0e-3);
-            expect (strip.muted);   // mute and solo are never undo steps
 
             auto* folder = dynamic_cast<tracktion::FolderTrack*> (tracktion::findTrackForID (f.projects.getEdit(), tracktion::EditItemID::fromString (bus)));
             auto* fader = folder->getVolumePlugin();
             expectWithinAbsoluteError (fader->volParam->getCurrentValue(), fader->volume.get(), 1.0e-6f);
+        }
+
+        beginTest ("Muting or soloing a Bus reaches its children as one undo step");
+        {
+            MixerFixture f;
+            f.invoke (cmd::trackAdd);
+            f.invoke (cmd::trackAdd);
+            const auto child = f.model.getTracks()[0].id;
+            const auto other = f.model.getTracks()[1].id;
+            f.invoke (cmd::mixerAddBus, { "Drums" });
+            const auto bus = f.busId ("Drums");
+            f.invoke (cmd::mixerMoveToBus, { child, bus });
+
+            auto& edit = f.projects.getEdit();
+            auto* childTrack = tracktion::findTrackForID (edit, tracktion::EditItemID::fromString (child));
+            auto* otherTrack = tracktion::findTrackForID (edit, tracktion::EditItemID::fromString (other));
+
+            f.invoke (cmd::trackToggleMute, { bus });
+            expect (! childTrack->shouldBePlayed());
+            expect (! f.model.isTrackMuted (child));   // the child's own button stays off (PRD §11.2)
+
+            f.invoke (cmd::editUndo);
+            expect (childTrack->shouldBePlayed());
+
+            f.invoke (cmd::trackToggleSolo, { bus });
+            expect (childTrack->shouldBePlayed());
+            expect (! otherTrack->shouldBePlayed());
+
+            f.invoke (cmd::editUndo);
+            expect (otherTrack->shouldBePlayed());
         }
 
         beginTest ("A Bus takes Mixer Inserts and Sends, and its Strip lists them with its colour and child count");

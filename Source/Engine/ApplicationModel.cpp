@@ -598,7 +598,10 @@ bool ApplicationModel::setTrackMuted (const juce::String& trackId, bool muted)
     if (track == nullptr || track->isMuted (false) == muted)
         return false;
 
-    track->setMute (muted);
+    // Track::setMute and setSolo write without the UndoManager, so mute and
+    // solo write the property through it.
+    impl->undo().beginStep ("Mute Track");
+    track->state.setProperty (te::IDs::mute, muted, &impl->undoManager());
     return true;
 }
 
@@ -609,7 +612,8 @@ bool ApplicationModel::setTrackSolo (const juce::String& trackId, bool solo)
     if (track == nullptr || track->isSolo (false) == solo)
         return false;
 
-    track->setSolo (solo);
+    impl->undo().beginStep ("Solo Track");
+    track->state.setProperty (te::IDs::solo, solo, &impl->undoManager());
     return true;
 }
 
@@ -655,7 +659,7 @@ bool ApplicationModel::setTrackInput (const juce::String& trackId, const juce::S
     if (track == nullptr || input == current || (input == nullptr && inputName.isNotEmpty()))
         return false;
 
-    // Inputs live outside the UndoManager, like mute and solo.
+    // Inputs live outside the UndoManager, like arming.
     const bool armed = current != nullptr && current->isRecordingEnabled (track->itemID);
 
     if (current != nullptr)

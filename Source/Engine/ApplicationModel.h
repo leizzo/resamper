@@ -104,11 +104,12 @@ struct TimeSignature
     changing the velocity of, and quantizing MIDI notes — one undo step per
     call that changes something. A continued velocity gesture joins the previous
     step, the way a fader drag does. A clip only moves onto a track of its own
-    kind. Not undoable: transport (including the loop), selection (clips and
-    notes), mute, solo, track input and arming (the engine keeps mute, solo and
-    inputs out of its UndoManager). The track, clip and note operations return
-    false, recording no undo step, when they would change nothing (unknown clip
-    or note, same value or position, empty range, unknown quantize grid).
+    kind. Mute and solo, on a track or a Bus, are one undo step each. Not
+    undoable: transport (including the loop), selection (clips and notes), track
+    input and arming (the engine keeps inputs out of its UndoManager). The
+    track, clip and note operations return false, recording no undo step, when
+    they would change nothing (unknown clip or note, same value or position,
+    empty range, unknown quantize grid).
 */
 class ApplicationModel
 {
@@ -165,7 +166,7 @@ public:
     /** Sets the track's palette colour, 0 .. trackPaletteSize - 1. One undo step. */
     bool setTrackColour (const juce::String& trackId, int colourIndex);
 
-    /** Never undoable. */
+    /** One undo step each when it changes something; false, with no step, otherwise. */
     bool setTrackMuted (const juce::String& trackId, bool muted);
     bool setTrackSolo (const juce::String& trackId, bool solo);
 

@@ -86,11 +86,13 @@ struct MidiTrackTests : juce::UnitTest
             expectWithinAbsoluteError (track.pan, 0.5, 1e-6);
             expect (track.muted && track.solo);
 
-            // Mute and solo are not undoable, same as an audio track.
-            f.invoke (cmd::editUndo);
+            // Solo, mute and pan are one undo step each, same as an audio track.
+            f.invoke (cmd::editUndo);   // the solo
+            f.invoke (cmd::editUndo);   // the mute
+            f.invoke (cmd::editUndo);   // the pan
             track = f.model.getTracks()[0];
             expectWithinAbsoluteError (track.pan, 0.0, 1e-6);
-            expect (track.muted && track.solo);
+            expect (! track.muted && ! track.solo);
 
             f.invoke (cmd::editUndo);
             expectWithinAbsoluteError (f.model.getTracks()[0].volume.value, 0.0, 1e-3);
