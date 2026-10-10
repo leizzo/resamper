@@ -3,6 +3,7 @@
 #include "ComponentSearch.h"
 #include "TestFixture.h"
 #include "Commands/ApplicationCommandTable.h"
+#include "Engine/NativeDevicePlugins.h"
 #include "UI/MainWindow/AppUpdatePrompt.h"
 #include "UI/MainWindow/MainComponent.h"
 
@@ -49,6 +50,8 @@ struct Snapshots : juce::UnitTest
         f.plugins.insert (f.model.getTracks()[0].id, tracktion::ReverbPlugin::xmlTypeName);
         f.plugins.insert (f.model.getTracks()[0].id, tracktion::CompressorPlugin::xmlTypeName, PluginChain::mixer);
         f.plugins.insert (f.model.getTracks()[0].id, tracktion::DelayPlugin::xmlTypeName);
+        f.plugins.insert (f.model.getTracks()[0].id, EqEightPlugin::xmlTypeName);
+        f.plugins.insert (f.model.getTracks()[0].id, CompressorV2Plugin::xmlTypeName);
         f.invoke (cmd::noteAdd, { f.model.getTracks()[1].clips[0].id, 0.0, 0.25, 60 });
         f.invoke (cmd::noteAdd, { f.model.getTracks()[1].clips[0].id, 0.5, 0.25, 64 });
         f.invoke (cmd::noteAdd, { f.model.getTracks()[1].clips[0].id, 1.0, 0.5, 67 });

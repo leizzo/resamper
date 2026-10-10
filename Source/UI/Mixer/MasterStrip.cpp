@@ -16,7 +16,7 @@ namespace
 MasterStrip::MasterStrip (CommandRegistry& c, ThemeManager& tm)
     : commands (c), themeManager (tm), faderSection (tm, faderGeometry)
 {
-    setTitle ("Master");
+    setTitle (TRANS ("Master"));
     faderSection.onVolumeChange = [this] (Decibels volume, bool continues)
     {
         commands.invoke (cmd::mixerSetMasterVolume, { volume, continues });
@@ -44,7 +44,7 @@ void MasterStrip::paint (juce::Graphics& g)
     drawIcon (g, Icon::audioLines, head.removeFromLeft (12).withSizeKeepingCentre (12, 12).toFloat(), theme.accent);
     head.removeFromLeft (7);
     drawNumber (g, themeManager, "1/2", TypeStyle { 9.5f, true, 400 }, head, juce::Justification::centredRight, theme.textDim);
-    drawStyledText (g, themeManager, "Master", TypeStyle { 12.0f, false, 600 }, head, juce::Justification::centredLeft,
+    drawStyledText (g, themeManager, TRANS ("Master"), TypeStyle { 12.0f, false, 600 }, head, juce::Justification::centredLeft,
                     theme.textPrimary);
 
     g.setColour (theme.borderSoft);

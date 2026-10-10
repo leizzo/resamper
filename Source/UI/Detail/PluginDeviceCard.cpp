@@ -2,6 +2,7 @@
 #include "Commands/CommandRegistry.h"
 #include "Commands/PluginCommands.h"
 #include "UI/Controls/ContinuousControl.h"
+#include "UI/Localisation.h"
 
 namespace resamper
 {
@@ -138,11 +139,11 @@ PluginDeviceCard::PluginDeviceCard (CommandRegistry& c, const PluginRack& r, con
       hosting (h),
       hostingState (h.getState (info.id)),
       power (tm, DevicePowerButton::Style::plugin),
-      openWindow (std::make_unique<CardButton> (tm, "Open plug-in window", CardButton::Kind::framed, Icon::appWindow)),
-      locate (std::make_unique<CardButton> (tm, "Locate", CardButton::Kind::framed)),
-      replace (std::make_unique<CardButton> (tm, "Replace", CardButton::Kind::framed)),
-      reload (std::make_unique<CardButton> (tm, "Reload", CardButton::Kind::framed)),
-      pinLearn (std::make_unique<CardButton> (tm, "Pin", CardButton::Kind::pin))
+      openWindow (std::make_unique<CardButton> (tm, TRANS ("Open plug-in window"), CardButton::Kind::framed, Icon::appWindow)),
+      locate (std::make_unique<CardButton> (tm, TRANS ("Locate"), CardButton::Kind::framed)),
+      replace (std::make_unique<CardButton> (tm, TRANS ("Replace"), CardButton::Kind::framed)),
+      reload (std::make_unique<CardButton> (tm, TRANS ("Reload"), CardButton::Kind::framed)),
+      pinLearn (std::make_unique<CardButton> (tm, TRANS ("Pin"), CardButton::Kind::pin))
 {
     setComponentID ("DeviceCard/Plugin");
     openWindow->setComponentID ("openWindow");
@@ -150,10 +151,10 @@ PluginDeviceCard::PluginDeviceCard (CommandRegistry& c, const PluginRack& r, con
     replace->setComponentID ("replace");
     reload->setComponentID ("reload");
     pinLearn->setComponentID ("pinLearn");
-    locate->setTooltip ("Point at the plug-in's file");
-    replace->setTooltip ("Put another plug-in in its place");
-    reload->setTooltip ("Start the plug-in again, from its last saved state");
-    pinLearn->setTooltip ("Pin parameters: touch them in the plug-in's window");
+    locate->setTooltip (TRANS ("Point at the plug-in's file"));
+    replace->setTooltip (TRANS ("Put another plug-in in its place"));
+    reload->setTooltip (TRANS ("Start the plug-in again, from its last saved state"));
+    pinLearn->setTooltip (TRANS ("Pin parameters: touch them in the plug-in's window"));
 
     power.onClick = [this] { toggleBypass(); };
     openWindow->onClick = [this] { if (onOpenEditor) onOpenEditor(); };
@@ -191,9 +192,11 @@ void PluginDeviceCard::setState (const PluginInfo& info)
     plugin = info;
     setTitle (plugin.name);
     // Never colour-only (§18): the vendor and the format are always said.
-    const auto vendor = plugin.manufacturer.isNotEmpty() ? plugin.manufacturer : juce::String ("Unknown vendor");
-    setDescription (vendor + " " + middleDot + " " + plugin.formatBadge() + " plug-in"
-                    + (isMissing() ? ", missing" : isCrashed() ? ", crashed" : ""));
+    const auto vendor = plugin.manufacturer.isNotEmpty() ? plugin.manufacturer : TRANS ("Unknown vendor");
+    setDescription (vendor + " " + middleDot + " "
+                    + (isMissing() ? tr ("%1 plug-in, missing", plugin.formatBadge())
+                       : isCrashed() ? tr ("%1 plug-in, crashed", plugin.formatBadge())
+                                     : tr ("%1 plug-in", plugin.formatBadge())));
     setAlpha (plugin.enabled ? 1.0f : 0.5f);
     power.setToggleState (plugin.enabled, juce::dontSendNotification);
 
@@ -273,7 +276,7 @@ void PluginDeviceCard::setWindowOpen (bool open)
 {
     windowOpen = open;
     openWindow->setToggleState (open, juce::dontSendNotification);
-    openWindow->setButtonText (open ? "Window open " + middleDot + " focus" : juce::String ("Open plug-in window"));
+    openWindow->setButtonText (open ? tr ("Window open %1 focus", middleDot) : TRANS ("Open plug-in window"));
     repaint();
 }
 
@@ -378,7 +381,7 @@ void PluginDeviceCard::paint (juce::Graphics& g)
     auto titles = title.withSizeKeepingCentre (title.getWidth(), 23);
     drawStyledText (g, themeManager, plugin.name, nameStyle, titles.removeFromTop (13), juce::Justification::centredLeft,
                     theme.textPrimary);
-    drawStyledText (g, themeManager, plugin.manufacturer.isNotEmpty() ? plugin.manufacturer : juce::String ("Unknown vendor"),
+    drawStyledText (g, themeManager, plugin.manufacturer.isNotEmpty() ? plugin.manufacturer : TRANS ("Unknown vendor"),
                     vendorStyle, titles, juce::Justification::centredLeft, theme.textDim);
 
     // Body: the Missing or Crashed badge, or the Pinned Parameters header.
@@ -388,13 +391,13 @@ void PluginDeviceCard::paint (juce::Graphics& g)
                                      .withSizeKeepingCentre (missingBadgeWidth, 14);
         g.setColour (theme.rec.withAlpha (0.2f));
         g.fillRoundedRectangle (badgeArea.toFloat(), 3.0f);
-        drawStyledText (g, themeManager, isMissing() ? "Missing" : "Crashed", theme.micro, badgeArea,
+        drawStyledText (g, themeManager, isMissing() ? TRANS ("Missing") : TRANS ("Crashed"), theme.micro, badgeArea,
                         juce::Justification::centred, theme.rec);
     }
     else
     {
         const auto learning = isLearningPins();
-        drawStyledText (g, themeManager, learning ? "Touch a control to pin" : "Pinned parameters", pinnedHeaderStyle,
+        drawStyledText (g, themeManager, learning ? TRANS ("Touch a control to pin") : TRANS ("Pinned parameters"), pinnedHeaderStyle,
                         pinnedHeader().withTrimmedRight (9 + bodyGap), juce::Justification::centredLeft,
                         learning ? theme.accent : theme.textDim);
     }
@@ -411,20 +414,20 @@ void PluginDeviceCard::paint (juce::Graphics& g)
     };
 
     item (Icon::cpu, theme.textDim, cpuText);
-    item (Icon::timer, theme.textDim, juce::String (plugin.latencySamples) + " smp");
-    item (Icon::shieldCheck, hostingState.kind == HostingState::Kind::sandboxed ? theme.meterLow : theme.textDim, [&]
+    item (Icon::timer, theme.textDim, tr ("%1 smp", plugin.latencySamples));
+    item (Icon::shieldCheck, hostingState.kind == HostingState::Kind::sandboxed ? theme.meterLow : theme.textDim, [&]() -> juce::String
     {
         switch (hostingState.kind)
         {
-            case HostingState::Kind::loading:     return "loading";
+            case HostingState::Kind::loading:     return TRANS ("loading");
             case HostingState::Kind::sandboxed:
-            case HostingState::Kind::crashed:     return "sandbox";
-            case HostingState::Kind::inProcess:   return "in-process";
-            case HostingState::Kind::failed:      return "failed";
-            case HostingState::Kind::missing:     return "missing";
+            case HostingState::Kind::crashed:     return TRANS ("sandbox");
+            case HostingState::Kind::inProcess:   return TRANS ("in-process");
+            case HostingState::Kind::failed:      return TRANS ("failed");
+            case HostingState::Kind::missing:     return TRANS ("missing");
         }
 
-        return "";
+        return {};
     }());
 
     // Outline: red dashes when missing, red when crashed, 1.5 px accent-dim while the window is open.
@@ -474,10 +477,10 @@ void PluginDeviceCard::mouseDoubleClick (const juce::MouseEvent& e)
 
 void PluginDeviceCard::addMenuItems (juce::PopupMenu& menu)
 {
-    menu.addItem ("Open Plug-in Window", ! isMissing() && ! isCrashed(), false, [this] { if (onOpenEditor) onOpenEditor(); });
+    menu.addItem (TRANS ("Open Plug-in Window"), ! isMissing() && ! isCrashed(), false, [this] { if (onOpenEditor) onOpenEditor(); });
 
     if (isCrashed())
-        menu.addItem ("Reload", [this] { commands.invoke (cmd::pluginReload, { trackId, plugin.id }); });
+        menu.addItem (TRANS ("Reload"), [this] { commands.invoke (cmd::pluginReload, { trackId, plugin.id }); });
 
     juce::PopupMenu pinMenu;
     const auto full = plugin.pinnedParameters.size() >= PluginRack::maxPinnedParameters;
@@ -489,8 +492,8 @@ void PluginDeviceCard::addMenuItems (juce::PopupMenu& menu)
                          [this, id = p.id, pinned] { commands.invoke (cmd::pluginSetPinned, { plugin.id, id, ! pinned }); });
     }
 
-    menu.addSubMenu ("Pin Parameter", pinMenu, pinMenu.getNumItems() > 0);
-    menu.addItem ("Pin by Touching in Window", ! isMissing() && ! isCrashed() && ! full, isLearningPins(),
+    menu.addSubMenu (TRANS ("Pin Parameter"), pinMenu, pinMenu.getNumItems() > 0);
+    menu.addItem (TRANS ("Pin by Touching in Window"), ! isMissing() && ! isCrashed() && ! full, isLearningPins(),
                   [this] { setLearningPins (! isLearningPins()); });
     menu.addSeparator();
 }

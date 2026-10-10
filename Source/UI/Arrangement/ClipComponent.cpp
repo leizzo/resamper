@@ -1,5 +1,6 @@
 #include "ClipComponent.h"
 #include "UI/Theme/Interaction.h"
+#include "UI/Localisation.h"
 
 namespace resamper
 {
@@ -72,8 +73,8 @@ void ClipComponent::paint (juce::Graphics& g)
     // Keep the name readable when the clip starts off-screen.
     auto nameArea = header.withLeft (onScreen.getX()).reduced (6, 0);
     const auto take = clip.numTakes == 0 ? juce::String()
-                    : clip.currentTake < 0 ? "  (" + juce::String (clip.numTakes) + " takes)"
-                                           : "  (Take " + juce::String (clip.currentTake + 1) + "/" + juce::String (clip.numTakes) + ")";
+                    : clip.currentTake < 0 ? "  " + trPlural (clip.numTakes, "(%1 Take)", "(%1 Takes)")
+                                           : "  " + tr ("(Take %1/%2)", clip.currentTake + 1, clip.numTakes);
     drawStyledText (g, themeManager, clip.name + take, TypeStyle { 9.5f, false, 700 }, nameArea,
                     juce::Justification::centredLeft, ink);
 
@@ -130,7 +131,7 @@ void ClipComponent::paint (juce::Graphics& g)
                     drawStyledText (g, themeManager, percent, theme.bodySm, textArea.reduced (metrics.spaceSm, metrics.space2xs),
                                     juce::Justification::bottomRight, ink);
                 else
-                    drawStyledText (g, themeManager, "Preparing audio " + percent, theme.bodySm, textArea.reduced (metrics.spaceSm),
+                    drawStyledText (g, themeManager, tr ("Preparing audio %1", percent), theme.bodySm, textArea.reduced (metrics.spaceSm),
                                     juce::Justification::centredLeft, ink);
             }
         }

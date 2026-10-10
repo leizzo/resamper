@@ -1,6 +1,7 @@
 #include "EqEightDevice.h"
 #include "Commands/CommandRegistry.h"
 #include "Commands/PluginCommands.h"
+#include "UI/Localisation.h"
 
 namespace resamper
 {
@@ -27,7 +28,8 @@ namespace
     const TypeStyle overlayStyle { 7.0f, true, 400 };
     const TypeStyle bandTitleStyle { 9.5f, false, 600 };
 
-    const juce::StringArray typeNames { "Low Cut", "Low Shelf", "Bell", "Notch", "High Shelf", "High Cut" };
+    const char* const typeNames[] = { NEEDS_TRANS ("Low Cut"), NEEDS_TRANS ("Low Shelf"), NEEDS_TRANS ("Bell"),
+                                       NEEDS_TRANS ("Notch"), NEEDS_TRANS ("High Shelf"), NEEDS_TRANS ("High Cut") };
 
     /** The design's type glyphs (14 x 11): cut, shelf, bell, notch. */
     juce::Path typeGlyph (dsp::EqBandType type)
@@ -54,7 +56,7 @@ namespace
     the band, double-click switches it on or off, right-click offers the rest. */
 struct EqEightDevice::BandButton : public ThemedButton
 {
-    BandButton (EqEightDevice& d, int b) : ThemedButton (d.themeManager, "Band " + juce::String (b + 1)), device (d), index (b)
+    BandButton (EqEightDevice& d, int b) : ThemedButton (d.themeManager, tr ("Band %1", b + 1)), device (d), index (b)
     {
         setComponentID ("band" + juce::String (b + 1));
         setClickingTogglesState (false);
@@ -125,7 +127,7 @@ struct EqEightDevice::BandHeader : public juce::Component
     explicit BandHeader (EqEightDevice& d) : device (d)
     {
         setComponentID ("bandType");
-        setTitle ("Band type");
+        setTitle (TRANS ("Band type"));
         setMouseCursor (juce::MouseCursor::PointingHandCursor);
     }
 
@@ -138,7 +140,7 @@ struct EqEightDevice::BandHeader : public juce::Component
         g.fillEllipse (r.removeFromLeft (bandDotSize).withSizeKeepingCentre (bandDotSize, bandDotSize).toFloat());
         r.removeFromLeft (bandDotGap);
         drawStyledText (g, device.getThemeManager(),
-                        "Band " + juce::String (b + 1) + juce::String (juce::CharPointer_UTF8 (" \xc2\xb7 ")) + typeNames[(int) device.band (b).type],
+                        tr ("Band %1", b + 1) + juce::String (juce::CharPointer_UTF8 (" \xc2\xb7 ")) + TRANS (typeNames[(int) device.band (b).type]),
                         bandTitleStyle, r, juce::Justification::centredLeft, theme.textPrimary);
     }
 
@@ -151,8 +153,8 @@ struct EqEightDevice::BandHeader : public juce::Component
 EqEightGraph::EqEightGraph (EqEightDevice& d) : device (d)
 {
     setComponentID ("EqGraph");
-    setTitle ("EQ curve");
-    setDescription ("Drag a node: frequency and gain. Wheel: Q. Double-click a node: band on or off; empty space: add a bell.");
+    setTitle (TRANS ("EQ curve"));
+    setDescription (TRANS ("Drag a node: frequency and gain. Wheel: Q. Double-click a node: band on or off; empty space: add a bell."));
 }
 
 float EqEightGraph::xForFrequency (float hz) const
@@ -399,6 +401,7 @@ void EqEightGraph::paint (juce::Graphics& g)
     g.setColour (theme.bgDeep.withAlpha (0.6f));
     g.fillRoundedRectangle (toggle, cellRadius);
     auto t = toggle.toNearestInt().reduced (overlayPaddingX, overlayPaddingY);
+    // PRE / POST and the range read as on hardware in every UI Language.
     drawNumber (g, tm, "PRE", TypeStyle { overlayStyle.size, true, post ? 400 : 700 }, t.removeFromLeft (preLabelWidth),
                 juce::Justification::centredLeft, post ? theme.textDim : theme.textPrimary);
     t.removeFromLeft (overlayGap);
@@ -507,15 +510,15 @@ EqEightDevice::EqEightDevice (CommandRegistry& c, const PluginRack& r, ThemeMana
     : DeviceBody (c, r, tm, id),
       graph (*this),
       header (std::make_unique<BandHeader> (*this)),
-      audition (tm, "Audition the band", Icon::headphones, IconButton::Kind::small),
-      channel (tm, "L+R", "Which side the band acts on"),
-      frequency (tm, bandSpec ("Freq"), "Freq"),
-      gain (tm, bandSpec ("Gain"), "Gain"),
+      audition (tm, TRANS ("Audition the band"), Icon::headphones, IconButton::Kind::small),
+      channel (tm, "L+R", TRANS ("Which side the band acts on")),
+      frequency (tm, bandSpec ("Freq"), TRANS ("Freq")),
+      gain (tm, bandSpec ("Gain"), TRANS ("Gain")),
       q (tm, bandSpec ("Q"), "Q"),
-      adaptive (tm, "ADPT Q", "Adaptive Q: Q grows with the boost or cut"),
+      adaptive (tm, "ADPT Q", TRANS ("Adaptive Q: Q grows with the boost or cut")),
       mode (tm, { "ST", "L/R", "M/S" }, Segmented::Style::device),
-      scale (tm, specFor ("scale"), "Scale"),
-      output (tm, specFor ("output"), "Out")
+      scale (tm, specFor ("scale"), TRANS ("Scale")),
+      output (tm, specFor ("output"), TRANS ("Out"))
 {
     setComponentID ("Device/EQ Eight v2");
 
@@ -539,7 +542,7 @@ EqEightDevice::EqEightDevice (CommandRegistry& c, const PluginRack& r, ThemeMana
     adaptive.setComponentID ("adaptiveQ");
     adaptive.onClick = [this] { set ("adaptiveQ", adaptive.getToggleState() ? 0.0f : 1.0f); };
     mode.setComponentID ("mode");
-    mode.setTitle ("Stereo mode");
+    mode.setTitle (TRANS ("Stereo mode"));
     mode.onChange = [this] (int index) { set ("mode", (float) index); };
     scale.setComponentID ("scale");
     output.setComponentID ("output");
@@ -682,11 +685,11 @@ void EqEightDevice::showBandMenu (int b)
     juce::PopupMenu menu;
     const auto current = band (b);
     juce::Component::SafePointer<EqEightDevice> safe (this);
-    menu.addItem (current.on ? "Turn Off" : "Turn On", [safe, b] { if (safe != nullptr) safe->toggleBand (b); });
+    menu.addItem (current.on ? TRANS ("Turn Off") : TRANS ("Turn On"), [safe, b] { if (safe != nullptr) safe->toggleBand (b); });
     menu.addSeparator();
 
     for (int t = 0; t < dsp::numEqBandTypes; ++t)
-        menu.addItem (typeNames[t], true, (int) current.type == t, [safe, b, t]
+        menu.addItem (TRANS (typeNames[t]), true, (int) current.type == t, [safe, b, t]
         {
             if (safe != nullptr)
                 safe->setBandType (b, (dsp::EqBandType) t);
@@ -711,7 +714,7 @@ void EqEightDevice::parametersChanged()
     gain.setValue (b.gain);
     q.setValue (b.q);
     gain.setEnabled (dsp::hasGain (b.type));
-    frequency.setTooltip ("Band " + juce::String (selected + 1) + " frequency");
+    frequency.setTooltip (tr ("Band %1 frequency", selected + 1));
 
     const auto m = getMode();
     const juce::StringArray sides[] = { { "L+R", "L", "R" }, { "M+S", "M", "S" } };

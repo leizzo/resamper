@@ -46,9 +46,9 @@ void DeviceCard::showMenu()
 {
     juce::PopupMenu menu;
     addMenuItems (menu);
-    menu.addItem (plugin.enabled ? "Bypass" : "Enable", [this] { toggleBypass(); });
+    menu.addItem (plugin.enabled ? TRANS ("Bypass") : TRANS ("Enable"), [this] { toggleBypass(); });
     menu.addSeparator();
-    menu.addItem ("Delete", [this] { commands.invoke (cmd::pluginRemove, { trackId, plugin.id }); });
+    menu.addItem (TRANS ("Delete"), [this] { commands.invoke (cmd::pluginRemove, { trackId, plugin.id }); });
     menu.showMenuAsync (juce::PopupMenu::Options().withTargetComponent (this));
 }
 
@@ -72,10 +72,10 @@ void DeviceCard::mouseDrag (const juce::MouseEvent& e)
 }
 
 //==============================================================================
-DevicePowerButton::DevicePowerButton (ThemeManager& tm, Style s) : ThemedButton (tm, "Power"), style (s)
+DevicePowerButton::DevicePowerButton (ThemeManager& tm, Style s) : ThemedButton (tm, TRANS ("Power")), style (s)
 {
     setComponentID ("power");
-    setTooltip ("Power (bypass)");
+    setTooltip (TRANS ("Power (bypass)"));
 }
 
 void DevicePowerButton::setStyle (Style s)
@@ -209,6 +209,7 @@ void DeviceHeaderButton::paintButton (juce::Graphics& g, bool highlighted, bool 
             const auto letter = TypeStyle { 8.5f, false, 700 };
             g.setColour (ink);
             g.fillRoundedRectangle (a, 3.0f);
+            // A and B stay as they are in every UI Language, as on hardware.
             drawStyledText (g, themeManager, "A", letter, a.toNearestInt(), juce::Justification::centred, theme.textPrimary);
             drawStyledText (g, themeManager, "B", letter, b.toNearestInt(), juce::Justification::centred, ink.withAlpha (iconAlpha));
             break;

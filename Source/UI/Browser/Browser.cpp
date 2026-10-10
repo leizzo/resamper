@@ -2,6 +2,7 @@
 #include "Commands/CommandRegistry.h"
 #include "Commands/PluginCommands.h"
 #include "Engine/SamplePreview.h"
+#include "UI/Localisation.h"
 
 namespace resamper
 {
@@ -56,12 +57,12 @@ namespace
 Browser::Browser (CommandRegistry& c, const PluginRack& r, const ApplicationModel& m, ThemeManager& tm, SamplePreview& p, juce::File root)
     : commands (c), rack (r), model (m), themeManager (tm), preview (p),
       library ([&r] { return r.getCatalogue(); }, std::move (root)),
-      scan (tm, "Scan", Button::Variant::ghost)
+      scan (tm, TRANS ("Scan"), Button::Variant::ghost)
 {
     setWantsKeyboardFocus (false);
 
     auto& theme = themeManager.getTheme();
-    search.setTextToShowWhenEmpty ("Search Library", theme.textDim);
+    search.setTextToShowWhenEmpty (TRANS ("Search Library"), theme.textDim);
     search.setFont (themeManager.font (TypeStyle { 12.0f, false, 400 }));
     search.setIndents (28, 0);
     search.setJustification (juce::Justification::centredLeft);
@@ -71,7 +72,7 @@ Browser::Browser (CommandRegistry& c, const PluginRack& r, const ApplicationMode
     search.onTextChange = [this] { folder = juce::File(); refresh(); };
     search.onEscapeKey = [this] { search.clear(); refresh(); };
 
-    scan.setTooltip ("Scan for VST3 / AU plug-ins, in the background");
+    scan.setTooltip (TRANS ("Scan for VST3 / AU plug-ins, in the background"));
     scan.onClick = [this] { commands.invoke (cmd::pluginScan); };
 
     list.setRowHeight (itemRowHeight);
@@ -148,7 +149,7 @@ void Browser::previewRow (int row)
 
 juce::String Browser::breadcrumb() const
 {
-    auto text = Library::nameOf (category);
+    auto text = TRANS (Library::nameOf (category));
 
     if (search.getText().trim().isNotEmpty())
         return text + chevron + "\"" + search.getText().trim() + "\"";
@@ -216,7 +217,7 @@ void Browser::paint (juce::Graphics& g)
         content.removeFromLeft (10);
         g.setColour (selected ? theme.textPrimary : theme.textSecondary);
         g.setFont (themeManager.font (TypeStyle { 12.5f, false, selected ? 600 : 400 }));
-        g.drawText (Library::nameOf (categories[i]), content, juce::Justification::centredLeft, true);
+        g.drawText (TRANS (Library::nameOf (categories[i])), content, juce::Justification::centredLeft, true);
     }
 
     // Divider and the list header (a breadcrumb; click to go up a folder).
@@ -228,8 +229,8 @@ void Browser::paint (juce::Graphics& g)
 
     if (items.empty())
         drawStyledText (g, themeManager,
-                        Library::isFileCategory (category) ? "Drop audio files into " + library.folderFor (category).getFullPathName()
-                                                           : juce::String ("Nothing here"),
+                        Library::isFileCategory (category) ? tr ("Drop audio files into %1", library.folderFor (category).getFullPathName())
+                                                           : TRANS ("Nothing here"),
                         theme.bodySm, list.getBounds().reduced (16, 8).withHeight (40), juce::Justification::topLeft,
                         theme.textDim);
 }
@@ -367,11 +368,11 @@ void Browser::paintListBoxItem (int row, juce::Graphics& g, int width, int heigh
         const auto retry = retryBounds (width, height);
         g.setColour (theme.border);
         g.drawRoundedRectangle (retry.toFloat().reduced (0.5f), theme.radiusSm, 1.0f);
-        drawStyledText (g, themeManager, "Retry", retryStyle, retry, juce::Justification::centred,
+        drawStyledText (g, themeManager, TRANS ("Retry"), retryStyle, retry, juce::Justification::centred,
                         row == hoveredRow ? theme.accent : theme.textSecondary);
         content.setRight (retry.getX() - rowGap);
 
-        const auto note = juce::String ("Failed to scan");
+        const auto note = TRANS ("Failed to scan");
         const auto noteWidth = juce::GlyphArrangement::getStringWidthInt (themeManager.font (noteStyle), note);
         drawStyledText (g, themeManager, note, noteStyle, content.removeFromRight (noteWidth), juce::Justification::centredRight,
                         theme.textDim);
@@ -402,9 +403,9 @@ juce::String Browser::getTooltipForRow (int row)
     const auto& item = items[(size_t) row];
 
     if (item.failedScan)
-        return item.formatBadge() + " plug-in that failed to scan: it crashed or timed out. Retry scans it again.";
+        return tr ("%1 plug-in that failed to scan: it crashed or timed out. Retry scans it again.", item.formatBadge());
 
-    return item.isPlugin() ? item.formatBadge() + " plug-in" : juce::String();
+    return item.isPlugin() ? tr ("%1 plug-in", item.formatBadge()) : juce::String();
 }
 
 void Browser::listBoxItemClicked (int row, const juce::MouseEvent& e)

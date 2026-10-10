@@ -66,9 +66,9 @@ private:
     };
 
     std::array<SectionChip, 6> sectionChips { {
-        { "I/O", ChannelStrip::Section::io, {} }, { "Inserts", ChannelStrip::Section::inserts, {} },
-        { "Sends", ChannelStrip::Section::sends, {} }, { "EQ", std::nullopt, {} },
-        { "Fader", ChannelStrip::Section::fader, {} }, { "Comments", std::nullopt, {} },
+        { NEEDS_TRANS ("I/O"), ChannelStrip::Section::io, {} }, { NEEDS_TRANS ("Inserts"), ChannelStrip::Section::inserts, {} },
+        { NEEDS_TRANS ("Sends"), ChannelStrip::Section::sends, {} }, { NEEDS_TRANS ("EQ"), std::nullopt, {} },
+        { NEEDS_TRANS ("Fader"), ChannelStrip::Section::fader, {} }, { NEEDS_TRANS ("Comments"), std::nullopt, {} },
     } };
 
     Segmented meterMode;
