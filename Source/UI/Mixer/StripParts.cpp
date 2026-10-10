@@ -52,7 +52,7 @@ float yForDb (juce::Rectangle<float> travel, double db)
 //==============================================================================
 Fader::Fader (ThemeManager& tm) : ContinuousControl (tm, faderSpec(), Axis::vertical)
 {
-    setTitle ("Volume");
+    setTitle (TRANS ("Volume"));
 }
 
 juce::Rectangle<int> Fader::getTravelBounds() const
@@ -128,8 +128,8 @@ void Fader::paint (juce::Graphics& g)
 //==============================================================================
 StereoMeter::StereoMeter (ThemeManager& tm) : themeManager (tm)
 {
-    setTitle ("Meter");
-    setTooltip ("Click to reset the peaks");
+    setTitle (TRANS ("Meter"));
+    setTooltip (TRANS ("Click to reset the peaks"));
 }
 
 void StereoMeter::setLevel (StereoLevel level, double elapsedSeconds)
@@ -221,8 +221,8 @@ FaderSection::FaderSection (ThemeManager& tm, Geometry g)
     auto changeVolume = [this] (double db, bool continues) { if (onVolumeChange) onVolumeChange (Decibels (db), continues); };
     fader.onChange = changeVolume;
     gain.onChange = changeVolume;
-    gain.setTitle ("Gain");
-    gain.setTooltip ("Gain: click to type");
+    gain.setTitle (TRANS ("Gain"));
+    gain.setTooltip (TRANS ("Gain: click to type"));
     gain.setDoubleClickEdits (false);
 
     meter.setWellWidth (geometry.meterWellWidth);

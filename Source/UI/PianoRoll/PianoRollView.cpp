@@ -3,6 +3,7 @@
 #include "UI/State/UIStateStore.h"
 
 #include <cmath>
+#include "UI/Localisation.h"
 
 namespace resamper
 {
@@ -27,11 +28,11 @@ PianoRollView::PianoRollView (const ApplicationModel& m, CommandRegistry& c, The
     sixteenthButton.onClick = [this] { quantize ("1/16"); };
     deleteButton.onClick = [this] { commands.invoke (cmd::noteDelete); };
 
-    arrangementButton.setTooltip ("Back to the Arrangement");
-    quarterButton.setTooltip ("Quantize to 1/4");
-    eighthButton.setTooltip ("Quantize to 1/8");
-    sixteenthButton.setTooltip ("Quantize to 1/16");
-    deleteButton.setTooltip ("Delete selected notes");
+    arrangementButton.setTooltip (TRANS ("Back to the Arrangement"));
+    quarterButton.setTooltip (tr ("Quantize to %1", "1/4"));
+    eighthButton.setTooltip (tr ("Quantize to %1", "1/8"));
+    sixteenthButton.setTooltip (tr ("Quantize to %1", "1/16"));
+    deleteButton.setTooltip (TRANS ("Delete selected notes"));
 
     for (auto* child : std::initializer_list<juce::Component*> { &arrangementButton, &quarterButton, &eighthButton,
                                                                  &sixteenthButton, &deleteButton, &keyboard, &ruler,
@@ -164,7 +165,7 @@ void PianoRollView::paint (juce::Graphics& g)
 
     g.setColour (theme.mutedText);
     g.setFont (themeManager.getFont (0.75f));
-    g.drawText ("Velocity", velocityLabel.reduced (themeManager.getMetrics().textPadding, 0),
+    g.drawText (TRANS ("Velocity"), velocityLabel.reduced (themeManager.getMetrics().textPadding, 0),
                 juce::Justification::centredLeft, true);
 
     if (auto* clip = currentClip())

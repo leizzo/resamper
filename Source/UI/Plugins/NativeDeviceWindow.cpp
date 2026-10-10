@@ -1,6 +1,7 @@
 #include "NativeDeviceWindow.h"
 
 #include "UI/Detail/NativeDeviceCard.h"
+#include "UI/Localisation.h"
 
 namespace resamper
 {
@@ -22,7 +23,7 @@ void NativeDeviceWindow::setState (const PluginInfo& info, const juce::String& t
     plugin = info;
     trackName = track;
     setName (plugin.name);
-    setTitle (plugin.name + " device window");
+    setTitle (tr ("%1 device window", plugin.name));
     setDescription (trackName);
     card->setState (info);
     updateSize();

@@ -13,6 +13,8 @@ How Resamper's UI reads in Turkish (ADR-0015). Translations go in `UI/translatio
 
 Domain terms from `CONTEXT.md` keep their English spelling, as Turkish producers know them: Clip, Audio Clip, MIDI Clip, Track, Audio Track, MIDI Track, Send, Return, Bus, Master, Insert, Mixer Insert, Device, Device Chain, Native Device, Plug-in, Rack, Rack Chain, Pad, Macro, Modulator, LFO, Sidechain, Tap, Pre-FX, Pre-Fader, Post-Fader, Strip, Folder, Scene, Slot Clip, Warp, Warp Marker, Transient, Fade, Clip Gain, Take, Loop, Cue, Session View, Arrangement, Mixer, Detail View, Piano Roll, Audio Editor, Automation Lane, Breakpoint, Clip Envelope, Read, Touch, Latch, Write, Sandbox, Theme. Units and abbreviations (dB, Hz, ms, BPM, M/S, Ø) stay as they are.
 
+Device and editing terms that Turkish producers use in English also keep it: Preset, Fader, Velocity, Track Chain, the EQ band types (Low Cut, Low Shelf, Bell, Notch, High Shelf, High Cut) and the Compressor's Attack, Release, Knee, Makeup, Lookahead and Mix. Hardware-style panel captions (A / B, PRE / POST, ST, L+R, ADPT Q, IN GR, LA, DT, RMS, EXP, smp) and note names (C3, F#4) stay as they are.
+
 Turkish suffixes attach to them with an apostrophe: "Clip'i sil", "Track'e ekle", "Send'ler".
 
 ## Translated
@@ -50,5 +52,54 @@ Turkish suffixes attach to them with an apostrophe: "Clip'i sil", "Track'e ekle"
 | Later | Sonra |
 | Update available | Güncelleme var |
 | What's new | Yenilikler |
+| Enable | Etkinleştir |
+| On / Off | Açık / Kapalı |
+| Turn On / Turn Off | Aç / Kapat |
+| Remove | Kaldır |
+| Replace | Değiştir |
+| Move | Taşı |
+| Locate | Bul |
+| Close | Kapat |
+| Unpin | Sabitlemeyi kaldır |
+| Scan | Tara |
+| Library | Kitaplık |
+| Search | Ara |
+| Empty | Boş |
+| Default | Varsayılan |
+| Fold / Expand / Compact | Katla / Genişlet / Daralt |
+| Colour | Renk |
+| Split | Böl |
+| Quantize | Kuantize et |
+| Reverse / Play Forwards | Ters çevir / İleri çal |
+| Bar / Bars (musical) | Ölçü / Ölçüler |
+| Start / Length | Başlangıç / Uzunluk |
+| Notes (musical) | Notalar |
+| Comments | Notlar |
+| Armed | Kayda hazır |
+| Power | Güç |
+| Peak (meter) | Tepe |
+| Meter | Ölçer |
+| Gain | Kazanç |
+| Ratio | Oran |
+| Threshold | Eşik |
+| Frequency / Freq | Frekans / Frek |
+| Band | Bant |
+| Scale | Ölçek |
+| Out / Output | Çıkış |
+| I/O | G/Ç |
+| Display | Görünüm |
+| Detection | Algılama |
+| Activity | Etkinlik |
+| Effect | Efekt |
+| Parameter | Parametre |
+| Editor (a plug-in's) | Düzenleyici |
+| Vendor | Üretici |
+| Slot | Yuva |
+| Loading | Yükleniyor |
+| Not loaded (a Failed plug-in) | Başarısız |
+| In-process / Out-of-process | Süreç içi / Süreç dışı |
+| UI scale | Arayüz ölçeği |
+| Sounds / Instruments / Samples | Sesler / Enstrümanlar / Sample'lar |
+| Drums / Bass / Chords / Vocal (track colours) | Davul / Bas / Akorlar / Vokal |
 
 "Record" is always "Kayıt", never "Kaydet": "Kaydet" is Save.

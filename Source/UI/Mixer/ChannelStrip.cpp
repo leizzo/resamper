@@ -3,6 +3,7 @@
 #include "Commands/MixerCommands.h"
 #include "Commands/PluginCommands.h"
 #include "UI/Browser/Library.h"
+#include "UI/Localisation.h"
 
 namespace resamper
 {
@@ -39,7 +40,7 @@ struct ChannelStrip::SendRow : juce::Component
 {
     SendRow (ThemeManager& tm, CommandRegistry& c) : themeManager (tm), commands (c), level (tm, sendSpec())
     {
-        level.setTitle ("Send level");
+        level.setTitle (TRANS ("Send level"));
         addAndMakeVisible (level);
     }
 
@@ -59,7 +60,7 @@ struct ChannelStrip::SendRow : juce::Component
         g.fillRoundedRectangle (badge.toFloat(), theme.radiusSm);
         drawStyledText (g, themeManager, letter, TypeStyle { 8.0f, false, 700 }, badge, juce::Justification::centred,
                         theme.textOnAccent);
-        drawNumber (g, themeManager, send.muted ? juce::String ("off") : juce::String (send.gain.value, 1),
+        drawNumber (g, themeManager, send.muted ? TRANS ("off") : juce::String (send.gain.value, 1),
                     TypeStyle { 9.0f, true, 400 }, getLocalBounds().removeFromRight (30), juce::Justification::centredRight,
                     theme.textSecondary);
     }
@@ -85,10 +86,10 @@ struct ChannelStrip::SendRow : juce::Component
 //==============================================================================
 ChannelStrip::ChannelStrip (CommandRegistry& c, const PluginHosting& hosting, ThemeManager& tm, StripRole role)
     : commands (c), themeManager (tm),
-      pan (tm, panKnobSpec(), "Pan", true), faderSection (tm, role == StripRole::bus ? busFaderGeometry : faderGeometry),
+      pan (tm, panKnobSpec(), TRANS ("Pan"), true), faderSection (tm, role == StripRole::bus ? busFaderGeometry : faderGeometry),
       mute (tm, TrackButton::Kind::mute), solo (tm, TrackButton::Kind::solo), arm (tm, TrackButton::Kind::arm)
 {
-    input.setTitle ("Input");
+    input.setTitle (TRANS ("Input"));
     input.onChange = [this]
     {
         const auto index = input.getSelectedItemIndex();
@@ -168,7 +169,7 @@ void ChannelStrip::showInsertMenu (InsertSlot& slot)
 
     if (! plugin)
     {
-        menu.addItem ("Add Effect...", [this, &slot] { if (onPickInsert) onPickInsert (slot, {}); });
+        menu.addItem (TRANS ("Add Effect..."), [this, &slot] { if (onPickInsert) onPickInsert (slot, {}); });
         menu.showMenuAsync (juce::PopupMenu::Options().withTargetComponent (&slot));
         return;
     }
@@ -177,18 +178,18 @@ void ChannelStrip::showInsertMenu (InsertSlot& slot)
     const auto id = plugin->id;
     const auto name = plugin->name;
 
-    menu.addItem ("Replace...", [this, &slot, id] { if (onPickInsert) onPickInsert (slot, id); });
-    menu.addItem (plugin->enabled ? "Bypass" : "Enable",
+    menu.addItem (TRANS ("Replace..."), [this, &slot, id] { if (onPickInsert) onPickInsert (slot, id); });
+    menu.addItem (plugin->enabled ? TRANS ("Bypass") : TRANS ("Enable"),
                   [this, trackId, id, on = plugin->enabled] { commands.invoke (cmd::pluginSetBypassed, { trackId, id, on }); });
-    menu.addItem ("Remove", [this, trackId, id] { commands.invoke (cmd::pluginRemove, { trackId, id }); });
-    menu.addItem ("Save Preset...", false, false, nullptr);   // presets arrive with the racks work
+    menu.addItem (TRANS ("Remove"), [this, trackId, id] { commands.invoke (cmd::pluginRemove, { trackId, id }); });
+    menu.addItem (TRANS ("Save Preset..."), false, false, nullptr);   // presets arrive with the racks work
     menu.addSeparator();
-    menu.addItem ("Move to Track Chain", [this, trackId, id, name]
+    menu.addItem (TRANS ("Move to Track Chain"), [this, trackId, id, name]
     {
         // It changes where the sound is made, so it asks first (PRD §10.6).
-        juce::AlertWindow::showOkCancelBox (juce::MessageBoxIconType::QuestionIcon, "Move to Track Chain",
-                                            "Move \"" + name + "\" from the mixer inserts to the end of the track's device chain?",
-                                            "Move", "Cancel", this,
+        juce::AlertWindow::showOkCancelBox (juce::MessageBoxIconType::QuestionIcon, TRANS ("Move to Track Chain"),
+                                            tr ("Move \"%1\" from the mixer inserts to the end of the track's device chain?", name),
+                                            TRANS ("Move"), TRANS ("Cancel"), this,
                                             juce::ModalCallbackFunction::create ([safe = juce::Component::SafePointer<ChannelStrip> (this), trackId, id] (int result)
                                             {
                                                 if (result == 1 && safe != nullptr)
@@ -218,21 +219,21 @@ juce::String ChannelStrip::dropRefusal (const SourceDetails& details, const Inse
             return {};
 
         if (! juce::ModifierKeys::currentModifiers.isAltDown())
-            return "Alt+drag copies an insert to another strip";
+            return TRANS ("Alt+drag copies an insert to another strip");
 
-        return (int) state.strip.inserts.size() >= PluginRack::maxMixerInserts ? "This strip's inserts are full" : juce::String();
+        return (int) state.strip.inserts.size() >= PluginRack::maxMixerInserts ? TRANS ("This strip's inserts are full") : juce::String();
     }
 
     if (auto item = itemFromDrag (details.description))
     {
         if (item->kind != LibraryItem::Kind::plugin)
-            return "Only effects go in mixer inserts";
+            return TRANS ("Only effects go in mixer inserts");
 
         if (item->instrument || item->midiEffect)
-            return "Mixer inserts take effects only";
+            return TRANS ("Mixer inserts take effects only");
 
         if (slot.getPlugin())
-            return "Drop on an empty slot";
+            return TRANS ("Drop on an empty slot");
     }
 
     return {};
@@ -312,7 +313,7 @@ void ChannelStrip::setState (const StripState& next)
 
     // Input choices: "No Input" then each input of the track's kind.
     input.clear (juce::dontSendNotification);
-    input.addItem ("No Input", 1);
+    input.addItem (TRANS ("No Input"), 1);
 
     for (int i = 0; i < state.inputs.size(); ++i)
         input.addItem (state.inputs[i], i + 2);
@@ -380,7 +381,7 @@ juce::String ChannelStrip::chainSummary() const
     for (auto& device : state.strip.deviceChain)
         names.add (device.name);
 
-    return names.isEmpty() ? juce::String ("Empty") : names.joinIntoString (juce::String (juce::CharPointer_UTF8 (" \xe2\x80\xba ")));
+    return names.isEmpty() ? TRANS ("Empty") : names.joinIntoString (juce::String (juce::CharPointer_UTF8 (" \xe2\x80\xba ")));
 }
 
 void ChannelStrip::setLevel (StereoLevel level, double elapsedSeconds)
@@ -552,7 +553,7 @@ void ChannelStrip::paint (juce::Graphics& g)
     if (! ioArea.isEmpty())
     {
         divider (ioArea);
-        paintSectionHeader (g, ioArea, "I/O", {}, {});
+        paintSectionHeader (g, ioArea, TRANS ("I/O"), {}, {});
         auto rows = ioArea.reduced (padX, sectionPadY).withTrimmedTop (labelHeight + rowGap);
 
         if (state.isBus())
@@ -561,8 +562,8 @@ void ChannelStrip::paint (juce::Graphics& g)
             g.setColour (colour.withAlpha (chipTintAlpha));
             g.fillRoundedRectangle (chip.toFloat(), theme.radiusMd);
             const auto count = state.strip.childCount;
-            drawStyledText (g, themeManager, juce::String (juce::CharPointer_UTF8 ("\xe2\x86\x90 ")) + juce::String (count)
-                                                 + (count == 1 ? " track" : " tracks"),
+            drawStyledText (g, themeManager, juce::String (juce::CharPointer_UTF8 ("\xe2\x86\x90 "))
+                                                 + trPlural (count, "%1 track", "%1 tracks"),
                             theme.bodySm, chip.reduced (chipPadX, 0), juce::Justification::centredLeft, colour);
         }
 
@@ -577,7 +578,7 @@ void ChannelStrip::paint (juce::Graphics& g)
     if (! chainArea.isEmpty())
     {
         divider (chainArea);
-        paintSectionHeader (g, chainArea, "Track chain", "Racks", theme.textSecondary);
+        paintSectionHeader (g, chainArea, TRANS ("Track chain"), TRANS ("Racks"), theme.textSecondary);
         const auto hovered = chainLink.contains (getMouseXYRelative()) && isMouseOver (true);
         g.setColour (hovered ? theme.bgHover : theme.bgSlot);
         g.fillRoundedRectangle (chainLink.toFloat(), theme.radiusMd);
@@ -599,12 +600,12 @@ void ChannelStrip::paint (juce::Graphics& g)
         drawIcon (g, Icon::arrowDown, flowArea.toFloat().withSizeKeepingCentre (9.0f, 9.0f), theme.textDim);
 
     if (! insertsArea.isEmpty())
-        paintSectionHeader (g, insertsArea, state.isBus() ? "Inserts" : "Mixer inserts", "Post", theme.accent);
+        paintSectionHeader (g, insertsArea, state.isBus() ? TRANS ("Inserts") : TRANS ("Mixer inserts"), TRANS ("Post"), theme.accent);
 
     if (! sendsArea.isEmpty())
     {
         divider (sendsArea);
-        paintSectionHeader (g, sendsArea, "Sends", {}, {});
+        paintSectionHeader (g, sendsArea, TRANS ("Sends"), {}, {});
     }
 
     divider (panArea);

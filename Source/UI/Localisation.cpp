@@ -27,4 +27,16 @@ juce::String fillPlaceholders (const juce::String& text, std::initializer_list<j
     return result;
 }
 
+juce::String toUpperCaseInUILanguage (const juce::String& text)
+{
+    const auto* mappings = juce::LocalisedStrings::getCurrentMappings();
+
+    if (mappings == nullptr || ! mappings->getCountryCodes().contains ("tr"))
+        return text.toUpperCase();
+
+    return text.replace ("i", juce::String::charToString (0x130))
+               .replace (juce::String::charToString (0x131), "I")
+               .toUpperCase();
+}
+
 } // namespace resamper

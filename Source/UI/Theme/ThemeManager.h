@@ -1,5 +1,7 @@
 #pragma once
 
+#include "UI/Localisation.h"
+
 #include <juce_gui_basics/juce_gui_basics.h>
 
 #include <array>
@@ -20,8 +22,8 @@ struct TypeStyle
     bool uppercase = false;
     float tracking = 0;
 
-    /** The text as this style shows it (uppercase styles upper-case it). */
-    juce::String apply (const juce::String& text) const   { return uppercase ? text.toUpperCase() : text; }
+    /** The text as this style shows it (uppercase styles upper-case it, by the UI Language's rules). */
+    juce::String apply (const juce::String& text) const   { return uppercase ? toUpperCaseInUILanguage (text) : text; }
 };
 
 /** One drop shadow of an elevation level (PRD §15.3). */

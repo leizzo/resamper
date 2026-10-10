@@ -6,6 +6,7 @@
 #include "Commands/TrackCommands.h"
 
 #include <algorithm>
+#include "UI/Localisation.h"
 
 namespace resamper
 {
@@ -39,7 +40,7 @@ juce::String PluginWindows::trackNameOf (const juce::String& trackId) const
         if (track.id == trackId)
             return track.name;
 
-    return "Track";
+    return TRANS ("Track");
 }
 
 std::unique_ptr<FloatingDeviceWindow> PluginWindows::createWindow (const PluginInfo& info)
@@ -152,7 +153,7 @@ void PluginWindows::open (const juce::String& pluginId, bool focus)
 void PluginWindows::announceAndFocus (FloatingDeviceWindow& window)
 {
     window.grabKeyboardFocus();
-    juce::AccessibilityHandler::postAnnouncement (window.getName() + " window opened",
+    juce::AccessibilityHandler::postAnnouncement (tr ("%1 window opened", window.getName()),
                                                   juce::AccessibilityHandler::AnnouncementPriority::medium);
 }
 
@@ -293,13 +294,12 @@ void PluginWindows::closeCrashed (const juce::String& pluginId)
         return;
 
     std::vector<Toasts::Action> actions;
-    actions.push_back ({ "Reload", [this, trackId = info->trackId, pluginId] (bool)
+    actions.push_back ({ TRANS ("Reload"), [this, trackId = info->trackId, pluginId] (bool)
     {
         commands.invoke (cmd::pluginReload, { trackId, pluginId });
     }, std::nullopt });
 
-    showToast (info->name + " crashed on " + trackNameOf (info->trackId) + " " + middleDot
-                   + " its audio is bypassed; the rest plays on",
+    showToast (tr ("%1 crashed on %2 %3 its audio is bypassed; the rest plays on", info->name, trackNameOf (info->trackId), middleDot),
                std::move (actions));
 }
 
@@ -319,17 +319,17 @@ void PluginWindows::pluginAdded (const juce::String& trackId, const juce::String
     if (! showToast)
         return;
 
-    auto message = info->name + " added to " + trackNameOf (trackId);
+    auto message = tr ("%1 added to %2", info->name, trackNameOf (trackId));
 
     if (autoOpen)
-        message << " " << middleDot << " Plug-in window opened automatically";
+        message << " " << middleDot << " " << TRANS ("Plug-in window opened automatically");
 
     std::vector<Toasts::Action> actions;
-    actions.push_back ({ "Undo", [this, trackId, pluginId] (bool)
+    actions.push_back ({ TRANS ("Undo"), [this, trackId, pluginId] (bool)
     {
         commands.invoke (cmd::pluginUndoInsert, { trackId, pluginId });
     }, std::nullopt });
-    actions.push_back ({ "Auto-open window on insert", [this] (bool on)
+    actions.push_back ({ TRANS ("Auto-open window on insert"), [this] (bool on)
     {
         preferences.setAutoOpenPluginWindows (on);
     }, autoOpen });

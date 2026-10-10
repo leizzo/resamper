@@ -32,14 +32,14 @@ juce::String Library::nameOf (LibraryCategory c)
 {
     switch (c)
     {
-        case LibraryCategory::sounds:        return "Sounds";
-        case LibraryCategory::drums:         return "Drums";
-        case LibraryCategory::instruments:   return "Instruments";
-        case LibraryCategory::audioEffects:  return "Audio Effects";
-        case LibraryCategory::midiEffects:   return "MIDI Effects";
-        case LibraryCategory::plugins:       return "Plug-Ins";
-        case LibraryCategory::clips:         return "Clips";
-        case LibraryCategory::samples:       return "Samples";
+        case LibraryCategory::sounds:        return NEEDS_TRANS ("Sounds");
+        case LibraryCategory::drums:         return NEEDS_TRANS ("Drums");
+        case LibraryCategory::instruments:   return NEEDS_TRANS ("Instruments");
+        case LibraryCategory::audioEffects:  return NEEDS_TRANS ("Audio Effects");
+        case LibraryCategory::midiEffects:   return NEEDS_TRANS ("MIDI Effects");
+        case LibraryCategory::plugins:       return NEEDS_TRANS ("Plug-Ins");
+        case LibraryCategory::clips:         return NEEDS_TRANS ("Clips");
+        case LibraryCategory::samples:       return NEEDS_TRANS ("Samples");
     }
 
     return {};

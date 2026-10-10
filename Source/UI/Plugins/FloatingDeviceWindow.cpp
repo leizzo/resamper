@@ -66,7 +66,7 @@ void FloatingDeviceWindow::ChromeButton::paintButton (juce::Graphics& g, bool hi
             drawIcon (g, Icon::power, glyphIn (content.removeFromLeft (powerGlyph), powerGlyph),
                       on ? theme.accent : theme.textDim);
             content.removeFromLeft (bypassGap);
-            drawStyledText (g, themeManager, on ? "On" : "Off", controlStyle, content, juce::Justification::centredLeft,
+            drawStyledText (g, themeManager, on ? TRANS ("On") : TRANS ("Off"), controlStyle, content, juce::Justification::centredLeft,
                             on ? theme.accent : theme.textSecondary);
             break;
         }
@@ -121,8 +121,8 @@ struct FloatingDeviceWindow::ClickWatch : juce::MouseListener
 FloatingDeviceWindow::FloatingDeviceWindow (ThemeManager& tm, const PluginInfo& info, const juce::String& track,
                                             const juce::String& componentId)
     : themeManager (tm), plugin (info), trackName (track),
-      pin (std::make_unique<ChromeButton> (tm, "Pin (keep on top)", ChromeButton::Kind::icon, Icon::pin)),
-      close (std::make_unique<ChromeButton> (tm, "Close", ChromeButton::Kind::icon, Icon::x)),
+      pin (std::make_unique<ChromeButton> (tm, TRANS ("Pin (keep on top)"), ChromeButton::Kind::icon, Icon::pin)),
+      close (std::make_unique<ChromeButton> (tm, TRANS ("Close"), ChromeButton::Kind::icon, Icon::x)),
       clickWatch (std::make_unique<ClickWatch> (*this)),
       foregroundWatch ([this] { updateAlwaysOnTop(); })
 {
@@ -169,7 +169,7 @@ void FloatingDeviceWindow::setPinned (bool shouldPin)
 {
     pinned = shouldPin;
     pin->setToggleState (pinned, juce::dontSendNotification);
-    pin->setTitle (pinned ? "Unpin" : "Pin (keep on top)");
+    pin->setTitle (pinned ? TRANS ("Unpin") : TRANS ("Pin (keep on top)"));
     updateAlwaysOnTop();
 }
 

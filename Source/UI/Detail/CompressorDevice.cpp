@@ -1,6 +1,7 @@
 #include "CompressorDevice.h"
 #include "Commands/CommandRegistry.h"
 #include "Commands/PluginCommands.h"
+#include "UI/Localisation.h"
 
 namespace resamper
 {
@@ -45,7 +46,7 @@ namespace
 DynamicsMeters::DynamicsMeters (ThemeManager& tm) : themeManager (tm)
 {
     setComponentID ("DynamicsMeters");
-    setTitle ("Input and gain reduction meters");
+    setTitle (TRANS ("Input and gain reduction meters"));
 }
 
 void DynamicsMeters::update (const DynamicsReading& reading, double elapsedSeconds)
@@ -65,6 +66,7 @@ void DynamicsMeters::paint (juce::Graphics& g)
     auto& theme = themeManager.getTheme();
     auto r = getLocalBounds();
 
+    // The meter captions read as on hardware in every UI Language.
     drawNumber (g, themeManager, "IN  GR", smallMono, r.removeFromTop (meterCaptionHeight), juce::Justification::centred, theme.textDim);
     auto value = r.removeFromBottom (meterCaptionHeight);
     r.removeFromTop (meterInset);
@@ -102,8 +104,8 @@ CompressorGraph::CompressorGraph (CompressorDevice& d)
     : device (d), levelHistory ((size_t) historyLength, -120.0f), reductionHistory ((size_t) historyLength, 0.0f)
 {
     setComponentID ("CompressorGraph");
-    setTitle ("Compressor curve");
-    setDescription ("Drag the threshold line; double-click it to reset.");
+    setTitle (TRANS ("Compressor curve"));
+    setDescription (TRANS ("Drag the threshold line; double-click it to reset."));
 }
 
 float CompressorGraph::xForDb (float db) const
@@ -314,23 +316,23 @@ void CompressorGraph::mouseDoubleClick (const juce::MouseEvent& e)
 CompressorDevice::CompressorDevice (CommandRegistry& c, const PluginRack& r, ThemeManager& tm, const juce::String& id)
     : DeviceBody (c, r, tm, id),
       meters (tm),
-      view (tm, { "TRANSFER", "ACTIVITY" }, Segmented::Style::device),
+      view (tm, { TRANS ("TRANSFER"), TRANS ("ACTIVITY") }, Segmented::Style::device),
       graph (*this),
-      ratio (tm, specFor ("ratio"), "Ratio"),
-      attack (tm, specFor ("attack"), "Attack"),
-      release (tm, specFor ("release"), "Release"),
-      knee (tm, specFor ("knee"), "Knee"),
+      ratio (tm, specFor ("ratio"), TRANS ("Ratio")),
+      attack (tm, specFor ("attack"), TRANS ("Attack")),
+      release (tm, specFor ("release"), TRANS ("Release")),
+      knee (tm, specFor ("knee"), TRANS ("Knee")),
       lookahead (tm, { "0", "1", "10 ms" }, Segmented::Style::device),
-      detect (tm, { "PEAK", "RMS", "EXP" }, Segmented::Style::device),
-      makeupAuto (tm, "A", "Makeup Auto: sets the makeup from the threshold and ratio"),
+      detect (tm, { TRANS ("PEAK"), "RMS", "EXP" }, Segmented::Style::device),
+      makeupAuto (tm, "A", TRANS ("Makeup Auto: sets the makeup from the threshold and ratio")),
       makeup (tm, specFor ("makeup"), {}),
-      mix (tm, specFor ("mix"), "Mix"),
-      output (tm, specFor ("output"), "Out")
+      mix (tm, specFor ("mix"), TRANS ("Mix")),
+      output (tm, specFor ("output"), TRANS ("Out"))
 {
     setComponentID ("Device/Compressor v2");
 
     view.setComponentID ("view");
-    view.setTitle ("Display");
+    view.setTitle (TRANS ("Display"));
     view.onChange = [this] (int index) { graph.setActivity (index == 1); };
 
     for (auto [knob, parameterId] : { std::pair { &ratio, "ratio" }, { &attack, "attack" }, { &release, "release" }, { &knee, "knee" } })
@@ -341,10 +343,10 @@ CompressorDevice::CompressorDevice (CommandRegistry& c, const PluginRack& r, The
     }
 
     lookahead.setComponentID ("lookahead");
-    lookahead.setTitle ("Lookahead");
+    lookahead.setTitle (TRANS ("Lookahead"));
     lookahead.onChange = [this] (int index) { set ("lookahead", (float) index); };
     detect.setComponentID ("detect");
-    detect.setTitle ("Detection");
+    detect.setTitle (TRANS ("Detection"));
     detect.onChange = [this] (int index) { set ("detect", (float) index); };
 
     makeupAuto.setComponentID ("makeupAuto");
@@ -357,7 +359,7 @@ CompressorDevice::CompressorDevice (CommandRegistry& c, const PluginRack& r, The
         row->onChange = [this, key = juce::String (parameterId)] (double v, bool continues) { set (key, (float) v, continues); };
     }
 
-    makeup.setTitle ("Makeup");
+    makeup.setTitle (TRANS ("Makeup"));
 
     for (auto* child : std::initializer_list<juce::Component*> { &meters, &view, &graph, &ratio, &attack, &release, &knee,
                                                                 &lookahead, &detect, &makeupAuto, &makeup, &mix, &output })
@@ -487,7 +489,8 @@ void CompressorDevice::paint (juce::Graphics& g)
 {
     auto& theme = themeManager.getTheme();
 
-    // Captions: LA and DT before their switches, OUTPUT and Makeup in the Output zone.
+    // Captions: LA and DT before their switches (abbreviations, as on hardware in every UI Language),
+    // OUTPUT and Makeup in the Output zone.
     drawNumber (g, themeManager, "LA", switchCaptionStyle, lookahead.getBounds().withX (controlsArea.getX()).withWidth (switchCaptionWidth),
                 juce::Justification::centredLeft, theme.textDim);
     drawNumber (g, themeManager, "DT", switchCaptionStyle, detect.getBounds().withX (controlsArea.getX()).withWidth (switchCaptionWidth),
@@ -498,9 +501,9 @@ void CompressorDevice::paint (juce::Graphics& g)
     g.fillRect (outputArea.getX(), outputArea.getY(), 1, outputArea.getHeight());
 
     auto out = outputArea.withTrimmedLeft (outputPadding);
-    drawNumber (g, themeManager, "OUTPUT", smallMono, out.removeFromTop (meterCaptionHeight), juce::Justification::centredLeft, theme.textDim);
+    drawNumber (g, themeManager, TRANS ("OUTPUT"), smallMono, out.removeFromTop (meterCaptionHeight), juce::Justification::centredLeft, theme.textDim);
     out.removeFromTop (outputGap);
-    drawStyledText (g, themeManager, "Makeup", captionStyle, out.removeFromTop (makeupHeaderHeight), juce::Justification::centredLeft,
+    drawStyledText (g, themeManager, TRANS ("Makeup"), captionStyle, out.removeFromTop (makeupHeaderHeight), juce::Justification::centredLeft,
                     theme.textDim);
 }
 

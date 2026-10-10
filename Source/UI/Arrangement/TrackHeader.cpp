@@ -8,7 +8,8 @@ namespace
 {
     constexpr int paddingX = 12, paddingY = 10, buttonWidth = 20, buttonHeight = 17, buttonGap = 4;
 
-    const char* const paletteNames[] = { "Drums", "Bass", "Chords", "Pads", "Arp", "Vocal", "FX" };
+    const char* const paletteNames[] = { NEEDS_TRANS ("Drums"), NEEDS_TRANS ("Bass"), NEEDS_TRANS ("Chords"), NEEDS_TRANS ("Pads"),
+                                         NEEDS_TRANS ("Arp"), NEEDS_TRANS ("Vocal"), NEEDS_TRANS ("FX") };
 }
 
 TrackHeader::TrackHeader (CommandRegistry& c, ThemeManager& tm, const TrackInfo& info, const juce::StringArray& inputList)
@@ -16,10 +17,10 @@ TrackHeader::TrackHeader (CommandRegistry& c, ThemeManager& tm, const TrackInfo&
       arm (tm, TrackButton::Kind::arm), solo (tm, TrackButton::Kind::solo),
       mute (tm, TrackButton::Kind::mute), automation (tm, TrackButton::Kind::automation)
 {
-    arm.setTooltip ("Arm for recording");
-    solo.setTooltip ("Solo (S)");
-    mute.setTooltip ("Mute");
-    automation.setTooltip ("Show automation");
+    arm.setTooltip (TRANS ("Arm for recording"));
+    solo.setTooltip (TRANS ("Solo (S)"));
+    mute.setTooltip (TRANS ("Mute"));
+    automation.setTooltip (TRANS ("Show automation"));
 
     arm.onClick = [this] { commands.invoke (cmd::trackToggleArm, { track.id }); };
     solo.onClick = [this] { commands.invoke (cmd::trackToggleSolo, { track.id }); };
@@ -125,29 +126,29 @@ void TrackHeader::showMenu()
     juce::PopupMenu colours;
 
     for (int i = 0; i < ApplicationModel::trackPaletteSize; ++i)
-        colours.addItem (juce::PopupMenu::Item (paletteNames[i])
+        colours.addItem (juce::PopupMenu::Item (TRANS (paletteNames[i]))
                              .setColour (theme.trackPalette[(size_t) i])
                              .setTicked (i == track.colourIndex)
                              .setAction ([&registry, id, i] { registry.invoke (cmd::trackSetColour, { id, i }); }));
 
     juce::PopupMenu menu;
-    menu.addSubMenu ("Colour", colours);
+    menu.addSubMenu (TRANS ("Colour"), colours);
 
     if (! track.isReturn)
     {
         juce::PopupMenu inputMenu;
-        inputMenu.addItem ("No Input", true, track.input.isEmpty(),
+        inputMenu.addItem (TRANS ("No Input"), true, track.input.isEmpty(),
                            [&registry, id] { registry.invoke (cmd::trackSetInput, { id, {} }); });
 
         for (auto& input : inputs)
             inputMenu.addItem (input, true, input == track.input,
                                [&registry, id, input] { registry.invoke (cmd::trackSetInput, { id, input }); });
 
-        menu.addSubMenu ("Input", inputMenu);
+        menu.addSubMenu (TRANS ("Input"), inputMenu);
     }
 
     menu.addSeparator();
-    menu.addItem ("Show Automation", true, automationShown,
+    menu.addItem (TRANS ("Show Automation"), true, automationShown,
                   [safeThis = juce::Component::SafePointer<TrackHeader> (this)]
                   {
                       if (safeThis != nullptr && safeThis->onToggleAutomation)

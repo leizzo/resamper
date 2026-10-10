@@ -134,7 +134,7 @@ void ArrangementView::paint (juce::Graphics& g)
     g.setColour (theme.borderSoft);
     g.fillRect (corner.removeFromBottom (1));
     g.fillRect (corner.getRight() - 1, 0, 1, timeline.getHeight());
-    drawStyledText (g, themeManager, "Bars", theme.caption, juce::Rectangle<int> (12, 0, trackList.getWidth() - 12, timeline.getHeight()),
+    drawStyledText (g, themeManager, TRANS ("Bars"), theme.caption, juce::Rectangle<int> (12, 0, trackList.getWidth() - 12, timeline.getHeight()),
                     juce::Justification::centredLeft, theme.textDim);
 }
 
@@ -262,7 +262,7 @@ void ArrangementView::itemDropped (const SourceDetails& details)
     // An invalid lane (a sample on a MIDI track) refuses with a shake.
     if (target.row >= 0 && ! target.valid)
     {
-        rejectWithShake (lanes, "Samples go on audio tracks");
+        rejectWithShake (lanes, TRANS ("Samples go on audio tracks"));
         return;
     }
 
