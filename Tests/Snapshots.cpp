@@ -228,8 +228,9 @@ struct LanguageSnapshot : juce::UnitTest
             };
 
             // The other menus, their Command names in the UI Language.
-            for (auto* menuName : { "File", "Edit", "Create", "View" })
-                capture (createCommandMenu (commandManager, menuName), "menu-" + juce::String (menuName).toLowerCase());
+            for (auto* menuName : getMenuNames())
+                if (juce::String (menuName) != "Options" && juce::String (menuName) != "Help")
+                    capture (createCommandMenu (commandManager, menuName), "menu-" + juce::String (menuName).toLowerCase());
 
             const auto options = createCommandMenu (commandManager, "Options");
             capture (options, "language-options-menu");

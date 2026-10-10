@@ -66,6 +66,7 @@ void MainWindow::closeButtonPressed()
 juce::PopupMenu MainWindow::getMenuForIndex (int index, const juce::String&)
 {
     // The title shown is translated; the menu's English name picks its Commands.
+    jassert (juce::isPositiveAndBelow (index, (int) getMenuNames().size()));
     return createCommandMenu (commandManager, getMenuNames()[(size_t) index]);
 }
 
