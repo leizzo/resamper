@@ -436,8 +436,6 @@ struct PluginSandboxTests : juce::UnitTest
 
             f.invoke (cmd::pluginSetRunInProcess, { id, true });
             expect (loaded (f, id) && is (f, id, HostingState::Kind::inProcess));
-            // The new instance starts from the plug-in's saved state, which the Gain set above isn't in yet.
-            setParameter (f, id, "Gain", 0.25f);
             expectWithinAbsoluteError (playedPeak(), dry * 0.25f, dry * 0.05f, "in-process");
         }
 
@@ -761,6 +759,47 @@ struct PluginSandboxTests : juce::UnitTest
             {
                 expect (false, "Reload left no instance");
             }
+        }
+
+        beginTest ("Run in-process, either way, and Reload keep the changes made since the last save (#171)");
+        {
+            Fixture f;
+            TestPlugin gain (f, "Sandbox Keep", "plugin Keep Gain");
+            const auto track = addTrack (f);
+            const auto id = insert (f, track, gain.path());
+
+            // What the plug-in itself plays: its state, not Resamper's mirror of it.
+            auto played = [&]
+            {
+                auto* instance = instanceOf (f, id);
+
+                if (instance == nullptr)
+                    return -1.0f;
+
+                prepare (*instance);
+                return processOnes (*instance);
+            };
+
+            auto check = [&] (float expected, const juce::String& after)
+            {
+                expect (loaded (f, id), after + ": it didn't load");
+                expectWithinAbsoluteError (parameterValue (f, id, "Gain"), expected, 1.0e-3f, after + ": Resamper's Gain");
+                expectWithinAbsoluteError (played(), expected, 1.0e-3f, after + ": the plug-in's Gain");
+            };
+
+            setParameter (f, id, "Gain", 0.25f);
+            f.invoke (cmd::pluginSetRunInProcess, { id, true });
+            check (0.25f, "Run in-process");
+            expect (is (f, id, HostingState::Kind::inProcess));
+
+            setParameter (f, id, "Gain", 0.75f);
+            f.invoke (cmd::pluginSetRunInProcess, { id, false });
+            check (0.75f, "back into the sandbox");
+            expect (is (f, id, HostingState::Kind::sandboxed));
+
+            setParameter (f, id, "Gain", 0.4f);
+            f.invoke (cmd::pluginReload, { track, id });
+            check (0.4f, "Reload");
         }
 
         beginTest ("Run in-process is per instance and saved with the project");

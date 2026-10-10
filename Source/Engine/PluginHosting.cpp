@@ -36,7 +36,13 @@ namespace
     /** Creates the plug-in's instance anew, now, from the state saved on it; its old one goes first. */
     void createAgain (te::ExternalPlugin& plugin)
     {
-        const auto hadInstance = plugin.getAudioPluginInstance() != nullptr;
+        auto* oldInstance = plugin.getAudioPluginInstance();
+        const auto hadInstance = oldInstance != nullptr;
+
+        // The old instance writes its current state onto the plug-in for the new one to take (#171).
+        // One whose sandbox host died can't: the new one starts from the state last written there.
+        if (hadInstance && ! PluginSandbox::hasCrashed (oldInstance))
+            plugin.flushPluginStateToValueTree();
 
         // Playback that has the plug-in initialised never prepares a new instance: it
         // would skip the plug-in, and the track would play dry (#168). Freed for the swap,

@@ -142,7 +142,7 @@ The floating window that shows one Native Device's card, Expanded: opened from t
 _Avoid_: native editor popover, device popover
 
 **Sandbox**:
-The separate process a Plug-in runs in by default (one per instance), so a crash takes down only that Plug-in: its audio is bypassed, the rest of the session plays on, and **Reload** starts it again from its last saved state. A Plug-in can be set to run in-process instead (**Run in-process**), per instance, saved with the project.
+The separate process a Plug-in runs in by default (one per instance), so a crash takes down only that Plug-in: its audio is bypassed, the rest of the session plays on, and **Reload** starts it again from its last saved state. Reloading a Plug-in that hasn't crashed, or switching Run in-process, keeps its current state. A Plug-in can be set to run in-process instead (**Run in-process**), per instance, saved with the project.
 _Avoid_: bridge, out-of-process host (for the concept; fine for the mechanism)
 
 **Plug-in Hosting**:
