@@ -5,6 +5,7 @@
 #include "UI/Controls/Menus.h"
 #include "UI/Localisation.h"
 #include "UI/MainWindow/MainComponent.h"
+#include "UI/Theme/ThemeManager.h"
 
 #include <regex>
 
@@ -82,11 +83,12 @@ namespace
                    .replace ("\\t", "\t").replace ("\\n", "\n").replace ("\\\\", "\\");
     }
 
-    /** Every key the source translates: TRANS ("..."), tr ("...", ...) and both of trPlural's. */
+    /** Every key the source translates: TRANS ("..."), tr ("...", ...), both of trPlural's,
+        and NEEDS_TRANS ("..."), which marks a key translated later through a variable. */
     juce::StringArray translationKeys (const juce::String& source)
     {
         static const std::string literal = R"#("((?:[^"\\]|\\.)*)")#";
-        static const std::regex single (R"#(\b(?:TRANS|tr)\s*\(\s*)#" + literal + R"#(\s*[,)])#");
+        static const std::regex single (R"#(\b(?:TRANS|NEEDS_TRANS|tr)\s*\(\s*)#" + literal + R"#(\s*[,)])#");
         static const std::regex plural (R"#(\btrPlural\s*\([^,;]+,\s*)#" + literal + R"#(\s*,\s*)#" + literal);
 
         const auto text = withoutComments (source.toStdString());
@@ -151,6 +153,17 @@ struct LocalisationTests : juce::UnitTest
             expectEquals (trPlural (0, "%1 track", "%1 tracks"), juce::String ("0 Track"));
             expectEquals (trPlural (4, "%1 track", "%1 tracks"), juce::String ("4 Track"));
             expectEquals (trPlural (2, "%1 clips on %2", "%1 clips on %2", "Bass"), juce::String ("2 clips on Bass"));
+        }
+
+        beginTest ("An uppercase style follows the UI Language's rules: Turkish i is İ and ı is I");
+        {
+            const TypeStyle caps { 8.0f, false, 600, true };
+            expectEquals (caps.apply ("Mixer inserts"), juce::String ("MIXER INSERTS"));
+
+            ScopedMapping mapping (emptyTurkish);
+            expectEquals (caps.apply (juce::String::fromUTF8 ("Mixer insert'leri ılık")),
+                          juce::String::fromUTF8 ("MİXER İNSERT'LERİ ILIK"));
+            expectEquals (TypeStyle {}.apply ("insert"), juce::String ("insert"));
         }
 
         beginTest ("The language preference defaults to system and round-trips through the file");
@@ -299,13 +312,14 @@ struct LocalisationTests : juce::UnitTest
                                         "// TRANS (\"In a comment\")\n"
                                         "label.setText (tr (\"Track %1\", n), juce::dontSendNotification);\n"
                                         "auto s = trPlural (count, \"%1 clip\", \"%1 clips\");\n"
-                                        "auto q = TRANS (\"Say \\\"hi\\\"\");\n";
+                                        "auto q = TRANS (\"Say \\\"hi\\\"\");\n"
+                                        "const char* names[] = { NEEDS_TRANS (\"Drums\") };\n";
 
             expectEquals (missingTranslations (source, emptyTurkish).joinIntoString (" | "),
-                          juce::String ("Save | Track %1 | Say \"hi\" | %1 clip | %1 clips"));
+                          juce::String ("Save | Track %1 | Say \"hi\" | Drums | %1 clip | %1 clips"));
 
             const auto file = emptyTurkish + "\"Save\" = \"Kaydet\"\n\"Track %1\" = \"Track %1\"\n\"%1 clip\" = \"%1 Clip\"\n"
-                                             "\"%1 clips\" = \"%1 Clip\"\n\"Say \\\"hi\\\"\" = \"Selam\"\n";
+                                             "\"%1 clips\" = \"%1 Clip\"\n\"Say \\\"hi\\\"\" = \"Selam\"\n\"Drums\" = \"Davul\"\n";
             expect (missingTranslations (source, file).isEmpty(), missingTranslations (source, file).joinIntoString (" | "));
         }
 

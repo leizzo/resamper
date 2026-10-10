@@ -6,6 +6,7 @@
 #include "UI/Controls/ValueFormat.h"
 
 #include <map>
+#include "UI/Localisation.h"
 
 namespace resamper
 {
@@ -39,10 +40,10 @@ namespace
             drawIcon (g, Icon::squareDashed, column.removeFromTop (iconSize).toFloat().withSizeKeepingCentre ((float) iconSize, (float) iconSize),
                       highlighted ? theme.accent : theme.textDim);
             column.removeFromTop (gap);
-            drawStyledText (g, themeManager, "Drop device", TypeStyle { 10.0f, false, 600 }, column.removeFromTop (firstLine),
+            drawStyledText (g, themeManager, TRANS ("Drop device"), TypeStyle { 10.0f, false, 600 }, column.removeFromTop (firstLine),
                             juce::Justification::centred, theme.textSecondary);
             column.removeFromTop (gap);
-            drawStyledText (g, themeManager, "or plug-in here", TypeStyle { 9.0f, false, 400 }, column.removeFromTop (secondLine),
+            drawStyledText (g, themeManager, TRANS ("or plug-in here"), TypeStyle { 9.0f, false, 400 }, column.removeFromTop (secondLine),
                             juce::Justification::centred, theme.textDim);
         }
 
@@ -55,7 +56,8 @@ namespace
         const auto beats = model.secondsToBeats (startSeconds + lengthSeconds) - model.secondsToBeats (startSeconds);
         const auto perBar = model.getBeatsPerBar (startSeconds);
         const auto bars = beats / perBar;
-        return juce::String (bars, std::abs (bars - std::round (bars)) < 0.01 ? 0 : 2) + (std::abs (bars - 1.0) < 0.01 ? " bar" : " bars");
+        const auto count = juce::String (bars, std::abs (bars - std::round (bars)) < 0.01 ? 0 : 2);
+        return std::abs (bars - 1.0) < 0.01 ? tr ("%1 bar", count) : tr ("%1 bars", count);
     }
 
     juce::String positionText (const ApplicationModel& model, double seconds)
@@ -88,7 +90,7 @@ struct DetailView::ClipPanel : juce::Component
 
         if (title.isEmpty())
         {
-            drawStyledText (g, themeManager, "Select a track or clip", theme.body, r.removeFromTop (20),
+            drawStyledText (g, themeManager, TRANS ("Select a track or clip"), theme.body, r.removeFromTop (20),
                             juce::Justification::centredLeft, theme.textDim);
             return;
         }
@@ -391,24 +393,24 @@ void DetailView::refresh()
                 continue;
 
             clipPanel->title = clip.name;
-            clipPanel->subtitle = (midi ? "MIDI clip" : "Audio clip") + juce::String (juce::CharPointer_UTF8 ("  \xc2\xb7  "))
+            clipPanel->subtitle = (midi ? TRANS ("MIDI clip") : TRANS ("Audio clip")) + juce::String (juce::CharPointer_UTF8 ("  \xc2\xb7  "))
                                 + barsText (model, clip.startSeconds, clip.lengthSeconds)
-                                + juce::String (juce::CharPointer_UTF8 ("  \xc2\xb7  ")) + juce::String (model.getTempo(), 0) + " BPM";
-            clipPanel->rows = { { "Start", positionText (model, clip.startSeconds) },
-                                { "Length", barsText (model, clip.startSeconds, clip.lengthSeconds) },
-                                midi ? ClipPanel::Row { "Notes", juce::String ((int) clip.notes.size()) }
-                                     : ClipPanel::Row { "Takes", clip.numTakes == 0 ? juce::String ("1") : juce::String (clip.numTakes) },
-                                { "Track", track.name } };
+                                + juce::String (juce::CharPointer_UTF8 ("  \xc2\xb7  ")) + tr ("%1 BPM", juce::String (model.getTempo(), 0));
+            clipPanel->rows = { { TRANS ("Start"), positionText (model, clip.startSeconds) },
+                                { TRANS ("Length"), barsText (model, clip.startSeconds, clip.lengthSeconds) },
+                                midi ? ClipPanel::Row { TRANS ("Notes"), juce::String ((int) clip.notes.size()) }
+                                     : ClipPanel::Row { TRANS ("Takes"), clip.numTakes == 0 ? juce::String ("1") : juce::String (clip.numTakes) },
+                                { TRANS ("Track"), track.name } };
         }
 
         if (clipPanel->title.isEmpty())
         {
             clipPanel->title = track.name;
-            clipPanel->subtitle = midi ? "MIDI track" : "Audio track";
-            clipPanel->rows = { { "Clips", juce::String ((int) track.clips.size()) },
-                                { "Volume", ValueFormat::decibels().format (track.volume.value) },
-                                { "Pan", ValueFormat::pan().format (track.pan) },
-                                { "Armed", track.armed ? "On" : "Off", track.armed } };
+            clipPanel->subtitle = midi ? TRANS ("MIDI track") : TRANS ("Audio track");
+            clipPanel->rows = { { TRANS ("Clips"), juce::String ((int) track.clips.size()) },
+                                { TRANS ("Volume"), ValueFormat::decibels().format (track.volume.value) },
+                                { TRANS ("Pan"), ValueFormat::pan().format (track.pan) },
+                                { TRANS ("Armed"), track.armed ? TRANS ("On") : TRANS ("Off"), track.armed } };
         }
     }
 

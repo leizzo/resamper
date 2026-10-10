@@ -27,23 +27,21 @@ namespace
     {
         return columns > 0 ? columns * knobWidth + (columns - 1) * knobGap : 0;
     }
-
-    const char* modsTooltip = "Modulators: the Mods Drawer is coming";
 }
 
 NativeDeviceCard::NativeDeviceCard (CommandRegistry& c, const PluginRack& r, ThemeManager& tm, const juce::String& track,
                                     const PluginInfo& info)
     : DeviceCard (c, r, tm, track, info),
       power (tm, DevicePowerButton::Style::native),
-      preset (tm, "Preset: presets are coming with the preset browser", DeviceHeaderButton::Kind::preset),
-      ab (tm, "A/B compare is coming", DeviceHeaderButton::Kind::abCompare),
-      mods (tm, modsTooltip, DeviceHeaderButton::Kind::mods),
-      fold (tm, "Fold", DeviceHeaderButton::Kind::icon, Icon::foldVertical),
-      expand (tm, "Expand", DeviceHeaderButton::Kind::icon, Icon::maximize2),
-      options (tm, "Options", DeviceHeaderButton::Kind::icon, Icon::ellipsis)
+      preset (tm, TRANS ("Preset: presets are coming with the preset browser"), DeviceHeaderButton::Kind::preset),
+      ab (tm, TRANS ("A/B compare is coming"), DeviceHeaderButton::Kind::abCompare),
+      mods (tm, TRANS ("Modulators: the Mods Drawer is coming"), DeviceHeaderButton::Kind::mods),
+      fold (tm, TRANS ("Fold"), DeviceHeaderButton::Kind::icon, Icon::foldVertical),
+      expand (tm, TRANS ("Expand"), DeviceHeaderButton::Kind::icon, Icon::maximize2),
+      options (tm, TRANS ("Options"), DeviceHeaderButton::Kind::icon, Icon::ellipsis)
 {
     setComponentID ("DeviceCard/Native");
-    setDescription ("Native device");
+    setDescription (TRANS ("Native device"));
 
     preset.setComponentID ("preset");
     ab.setComponentID ("ab");
@@ -52,7 +50,7 @@ NativeDeviceCard::NativeDeviceCard (CommandRegistry& c, const PluginRack& r, The
     expand.setComponentID ("expand");
     options.setComponentID ("options");
 
-    preset.setButtonText ("Default");
+    preset.setButtonText (TRANS ("Default"));
     mods.setButtonText ("0");
 
     // Until they land, these show their state but can't be used.
@@ -95,6 +93,7 @@ void NativeDeviceCard::rebuild (const std::vector<PluginParameter>& list)
 
         for (auto& p : list)
         {
+            // A device without a body of its own shows its parameters' own names, untranslated.
             auto knob = std::make_unique<Knob> (themeManager, specFor (p), p.name);
             knob->setComponentID (p.id);
             knob->setDialSize (dialSize);
@@ -149,7 +148,7 @@ void NativeDeviceCard::setState (const PluginInfo& info)
     power.setStyle (folded ? DevicePowerButton::Style::folded : DevicePowerButton::Style::native);
     mods.setKind (folded ? DeviceHeaderButton::Kind::foldedMods : DeviceHeaderButton::Kind::mods);
     expand.setIcon (size == DeviceSize::expanded ? Icon::minimize2 : Icon::maximize2);
-    expand.setTooltip (size == DeviceSize::expanded ? "Compact" : "Expand");
+    expand.setTooltip (size == DeviceSize::expanded ? TRANS ("Compact") : TRANS ("Expand"));
 
     rebuild (rack.getParameters (plugin.id));
     repaint();
@@ -227,9 +226,9 @@ void NativeDeviceCard::addMenuItems (juce::PopupMenu& menu)
     if (floating)
         return;
 
-    menu.addItem ("Fold", true, size == DeviceSize::folded, resize (toggledSize (size, DeviceSize::folded)));
-    menu.addItem ("Expand", true, size == DeviceSize::expanded, resize (toggledSize (size, DeviceSize::expanded)));
-    menu.addItem ("Open in Window", [this] { if (onFloat) onFloat(); });
+    menu.addItem (TRANS ("Fold"), true, size == DeviceSize::folded, resize (toggledSize (size, DeviceSize::folded)));
+    menu.addItem (TRANS ("Expand"), true, size == DeviceSize::expanded, resize (toggledSize (size, DeviceSize::expanded)));
+    menu.addItem (TRANS ("Open in Window"), [this] { if (onFloat) onFloat(); });
     menu.addSeparator();
 }
 

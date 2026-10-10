@@ -30,4 +30,8 @@ juce::String trPlural (int n, const juce::String& singular, const juce::String& 
     return tr (n == 1 ? singular : plural, n, args...);
 }
 
+/** The text upper-cased by the UI Language's rules: in Turkish, i becomes İ
+    and ı becomes I, which juce::String::toUpperCase does not know. */
+juce::String toUpperCaseInUILanguage (const juce::String& text);
+
 } // namespace resamper

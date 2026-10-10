@@ -1,5 +1,6 @@
 #include "InsertSlot.h"
 #include "UI/Controls/Icons.h"
+#include "UI/Localisation.h"
 
 namespace resamper
 {
@@ -17,7 +18,7 @@ namespace
 InsertSlot::InsertSlot (ThemeManager& tm, const PluginHosting& h, int i) : themeManager (tm), hosting (h), index (i)
 {
     setRepaintsOnMouseActivity (true);
-    setTitle ("Insert " + juce::String (i + 1));
+    setTitle (tr ("Insert %1", i + 1));
     hosting.addListener (this);
 }
 
@@ -47,11 +48,12 @@ void InsertSlot::hostingStateChanged (const juce::String& pluginId, const Hostin
 void InsertSlot::updateTooltip()
 {
     if (! plugin)
-        setTooltip ("Empty insert: click to add an effect, or drop one here");
+        setTooltip (TRANS ("Empty insert: click to add an effect, or drop one here"));
     else if (plugin->external)
-        setTooltip (plugin->name + " (" + plugin->formatBadge() + " plug-in" + (isMissing() ? ", missing)" : "): click to open its window"));
+        setTooltip (isMissing() ? tr ("%1 (%2 plug-in, missing)", plugin->name, plugin->formatBadge())
+                                : tr ("%1 (%2 plug-in): click to open its window", plugin->name, plugin->formatBadge()));
     else
-        setTooltip (plugin->name + ": click to open its editor");
+        setTooltip (tr ("%1: click to open its editor", plugin->name));
 
     setDescription (getTooltip());
 }
@@ -98,7 +100,7 @@ void InsertSlot::paint (juce::Graphics& g)
             auto badge = r.removeFromRight (badgeWidth).withSizeKeepingCentre (badgeWidth, 12);
             g.setColour (theme.rec.withAlpha (0.2f));
             g.fillRoundedRectangle (badge.toFloat(), theme.radiusSm);
-            drawStyledText (g, themeManager, "Missing", theme.micro, badge, juce::Justification::centred, theme.rec);
+            drawStyledText (g, themeManager, TRANS ("Missing"), theme.micro, badge, juce::Justification::centred, theme.rec);
             r.removeFromRight (gap);
         }
 

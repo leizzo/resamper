@@ -44,6 +44,7 @@ void PianoKeyboard::paint (juce::Graphics& g)
         {
             g.setColour (theme.background);
             g.setFont (themeManager.getFont (0.7f));
+            // Note names stay as they are in every UI Language.
             g.drawText ("C" + juce::String (pitch / 12 - 1),
                         key.reduced (metrics.textPadding, 0), juce::Justification::centredLeft, false);
         }

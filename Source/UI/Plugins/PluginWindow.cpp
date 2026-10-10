@@ -5,6 +5,7 @@
 #include "Commands/PluginCommands.h"
 
 #include <juce_audio_processors/juce_audio_processors.h>
+#include "UI/Localisation.h"
 
 namespace resamper
 {
@@ -42,7 +43,7 @@ namespace
 
     juce::String vendorOf (const PluginInfo& info)
     {
-        return info.manufacturer.isNotEmpty() ? info.manufacturer : juce::String ("Unknown vendor");
+        return info.manufacturer.isNotEmpty() ? info.manufacturer : TRANS ("Unknown vendor");
     }
 
     /** Where the plug-in runs, as the footer says it. */
@@ -50,12 +51,12 @@ namespace
     {
         switch (state.kind)
         {
-            case HostingState::Kind::loading:     return "loading";
-            case HostingState::Kind::sandboxed:   return "out-of-process";
-            case HostingState::Kind::inProcess:   return "in-process";
-            case HostingState::Kind::crashed:     return "crashed";
-            case HostingState::Kind::failed:      return "not loaded";
-            case HostingState::Kind::missing:     return "missing";
+            case HostingState::Kind::loading:     return TRANS ("loading");
+            case HostingState::Kind::sandboxed:   return TRANS ("out-of-process");
+            case HostingState::Kind::inProcess:   return TRANS ("in-process");
+            case HostingState::Kind::crashed:     return TRANS ("crashed");
+            case HostingState::Kind::failed:      return TRANS ("not loaded");
+            case HostingState::Kind::missing:     return TRANS ("missing");
         }
 
         return {};
@@ -66,12 +67,12 @@ namespace
     {
         switch (state.kind)
         {
-            case HostingState::Kind::loading:     return "Loading";
-            case HostingState::Kind::sandboxed:   return "Sandboxed: out-of-process";
-            case HostingState::Kind::inProcess:   return "Not sandboxed: in-process";
-            case HostingState::Kind::crashed:     return "Crashed: its sandbox died";
-            case HostingState::Kind::failed:      return "Not loaded";
-            case HostingState::Kind::missing:     return "Missing: not installed";
+            case HostingState::Kind::loading:     return TRANS ("Loading");
+            case HostingState::Kind::sandboxed:   return TRANS ("Sandboxed: out-of-process");
+            case HostingState::Kind::inProcess:   return TRANS ("Not sandboxed: in-process");
+            case HostingState::Kind::crashed:     return TRANS ("Crashed: its sandbox died");
+            case HostingState::Kind::failed:      return TRANS ("Not loaded");
+            case HostingState::Kind::missing:     return TRANS ("Missing: not installed");
         }
 
         return {};
@@ -104,7 +105,7 @@ namespace
         void paint (juce::Graphics& g) override
         {
             auto& theme = themeManager.getTheme();
-            drawStyledText (g, themeManager, "This plug-in has no editor of its own", stateStyle, getLocalBounds(),
+            drawStyledText (g, themeManager, TRANS ("This plug-in has no editor of its own"), stateStyle, getLocalBounds(),
                             juce::Justification::centred, theme.textSecondary);
         }
 
@@ -169,7 +170,7 @@ public:
     explicit Grip (PluginWindow& w) : window (w)
     {
         setMouseCursor (juce::MouseCursor::BottomRightCornerResizeCursor);
-        setTitle ("Resize");
+        setTitle (TRANS ("Resize"));
     }
 
     void paint (juce::Graphics& g) override
@@ -216,28 +217,29 @@ PluginWindow::PluginWindow (const PluginRack& r, CommandRegistry& c, ThemeManage
     : FloatingDeviceWindow (tm, info, track, "PluginWindow"), rack (r), commands (c)
 {
     using Kind = ChromeButton::Kind;
-    bypass = std::make_unique<ChromeButton> (tm, "Bypass", Kind::bypass);
-    previousPreset = std::make_unique<ChromeButton> (tm, "Previous preset", Kind::icon, Icon::chevronLeft);
-    presetName = std::make_unique<ChromeButton> (tm, "Presets", Kind::text, Icon::chevronDown);
-    nextPreset = std::make_unique<ChromeButton> (tm, "Next preset", Kind::icon, Icon::chevronRight);
-    savePreset = std::make_unique<ChromeButton> (tm, "Save preset", Kind::icon, Icon::save);
+    bypass = std::make_unique<ChromeButton> (tm, TRANS ("Bypass"), Kind::bypass);
+    previousPreset = std::make_unique<ChromeButton> (tm, TRANS ("Previous preset"), Kind::icon, Icon::chevronLeft);
+    presetName = std::make_unique<ChromeButton> (tm, TRANS ("Presets"), Kind::text, Icon::chevronDown);
+    nextPreset = std::make_unique<ChromeButton> (tm, TRANS ("Next preset"), Kind::icon, Icon::chevronRight);
+    savePreset = std::make_unique<ChromeButton> (tm, TRANS ("Save preset"), Kind::icon, Icon::save);
+    // The A / B slots read as on hardware in every UI Language.
     slotA = std::make_unique<ChromeButton> (tm, "A", Kind::slot);
     slotB = std::make_unique<ChromeButton> (tm, "B", Kind::slot);
-    copyAToB = std::make_unique<ChromeButton> (tm, "Copy A" + rightArrow + "B", Kind::text);
-    undo = std::make_unique<ChromeButton> (tm, "Undo", Kind::icon, Icon::undo2);
-    redo = std::make_unique<ChromeButton> (tm, "Redo", Kind::icon, Icon::redo2);
-    parameters = std::make_unique<ChromeButton> (tm, "Parameters", Kind::icon, Icon::slidersHorizontal);
-    retry = std::make_unique<ChromeButton> (tm, "Retry", Kind::text);
-    runInProcess = std::make_unique<ChromeButton> (tm, "Run in-process", Kind::text);
+    copyAToB = std::make_unique<ChromeButton> (tm, tr ("Copy A%1B", rightArrow), Kind::text);
+    undo = std::make_unique<ChromeButton> (tm, TRANS ("Undo"), Kind::icon, Icon::undo2);
+    redo = std::make_unique<ChromeButton> (tm, TRANS ("Redo"), Kind::icon, Icon::redo2);
+    parameters = std::make_unique<ChromeButton> (tm, TRANS ("Parameters"), Kind::icon, Icon::slidersHorizontal);
+    retry = std::make_unique<ChromeButton> (tm, TRANS ("Retry"), Kind::text);
+    runInProcess = std::make_unique<ChromeButton> (tm, TRANS ("Run in-process"), Kind::text);
     stats = std::make_unique<Readout> (tm, Readout::Kind::stats);
     sandbox = std::make_unique<Readout> (tm, Readout::Kind::sandbox);
     footerInfo = std::make_unique<Readout> (tm, Readout::Kind::footer);
     scale = std::make_unique<Segmented> (tm, juce::StringArray { "100%", "150%", "200%" });
     grip = std::make_unique<Grip> (*this);
 
-    slotA->setTitle ("A/B compare: A");
-    slotB->setTitle ("A/B compare: B");
-    scale->setTitle ("UI scale");
+    slotA->setTitle (TRANS ("A/B compare: A"));
+    slotB->setTitle (TRANS ("A/B compare: B"));
+    scale->setTitle (TRANS ("UI scale"));
 
     bypass->setComponentID ("bypass");
     presetName->setComponentID ("preset");
@@ -310,10 +312,10 @@ void PluginWindow::setState (const PluginInfo& info, const juce::String& track)
     plugin = info;
     trackName = track;
     setName (plugin.name);
-    setTitle (plugin.name + " plug-in window");
+    setTitle (tr ("%1 plug-in window", plugin.name));
     setDescription (trackName + ", " + vendorOf (plugin) + " " + middleDot + " " + plugin.formatBadge() + " " + plugin.version);
     bypass->setToggleState (plugin.enabled, juce::dontSendNotification);
-    bypass->setTitle (plugin.enabled ? "Bypass (plug-in on)" : "Bypass (plug-in bypassed)");
+    bypass->setTitle (plugin.enabled ? TRANS ("Bypass (plug-in on)") : TRANS ("Bypass (plug-in bypassed)"));
     slotA->setToggleState (plugin.abSlot == 0, juce::dontSendNotification);
     slotB->setToggleState (plugin.abSlot == 1, juce::dontSendNotification);
     updateTexts();
@@ -324,15 +326,15 @@ void PluginWindow::updateTexts()
 {
     const auto presets = rack.getPresetNames (plugin.id);
     presetName->setButtonText (plugin.presetName.isNotEmpty() ? plugin.presetName
-                                                              : presets.isEmpty() ? juce::String ("No presets") : juce::String ("Presets"));
-    presetName->setTitle ("Preset: " + presetName->getButtonText());
+                                                              : presets.isEmpty() ? TRANS ("No presets") : TRANS ("Presets"));
+    presetName->setTitle (tr ("Preset: %1", presetName->getButtonText()));
 
     for (auto* b : { previousPreset.get(), nextPreset.get() })
         b->setEnabled (! presets.isEmpty());
 
-    stats->setText (juce::String (plugin.latencySamples) + " smp " + middleDot + " " + cpuText);
+    stats->setText (tr ("%1 smp", plugin.latencySamples) + " " + middleDot + " " + cpuText);
     sandbox->setText (sandboxText (hostingState), hostingState.kind == HostingState::Kind::sandboxed);
-    footerInfo->setText ("Plug-in UI " + middleDot + " rendered by " + vendorOf (plugin) + " " + middleDot + " "
+    footerInfo->setText (tr ("Plug-in UI %1 rendered by %2", middleDot, vendorOf (plugin)) + " " + middleDot + " "
                          + (plugin.formatBadge() + " " + plugin.version).trim() + " " + middleDot + " " + processText (hostingState));
 }
 
@@ -364,7 +366,7 @@ void PluginWindow::showParameters (bool shouldShow)
         vendor->setVisible (parameterPanel == nullptr);
 
     parameters->setToggleState (parameterPanel != nullptr, juce::dontSendNotification);
-    parameters->setTitle (parameterPanel != nullptr ? "Parameters (shown)" : "Parameters");
+    parameters->setTitle (parameterPanel != nullptr ? TRANS ("Parameters (shown)") : TRANS ("Parameters"));
     resized();
 }
 
@@ -593,14 +595,14 @@ void PluginWindow::paintBody (juce::Graphics& g)
             g.setColour (theme.accent);
             g.strokePath (arc, juce::PathStrokeType (spinnerStroke, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
             area.removeFromTop (stateGap);
-            drawStyledText (g, themeManager, "Loading " + plugin.name + juce::String (juce::CharPointer_UTF8 ("\xe2\x80\xa6")),
+            drawStyledText (g, themeManager, tr ("Loading %1", plugin.name) + juce::String (juce::CharPointer_UTF8 ("\xe2\x80\xa6")),
                             stateStyle, area.removeFromTop (stateLineHeight), juce::Justification::centred, theme.textSecondary);
         }
         else
         {
-            drawStyledText (g, themeManager, plugin.name + " didn't load", stateStyle, area.removeFromTop (stateLineHeight),
+            drawStyledText (g, themeManager, tr ("%1 didn't load", plugin.name), stateStyle, area.removeFromTop (stateLineHeight),
                             juce::Justification::centred, theme.rec);
-            drawStyledText (g, themeManager, hostingState.reason.isNotEmpty() ? hostingState.reason : juce::String ("It couldn't be loaded."),
+            drawStyledText (g, themeManager, hostingState.reason.isNotEmpty() ? hostingState.reason : TRANS ("It couldn't be loaded."),
                             stateDetailStyle, area.removeFromTop (stateLineHeight), juce::Justification::centred, theme.textDim);
         }
     }
@@ -669,10 +671,10 @@ void PluginWindow::showPresetMenu()
                       });
 
     if (presets.isEmpty())
-        menu.addItem ("No presets yet: Save stores one", false, false, nullptr);
+        menu.addItem (TRANS ("No presets yet: Save stores one"), false, false, nullptr);
 
     menu.addSeparator();
-    menu.addItem ("Save Preset" + juce::String (juce::CharPointer_UTF8 ("\xe2\x80\xa6")), [safe]
+    menu.addItem (TRANS ("Save Preset") + juce::String (juce::CharPointer_UTF8 ("\xe2\x80\xa6")), [safe]
     {
         if (safe != nullptr)
             safe->askPresetName();
@@ -682,11 +684,11 @@ void PluginWindow::showPresetMenu()
 
 void PluginWindow::askPresetName()
 {
-    auto* dialog = new juce::AlertWindow ("Save Preset", "Save the current settings of " + plugin.name + " as:",
+    auto* dialog = new juce::AlertWindow (TRANS ("Save Preset"), tr ("Save the current settings of %1 as:", plugin.name),
                                           juce::MessageBoxIconType::NoIcon, this);
-    dialog->addTextEditor ("name", plugin.presetName.isNotEmpty() ? plugin.presetName : juce::String ("My Preset"));
-    dialog->addButton ("Save", 1, juce::KeyPress (juce::KeyPress::returnKey));
-    dialog->addButton ("Cancel", 0, juce::KeyPress (juce::KeyPress::escapeKey));
+    dialog->addTextEditor ("name", plugin.presetName.isNotEmpty() ? plugin.presetName : TRANS ("My Preset"));
+    dialog->addButton (TRANS ("Save"), 1, juce::KeyPress (juce::KeyPress::returnKey));
+    dialog->addButton (TRANS ("Cancel"), 0, juce::KeyPress (juce::KeyPress::escapeKey));
     dialog->enterModalState (true, juce::ModalCallbackFunction::create (
         [safe = juce::Component::SafePointer<PluginWindow> (this), dialog] (int result)
         {

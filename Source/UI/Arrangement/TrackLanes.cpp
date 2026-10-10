@@ -4,6 +4,7 @@
 #include "UI/PianoRoll/BeatGrid.h"
 #include "UI/State/ArrangementViewState.h"
 #include "UI/Theme/ThemeManager.h"
+#include "UI/Localisation.h"
 
 namespace resamper
 {
@@ -248,37 +249,37 @@ void TrackLanes::showClipMenu (const ClipInfo& clip)
     };
 
     juce::PopupMenu colours;
-    colours.addItem (juce::PopupMenu::Item ("Track Colour").setTicked (clip.colourIndex < 0)
+    colours.addItem (juce::PopupMenu::Item (TRANS ("Track Colour")).setTicked (clip.colourIndex < 0)
                          .setAction ([this, id = clip.id] { commands.invoke (cmd::clipSetColour, { id, -1 }); }));
 
     for (int i = 0; i < ApplicationModel::trackPaletteSize; ++i)
-        colours.addItem (juce::PopupMenu::Item ("Colour " + juce::String (i + 1)).setColour (theme.trackPalette[(size_t) i])
+        colours.addItem (juce::PopupMenu::Item (tr ("Colour %1", i + 1)).setColour (theme.trackPalette[(size_t) i])
                              .setTicked (clip.colourIndex == i)
                              .setAction ([this, id = clip.id, i] { commands.invoke (cmd::clipSetColour, { id, i }); }));
 
     juce::PopupMenu menu;
-    menu.addItem (item ("Rename", [this, clip] { startRename (clip); }));
-    menu.addSubMenu ("Colour", colours);
+    menu.addItem (item (TRANS ("Rename"), [this, clip] { startRename (clip); }));
+    menu.addSubMenu (TRANS ("Colour"), colours);
     menu.addSeparator();
     menu.addItem (commandItem (commands, cmd::clipDuplicate));
-    menu.addItem (commandItem (commands, cmd::clipSplit, "Split"));
+    menu.addItem (commandItem (commands, cmd::clipSplit, TRANS ("Split")));
     menu.addItem (commandItem (commands, cmd::clipConsolidate).setEnabled (model.getSelectedClipIds().size() > 1));
 
     if (clip.kind == TrackKind::audio)
-        menu.addItem (item (clip.reversed ? "Play Forwards" : "Reverse",
+        menu.addItem (item (clip.reversed ? TRANS ("Play Forwards") : TRANS ("Reverse"),
                             [this, id = clip.id] { commands.invoke (cmd::clipReverse, { id }); }));
     else
-        menu.addItem (commandItem (commands, cmd::noteQuantize, { clip.id, "1/16" }, "Quantize"));
+        menu.addItem (commandItem (commands, cmd::noteQuantize, { clip.id, "1/16" }, TRANS ("Quantize")));
 
     if (clip.numTakes > 0)
     {
         juce::PopupMenu takes;
 
         for (int take = 0; take < clip.numTakes; ++take)
-            takes.addItem ("Take " + juce::String (take + 1), true, take == clip.currentTake,
+            takes.addItem (tr ("Take %1", take + 1), true, take == clip.currentTake,
                            [this, id = clip.id, take] { commands.invoke (cmd::clipSetTake, { id, take }); });
 
-        menu.addSubMenu ("Takes", takes);
+        menu.addSubMenu (TRANS ("Takes"), takes);
     }
 
     menu.addSeparator();

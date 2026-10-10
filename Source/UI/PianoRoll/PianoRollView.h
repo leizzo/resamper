@@ -57,11 +57,11 @@ private:
     ThemeManager& themeManager;
     ArrangementViewState view;
 
-    juce::TextButton arrangementButton { "Arrangement" };
+    juce::TextButton arrangementButton { TRANS ("Arrangement") };
     juce::TextButton quarterButton { "1/4" };
     juce::TextButton eighthButton { "1/8" };
     juce::TextButton sixteenthButton { "1/16" };
-    juce::TextButton deleteButton { "Delete" };
+    juce::TextButton deleteButton { TRANS ("Delete") };
 
     PianoKeyboard keyboard;
     BeatRuler ruler;

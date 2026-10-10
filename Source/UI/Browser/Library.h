@@ -47,6 +47,7 @@ public:
     /** ~/Music/Resamper. */
     static juce::File defaultRoot();
 
+    /** The category's English name: its folder under the root, and its key in the UI Language. */
     static juce::String nameOf (LibraryCategory);
     static bool isFileCategory (LibraryCategory);
     static bool isAudioFile (const juce::File&);

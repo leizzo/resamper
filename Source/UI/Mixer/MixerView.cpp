@@ -2,6 +2,7 @@
 #include "Commands/MixerCommands.h"
 #include "Commands/PluginCommands.h"
 #include "UI/Controls/Menus.h"
+#include "UI/Localisation.h"
 
 namespace resamper
 {
@@ -11,21 +12,21 @@ namespace
     constexpr int stripsPadding = 12, groupGap = 14, stripGap = 6, masterWidth = 186;
     constexpr int toolbarGap = 14, flowPadX = 10, flowGap = 6, flowIcon = 10;
     const TypeStyle titleStyle { 13.0f, false, 600 }, flowStyle { 10.0f, false, 400 };
-    const char* const flowStages[] = { "Track chain", "Inserts", "Sends", "Fader" };
+    const char* const flowStages[] = { NEEDS_TRANS ("Track chain"), NEEDS_TRANS ("Inserts"), NEEDS_TRANS ("Sends"), NEEDS_TRANS ("Fader") };
 }
 
 MixerView::MixerView (const ApplicationModel& m, const Mixer& mx, const PluginRack& p, const PluginHosting& h, CommandRegistry& c, ThemeManager& tm,
                       juce::ValueTree uiState)
     : model (m), mixer (mx), plugins (p), hosting (h), commands (c), themeManager (tm), state (std::move (uiState)),
-      meterMode (tm, { "Peak", "RMS", "LUFS" }, Segmented::Style::sunken),
-      resetPeaks (tm, "Reset Peaks", Button::Variant::outline, Icon::rotateCcw),
+      meterMode (tm, { TRANS ("Peak"), "RMS", "LUFS" }, Segmented::Style::sunken),
+      resetPeaks (tm, TRANS ("Reset Peaks"), Button::Variant::outline, Icon::rotateCcw),
       master (c, tm)
 {
     setComponentID (componentId);
 
     for (auto& chip : sectionChips)
     {
-        chip.button = std::make_unique<Chip> (themeManager, chip.name);
+        chip.button = std::make_unique<Chip> (themeManager, TRANS (chip.name));
         chip.button->setShowsLed (true);
         chip.button->setToggleState (! (bool) state.getProperty ("hide_" + juce::String (chip.name), false), juce::dontSendNotification);
         chip.button->onClick = [this, &chip]
@@ -36,12 +37,12 @@ MixerView::MixerView (const ApplicationModel& m, const Mixer& mx, const PluginRa
 
         // EQ and Comments have no strip section yet.
         chip.button->setEnabled (chip.section.has_value());
-        chip.button->setTooltip (chip.section ? "Show or hide " + juce::String (chip.name) + " on every strip"
-                                              : juce::String (chip.name) + ": not in the strip yet");
+        chip.button->setTooltip (chip.section ? tr ("Show or hide %1 on every strip", TRANS (chip.name))
+                                              : tr ("%1: not in the strip yet", TRANS (chip.name)));
         addAndMakeVisible (*chip.button);
     }
 
-    meterMode.setTitle ("Meter mode");
+    meterMode.setTitle (TRANS ("Meter mode"));
     meterMode.setSelectedIndex (juce::jlimit (0, 2, (int) state.getProperty ("meterMode", 0)), juce::dontSendNotification);
     meterMode.onChange = [this] (int index)
     {
@@ -49,7 +50,7 @@ MixerView::MixerView (const ApplicationModel& m, const Mixer& mx, const PluginRa
         applyMeterMode();
     };
 
-    resetPeaks.setTooltip ("Clear every peak hold");
+    resetPeaks.setTooltip (TRANS ("Clear every peak hold"));
     resetPeaks.onClick = [this]
     {
         for (auto& [id, strip] : strips)
@@ -95,14 +96,14 @@ void MixerView::showStripMenu (const Strip& strip)
 
     // A return doesn't send to returns or join a bus; a Bus sends, but nesting Buses is #37.
     juce::PopupMenu menu;
-    menu.addSubMenu ("Add Send", sends, ! isReturn && sends.getNumItems() > 0);
+    menu.addSubMenu (TRANS ("Add Send"), sends, ! isReturn && sends.getNumItems() > 0);
 
     if (! isBus)
-        menu.addSubMenu ("Move to Bus", buses, ! isReturn && buses.getNumItems() > 0);
+        menu.addSubMenu (TRANS ("Move to Bus"), buses, ! isReturn && buses.getNumItems() > 0);
 
     menu.addSeparator();
-    menu.addItem (commandItem (commands, cmd::mixerAddReturn, { "Return " + juce::String (mixer.getReturns().size() + 1) }));
-    menu.addItem (commandItem (commands, cmd::mixerAddBus, { "Bus " + juce::String (mixer.getBuses().size() + 1) }));
+    menu.addItem (commandItem (commands, cmd::mixerAddReturn, { tr ("Return %1", mixer.getReturns().size() + 1) }));
+    menu.addItem (commandItem (commands, cmd::mixerAddBus, { tr ("Bus %1", mixer.getBuses().size() + 1) }));
     menu.showMenuAsync (juce::PopupMenu::Options().withMousePosition());
 }
 
@@ -128,9 +129,9 @@ void MixerView::showEffectPicker (const juce::String& trackId, InsertSlot& slot,
     }
 
     juce::PopupMenu menu;
-    menu.addSectionHeader (replacing.isNotEmpty() ? "Replace with" : "Add effect");
-    menu.addSubMenu ("Resamper", builtIn);
-    menu.addSubMenu ("Plug-Ins", external, external.getNumItems() > 0);
+    menu.addSectionHeader (replacing.isNotEmpty() ? TRANS ("Replace with") : TRANS ("Add effect"));
+    menu.addSubMenu ("Resamper", builtIn);   // the app's own name
+    menu.addSubMenu (TRANS ("Plug-Ins"), external, external.getNumItems() > 0);
     menu.showMenuAsync (juce::PopupMenu::Options().withTargetComponent (&slot));
 }
 
@@ -266,7 +267,7 @@ void MixerView::paint (juce::Graphics& g)
     g.setColour (theme.borderSoft);
     g.fillRect (toolbar.removeFromBottom (1));
 
-    drawStyledText (g, themeManager, "Mixer", titleStyle, titleArea, juce::Justification::centredLeft, theme.textPrimary);
+    drawStyledText (g, themeManager, TRANS ("Mixer"), titleStyle, titleArea, juce::Justification::centredLeft, theme.textPrimary);
     g.setColour (theme.border);
     g.fillRect (titleDivider);
 
@@ -285,7 +286,7 @@ void MixerView::paint (juce::Graphics& g)
 
     for (int i = 0; i < (int) std::size (flowStages); ++i)
     {
-        const auto text = juce::String (flowStages[i]);
+        const auto text = TRANS (flowStages[i]);
         g.setColour (i == flowStage ? theme.accent : theme.textSecondary);
         g.drawText (text, r.removeFromLeft (juce::GlyphArrangement::getStringWidthInt (font, text) + 1),
                     juce::Justification::centredLeft, false);
@@ -305,7 +306,7 @@ int MixerView::flowWidth() const
     auto width = 2 * flowPadX + ((int) std::size (flowStages) - 1) * (flowIcon + 2 * flowGap);
 
     for (auto* stage : flowStages)
-        width += juce::GlyphArrangement::getStringWidthInt (font, stage) + 1;
+        width += juce::GlyphArrangement::getStringWidthInt (font, TRANS (stage)) + 1;
 
     return width;
 }
@@ -319,7 +320,7 @@ void MixerView::resized()
     auto centred = [&] (juce::Rectangle<int> area) { return area.withSizeKeepingCentre (area.getWidth(), rowHeight); };
 
     // Left: title | section chips, 14 apart; the chips 4 apart.
-    titleArea = toolbar.removeFromLeft (juce::GlyphArrangement::getStringWidthInt (themeManager.font (titleStyle), "Mixer") + 1);
+    titleArea = toolbar.removeFromLeft (juce::GlyphArrangement::getStringWidthInt (themeManager.font (titleStyle), TRANS ("Mixer")) + 1);
     toolbar.removeFromLeft (toolbarGap);
     titleDivider = toolbar.removeFromLeft (1).withSizeKeepingCentre (1, 18);
     toolbar.removeFromLeft (toolbarGap);
