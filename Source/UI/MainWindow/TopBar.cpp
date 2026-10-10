@@ -61,32 +61,33 @@ TopBar::TopBar (const ApplicationModel& m, CommandRegistry& c, ThemeManager& tm,
     : model (m), commands (c), themeManager (tm), shell (s),
       tempo (tm, tempoSpec()),
       signature (tm, "4 / 4"),
-      prev (tm, "Return to Start", Icon::skipBack),
-      record (tm, "Record (Shift: no count-in)", Icon::circleDot),
-      automationArm (tm, "Automation Arm (arrives with automation recording)", Icon::spline),
-      play (tm, "Play", Icon::play),
-      stop (tm, "Stop (twice: return to start)", Icon::square),
-      metronome (tm, "Metronome (C)", Icon::timer),
-      follow (tm, "Follow", Icon::crosshair),
-      views (tm, { "Session", "Arrange", "Mixer", "Piano Roll", "Editor" }, Segmented::Style::tabs)
+      prev (tm, TRANS ("Return to Start"), Icon::skipBack),
+      record (tm, TRANS ("Record (Shift: no count-in)"), Icon::circleDot),
+      automationArm (tm, TRANS ("Automation Arm (arrives with automation recording)"), Icon::spline),
+      play (tm, TRANS ("Play"), Icon::play),
+      stop (tm, TRANS ("Stop (twice: return to start)"), Icon::square),
+      metronome (tm, TRANS ("Metronome (C)"), Icon::timer),
+      follow (tm, TRANS ("Follow"), Icon::crosshair),
+      views (tm, { TRANS ("Session"), TRANS ("Arrange"), TRANS ("Mixer"), TRANS ("Piano Roll"), TRANS ("Editor") },
+             Segmented::Style::tabs)
 {
-    tempo.setTitle ("Tempo");
-    tempo.setTooltip ("Tempo: drag, or double-click to type (T taps)");
+    tempo.setTitle (TRANS ("Tempo"));
+    tempo.setTooltip (TRANS ("Tempo: drag, or double-click to type (T taps)"));
     tempo.setValueStyle (TypeStyle { 15.0f, true, 500 });
     tempo.setSuffix ("BPM");
     tempo.setRaised (true);
     tempo.onChange = [this] (double bpm, bool continues) { commands.invoke (cmd::transportSetTempo, { bpm, continues }); };
 
     signature.setNumeric (true);
-    signature.setTooltip ("Time signature");
+    signature.setTooltip (TRANS ("Time signature"));
     signature.onClick = [this] { showSignatureMenu(); };
 
-    prev.setTooltip (tooltipFor ("Return to Start", "transport.returnToStart"));
-    record.setTooltip (tooltipFor ("Record (Shift: no count-in)", "transport.record"));
-    play.setTooltip (tooltipFor ("Play", "transport.togglePlay"));
-    stop.setTooltip (tooltipFor ("Stop (twice: return to start)", "transport.togglePlay"));
-    metronome.setTooltip (tooltipFor ("Metronome", "transport.toggleMetronome"));
-    follow.setTooltip (tooltipFor ("Follow", "view.toggleFollow"));
+    prev.setTooltip (tooltipFor (TRANS ("Return to Start"), "transport.returnToStart"));
+    record.setTooltip (tooltipFor (TRANS ("Record (Shift: no count-in)"), "transport.record"));
+    play.setTooltip (tooltipFor (TRANS ("Play"), "transport.togglePlay"));
+    stop.setTooltip (tooltipFor (TRANS ("Stop (twice: return to start)"), "transport.togglePlay"));
+    metronome.setTooltip (tooltipFor (TRANS ("Metronome"), "transport.toggleMetronome"));
+    follow.setTooltip (tooltipFor (TRANS ("Follow"), "view.toggleFollow"));
 
     prev.onClick = [this] { commands.invoke (cmd::transportReturnToStart); };
     // Shift-click records at once, skipping the count-in.
@@ -103,7 +104,7 @@ TopBar::TopBar (const ApplicationModel& m, CommandRegistry& c, ThemeManager& tm,
     metronome.onClick = [this] { commands.invoke (cmd::transportToggleMetronome); };
     follow.onClick = [this] { commands.invoke (cmd::viewToggleFollow); };
 
-    views.setTitle ("View");
+    views.setTitle (TRANS ("View"));
     views.onChange = [this] (int index)
     {
         static constexpr CommandRef<> viewCommands[] = { cmd::viewSession, cmd::viewArrange, cmd::viewMixer,
@@ -116,7 +117,7 @@ TopBar::TopBar (const ApplicationModel& m, CommandRegistry& c, ThemeManager& tm,
         addAndMakeVisible (child);
 
     for (auto* name : getMenuNames())
-        menus.push_back ({ name, {} });
+        menus.push_back ({ name, TRANS (name), {} });
 
     model.addListener (this);
     shell.getState().addListener (this);
@@ -193,7 +194,7 @@ void TopBar::paint (juce::Graphics& g)
 
     for (auto& menu : menus)
         if (! menu.bounds.isEmpty())
-            g.drawText (compactMenu ? juce::String ("Menu") : menu.name, menu.bounds, juce::Justification::centredLeft, false);
+            g.drawText (compactMenu ? TRANS ("Menu") : menu.title, menu.bounds, juce::Justification::centredLeft, false);
 
     // Position: bars.beats.sixteenths, then the clock.
     if (! positionBounds.isEmpty())
@@ -249,12 +250,12 @@ void TopBar::resized()
     auto menuWidth = [&] (bool compact)
     {
         if (compact)
-            return 20 + stringWidth (menuFont, "Menu");
+            return 20 + stringWidth (menuFont, TRANS ("Menu"));
 
         int w = 20;
 
         for (auto& m : menus)
-            w += stringWidth (menuFont, m.name) + 18;
+            w += stringWidth (menuFont, m.title) + 18;
 
         return w - 18;
     };
@@ -290,13 +291,13 @@ void TopBar::resized()
 
     if (compactMenu)
     {
-        menus.front().bounds = r.removeFromLeft (stringWidth (menuFont, "Menu"));
+        menus.front().bounds = r.removeFromLeft (stringWidth (menuFont, TRANS ("Menu")));
     }
     else
     {
         for (auto& m : menus)
         {
-            m.bounds = r.removeFromLeft (stringWidth (menuFont, m.name));
+            m.bounds = r.removeFromLeft (stringWidth (menuFont, m.title));
             r.removeFromLeft (18);
         }
     }

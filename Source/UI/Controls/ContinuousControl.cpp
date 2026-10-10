@@ -1,4 +1,5 @@
 #include "ContinuousControl.h"
+#include "UI/Localisation.h"
 
 namespace resamper
 {
@@ -285,7 +286,7 @@ juce::String ContinuousControl::getTooltip()
     if (name.isEmpty())
         name = getTitle();
 
-    return name.isEmpty() ? model.getText() : name + ": " + model.getText();
+    return name.isEmpty() ? model.getText() : tr ("%1: %2", name, model.getText());
 }
 
 void ContinuousControl::paintOverChildren (juce::Graphics& g)

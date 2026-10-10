@@ -173,8 +173,8 @@ struct WhatsNewSnapshot : juce::UnitTest
 
 static WhatsNewSnapshot whatsNewSnapshot;
 
-/** The Options menu with its Language / Dil submenu, and the relaunch offer
-    after choosing another language, in the SNAPSHOT_LANG UI Language. */
+/** The menus, the Options menu with its Language / Dil submenu, and the relaunch
+    offer after choosing another language, in the SNAPSHOT_LANG UI Language. */
 struct LanguageSnapshot : juce::UnitTest
 {
     LanguageSnapshot() : juce::UnitTest ("Language menu", "Snapshot") {}
@@ -229,6 +229,11 @@ struct LanguageSnapshot : juce::UnitTest
                 juce::PopupMenu::dismissAllActiveMenus();
                 juce::MessageManager::getInstance()->runDispatchLoopUntil (100);
             };
+
+            // The other menus, their Command names in the UI Language.
+            for (auto* menuName : getMenuNames())
+                if (juce::String (menuName) != "Options" && juce::String (menuName) != "Help")
+                    capture (createCommandMenu (commandManager, menuName), "menu-" + juce::String (menuName).toLowerCase());
 
             const auto options = createCommandMenu (commandManager, "Options");
             capture (options, "language-options-menu");

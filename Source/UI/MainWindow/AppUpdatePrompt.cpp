@@ -1,6 +1,7 @@
 #include "AppUpdatePrompt.h"
 
 #include "UI/Controls/Icons.h"
+#include "UI/Localisation.h"
 #include "UI/Theme/Interaction.h"
 
 namespace resamper
@@ -28,17 +29,14 @@ namespace
     constexpr float footerIconSize = 13.0f;
     constexpr double percentScale = 100.0;
 
-    constexpr const char* updateLabel = "Update";
-    constexpr const char* updatedLabel = "Updated";
-    constexpr const char* downloadingLabel = "Downloading";
-    constexpr const char* dialogTitle = "Update complete";
-    constexpr const char* dialogSuffix = " is ready to use";
-    constexpr const char* changelogLabel = "CHANGELOG";
-    constexpr const char* releaseNotesLabel = "Release notes";
-    constexpr const char* restartLabel = "Restart";
-    constexpr const char* installingLabel = "Installing...";
-    constexpr const char* hintSuffix = " is ready";
-    constexpr const char* productName = "RESAMPER ";
+    juce::String releaseNotesLabel()                { return TRANS ("Release notes"); }
+    juce::String restartLabel (bool installing)     { return installing ? TRANS ("Installing...") : TRANS ("Restart"); }
+
+    /** The hint's title: "v1.2.0 is ready". */
+    juce::String hintTitle (const juce::String& version)
+    {
+        return tr ("%1 is ready", version.startsWithChar ('v') ? version : "v" + version);
+    }
 
     void focusIfShowing (juce::Component& component)
     {
@@ -313,16 +311,15 @@ juce::String AppUpdatePrompt::pillText() const
     if (phase == Phase::downloading)
     {
         if (fraction > 0.0)
-            return juce::String (downloadingLabel) + " "
-                   + juce::String (juce::roundToInt (fraction * percentScale)) + "%";
+            return tr ("Downloading %1%", juce::roundToInt (fraction * percentScale));
 
-        return downloadingLabel;
+        return TRANS ("Downloading");
     }
 
     if (phase == Phase::ready)
-        return updatedLabel;
+        return TRANS ("Updated");
 
-    return updateLabel;
+    return TRANS ("Update");
 }
 
 void AppUpdatePrompt::rebuildGeometry()
@@ -358,7 +355,7 @@ void AppUpdatePrompt::rebuildGeometry()
         const auto titleFont = themeManager.font (TypeStyle { theme.body.size, false, semibold });
         const auto bodyFont = themeManager.font (theme.bodySm);
         const auto textW = hintWidth - 2 * metrics.spaceXl;
-        const auto title = (version.startsWithChar ('v') ? version : "v" + version) + hintSuffix;
+        const auto title = hintTitle (version);
         auto height = metrics.spaceLg + juce::jmax ((int) std::ceil (titleFont.getHeight()),
                                                     wrappedHeight (titleFont, title, textW));
 
@@ -414,13 +411,13 @@ void AppUpdatePrompt::rebuildGeometry()
     changelog = content.removeFromTop (notesH);
     content.removeFromTop (dialogGap);
     auto footer = content.removeFromTop (footerHeight);
-    const auto restartText = installing ? juce::String (installingLabel) : juce::String (restartLabel);
+    const auto restartText = restartLabel (installing);
     const auto restartW = footerPadRestart + (int) footerIconSize + metrics.spaceMd
                           + textWidth (restartFont, restartText) + footerPadRestart;
     restartButton = footer.removeFromRight (restartW);
     footer.removeFromRight (metrics.spaceLg);
     const auto notesW = metrics.spaceXl + (int) footerIconSize + metrics.spaceMd
-                        + textWidth (notesFont, releaseNotesLabel) + metrics.spaceXl;
+                        + textWidth (notesFont, releaseNotesLabel()) + metrics.spaceXl;
     notesButton = footer.removeFromRight (notesW);
 
     noteViewport.setVisible (notesH > 0);
@@ -484,7 +481,7 @@ void AppUpdatePrompt::paint (juce::Graphics& g)
         auto text = hint.reduced (metrics.spaceXl, metrics.spaceLg);
         const auto titleStyle = TypeStyle { theme.body.size, false, semibold };
         const auto titleFont = themeManager.font (titleStyle);
-        const auto title = (version.startsWithChar ('v') ? version : "v" + version) + hintSuffix;
+        const auto title = hintTitle (version);
         const auto titleH = juce::jmax ((int) std::ceil (titleFont.getHeight()),
                                         wrappedHeight (titleFont, title, text.getWidth()));
         drawLines (g, titleFont, theme.textPrimary, title, text.removeFromTop (titleH));
@@ -528,11 +525,11 @@ void AppUpdatePrompt::paint (juce::Graphics& g)
     auto block = titles.withSizeKeepingCentre (titles.getWidth(), titleH + titleGap + subH);
     g.setColour (theme.textPrimary);
     g.setFont (titleFont);
-    g.drawFittedText (dialogTitle, block.removeFromTop (titleH), juce::Justification::centredLeft, 1, 1.0f);
+    g.drawFittedText (TRANS ("Update complete"), block.removeFromTop (titleH), juce::Justification::centredLeft, 1, 1.0f);
     block.removeFromTop (titleGap);
     g.setColour (theme.textSecondary);
     g.setFont (subFont);
-    g.drawFittedText (juce::String (productName) + version + dialogSuffix, block.removeFromTop (subH),
+    g.drawFittedText (tr ("RESAMPER %1 is ready to use", version), block.removeFromTop (subH),
                       juce::Justification::centredLeft, 1, 1.0f);
 
     {
@@ -559,12 +556,12 @@ void AppUpdatePrompt::paint (juce::Graphics& g)
     {
         g.setColour (theme.accent);
         g.setFont (themeManager.font (TypeStyle { theme.bodySm.size, false, bold }));
-        g.drawFittedText (changelogLabel, changelogHeading, juce::Justification::centredLeft, 1, 1.0f);
+        g.drawFittedText (TRANS ("CHANGELOG"), changelogHeading, juce::Justification::centredLeft, 1, 1.0f);
     }
 
-    paintAction (g, themeManager, notesButton, releaseNotesLabel, Icon::fileText, false,
+    paintAction (g, themeManager, notesButton, releaseNotesLabel(), Icon::fileText, false,
                  hot == Hot::notes, pressed && hot == Hot::notes);
-    paintAction (g, themeManager, restartButton, installing ? installingLabel : restartLabel, Icon::refreshCw, true,
+    paintAction (g, themeManager, restartButton, restartLabel (installing), Icon::refreshCw, true,
                  hot == Hot::restart, pressed && hot == Hot::restart);
 
     if (hasKeyboardFocus (true))

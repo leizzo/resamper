@@ -56,4 +56,14 @@ const Command* CommandRegistry::find (const juce::String& commandId) const
     return it != commands.end() ? it->second.get() : nullptr;
 }
 
+juce::StringArray CommandRegistry::getIds() const
+{
+    juce::StringArray ids;
+
+    for (auto& [id, command] : commands)
+        ids.add (id);
+
+    return ids;
+}
+
 } // namespace resamper

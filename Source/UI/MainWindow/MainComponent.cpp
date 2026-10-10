@@ -4,6 +4,7 @@
 #include "Commands/AppCommands.h"
 #include "Commands/ApplicationCommandTable.h"
 #include "UI/Developer/DeveloperCommands.h"
+#include "UI/Localisation.h"
 #include "UI/Theme/UIFileSource.h"
 #include "UI/State/UIStateStore.h"
 
@@ -34,9 +35,9 @@ MainComponent::MainComponent (ResamperApp& a, juce::ApplicationCommandManager& c
       browser (commands, plugins, model, themeManager, preview, Library::defaultRoot()),
       detailView (model, plugins, hosting, commands, themeManager, shell, uiState.getState ("detail")),
       mixerView (model, mixer, plugins, hosting, commands, themeManager, uiState.getState ("mixer")),
-      sessionPlaceholder (themeManager, "The Session view arrives with M5."),
-      editorPlaceholder (themeManager, "The audio Editor arrives with M4. Double-click an audio clip then."),
-      pianoRollPlaceholder (themeManager, "Select a MIDI clip, or double-click one, to edit its notes."),
+      sessionPlaceholder (themeManager, TRANS ("The Session view arrives with M5.")),
+      editorPlaceholder (themeManager, TRANS ("The audio Editor arrives with M4. Double-click an audio clip then.")),
+      pianoRollPlaceholder (themeManager, TRANS ("Select a MIDI clip, or double-click one, to edit its notes.")),
       developerOverlay (themeManager),
       toasts (themeManager),
       updatePrompt (themeManager),
@@ -205,7 +206,8 @@ void MainComponent::registerPluginWindowCommands()
 
 void MainComponent::registerLanguageCommands()
 {
-    // Never translated: each language is named in itself, so a wrong choice can be undone.
+    // The menus translate System; each language is named in itself in every UI Language
+    // (an entry equal to its key in tr.txt), so a wrong choice can be undone.
     auto add = [this] (CommandRef<> ref, const juce::String& name, const char* preference)
     {
         commands.add (ref, { name, {}, [this, preference] { return preferences.getLanguage() == preference; } },
@@ -411,7 +413,7 @@ void MainComponent::showMenu (const juce::String& name, juce::Rectangle<int> scr
 
     if (name.isEmpty())
         for (auto* menuName : getMenuNames())
-            menu.addSubMenu (menuName, createCommandMenu (commandManager, menuName));
+            menu.addSubMenu (TRANS (menuName), createCommandMenu (commandManager, menuName));
     else
         menu = createCommandMenu (commandManager, name);
 
@@ -420,14 +422,14 @@ void MainComponent::showMenu (const juce::String& name, juce::Rectangle<int> scr
 
 void MainComponent::updateStatusBar()
 {
-    statusBar.setProject ("Project: " + model.getProjectName());
+    statusBar.setProject (tr ("Project: %1", model.getProjectName()));
     statusBar.setDevice (audioDeviceDescription);
-    statusBar.setMode (uiFiles.isDevMode() ? "Dev UI: source tree" : juce::String());
+    statusBar.setMode (uiFiles.isDevMode() ? TRANS ("Dev UI: source tree") : juce::String());
 
     if (developerOverlay.isVisible())
-        developerOverlay.setStatusText (model.getProjectName()
-                                        + "   " + juce::String (model.getTracks().size()) + " tracks"
-                                        + "   " + juce::String (model.getTransportPositionSeconds(), 2) + " s");
+        developerOverlay.setStatusText (tr ("%1   %2   %3 s", model.getProjectName(),
+                                            trPlural ((int) model.getTracks().size(), "%1 track", "%1 tracks"),
+                                            juce::String (model.getTransportPositionSeconds(), 2)));
 }
 
 void MainComponent::modelChanged()
@@ -460,7 +462,9 @@ void MainComponent::getCommandInfo (juce::CommandID id, juce::ApplicationCommand
     if (command == nullptr)
         return;
 
-    info.setInfo (command->getName(), command->getName(), entry->menu, 0);
+    // A Command's name is an English key: the menus show it in the UI Language (ADR-0015).
+    const auto name = TRANS (command->getName());
+    info.setInfo (name, name, entry->menu, 0);
 
     // Global shortcuts belong to the menus; a view's own go through the ShortcutListener.
     for (auto& binding : getKeyBindings())

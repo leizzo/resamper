@@ -9,7 +9,7 @@ namespace resamper
 
 /** A context-menu item that invokes a Command by ID with args (empty, or the
     Command's args type) and shows the shortcut bound to it (PRD §16.5).
-    Disabled when the Command is. label defaults to its name. */
+    Disabled when the Command is. label defaults to its name in the UI Language. */
 juce::PopupMenu::Item commandItem (CommandRegistry&, const juce::String& commandId, std::any args,
                                    const juce::String& label);
 
