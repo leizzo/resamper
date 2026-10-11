@@ -1820,13 +1820,19 @@ void PluginSandbox::dropLoad (const juce::String& pluginId)
 
 bool PluginSandbox::isLoading (const juce::String& pluginId) const
 {
+   #if RESAMPER_SANDBOX
     const auto found = loads.find (pluginId);
     return found != loads.end() && ! found->second->done;
+   #else
+    juce::ignoreUnused (pluginId);
+    return false;
+   #endif
 }
 
 bool PluginSandbox::waitForLoads()
 {
     JUCE_ASSERT_MESSAGE_THREAD
+   #if RESAMPER_SANDBOX
     auto anyLoading = [this] { return std::any_of (loads.begin(), loads.end(), [] (const auto& l) { return ! l.second->done; }); };
 
     // A load ends by itself within loadTimeoutMs; a little more lets its answer arrive.
@@ -1836,6 +1842,9 @@ bool PluginSandbox::waitForLoads()
         juce::MessageManager::getInstance()->runDispatchLoopUntil (10);
 
     return ! anyLoading();
+   #else
+    return true;
+   #endif
 }
 
 void PluginSandbox::loadFinished (const juce::String& pluginId, const Load* which, const juce::ValueTree& loaded,
