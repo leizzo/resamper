@@ -47,6 +47,15 @@ struct ApplicationModel::Impl : private juce::ValueTree::Listener,
 
     juce::StringArray selectedNoteIds;
 
+    /** Never undoable and never saved; it and a clip selection never coexist. */
+    std::optional<TimeRangeSeconds> timeSelection;
+
+    void deselectTime()
+    {
+        if (std::exchange (timeSelection, std::nullopt))
+            notifyChanged();
+    }
+
     //==============================================================================
     /** Must wrap every replacement of the current Edit. */
     template <typename Fn>
@@ -74,6 +83,7 @@ struct ApplicationModel::Impl : private juce::ValueTree::Listener,
         selectionManager.deselectAll();
         selectionManager.edit = nullptr;
         selectedNoteIds.clear();
+        timeSelection.reset();
     }
 
     //==============================================================================
@@ -445,6 +455,11 @@ struct ApplicationModel::Impl : private juce::ValueTree::Listener,
 
         return result;
     }
+
+    /** Puts a copy of the Time Selection's content at targetSeconds, inside the
+        caller's undo step, cutting away what was there; without keepSource the
+        original content goes. The selection moves onto the copy. */
+    bool placeTimeSelection (double targetSeconds, bool keepSource);
 
     //==============================================================================
     ProjectManager& projectManager;
@@ -904,6 +919,7 @@ juce::Result ApplicationModel::copyClip (const juce::String& clipId, double star
     {
         moved->setStart (te::TimePosition::fromSeconds (std::max (0.0, startSeconds)), false, true);
         impl->selectionManager.selectOnly (moved);
+        impl->deselectTime();
     }
 
     return juce::Result::ok();
@@ -1076,6 +1092,289 @@ bool ApplicationModel::deleteSelectedClips()
 
     for (auto* clip : selected)
         clip->removeFromParent();
+
+    return true;
+}
+
+//==============================================================================
+namespace
+{
+    /** The tracks a Time Selection operation changes: every audio track that isn't frozen. */
+    juce::Array<te::AudioTrack*> unfrozenTracks (const te::Edit& edit)
+    {
+        juce::Array<te::AudioTrack*> tracks;
+
+        for (auto* track : te::getAudioTracks (edit))
+            if (! track->isFrozen (te::Track::anyFreeze))
+                tracks.add (track);
+
+        return tracks;
+    }
+
+    /** The parameters with automation points on every audio track and Bus that isn't frozen. */
+    juce::Array<te::AutomatableParameter*> automatedParameters (const te::Edit& edit)
+    {
+        juce::Array<te::AutomatableParameter*> parameters;
+
+        for (auto* track : te::getAllTracks (edit))
+        {
+            if (track->isFrozen (te::Track::anyFreeze) || ! (dynamic_cast<te::AudioTrack*> (track) != nullptr || isBus (*track)))
+                continue;
+
+            for (auto* parameter : track->getAllAutomatableParams())
+                if (parameter->getCurve().getNumPoints() > 0)
+                    parameters.add (parameter);
+        }
+
+        return parameters;
+    }
+
+    struct CurvePoint
+    {
+        te::TimePosition time;
+        float value, curve;
+    };
+
+    /** Takes the points at or after from (and before to) off the curve, returning them. */
+    std::vector<CurvePoint> takePoints (te::AutomationCurve& curve, te::TimeRange range, juce::UndoManager* um)
+    {
+        std::vector<CurvePoint> taken;
+
+        for (int i = 0; i < curve.getNumPoints(); ++i)
+            if (const auto t = curve.getPointTime (i); t >= range.getStart() && t < range.getEnd())
+                taken.push_back ({ t, curve.getPointValue (i), curve.getPointCurve (i) });
+
+        curve.removePointsInRegion (range, um);
+        return taken;
+    }
+
+    void addPoints (te::AutomationCurve& curve, const std::vector<CurvePoint>& points, te::TimeDuration shift, juce::UndoManager* um)
+    {
+        for (auto& p : points)
+            curve.addPoint (p.time + shift, p.value, p.curve, um);
+    }
+
+    /** Moves every point at or after from by shift. */
+    void shiftPoints (te::AutomationCurve& curve, te::TimePosition from, te::TimeDuration shift, juce::UndoManager* um)
+    {
+        addPoints (curve, takePoints (curve, { from, te::Edit::getMaximumEditEnd() }, um), shift, um);
+    }
+
+    /** Cuts away the part of every clip on the track inside range, except the clips in keep. */
+    void eraseClips (te::ClipTrack& track, te::TimeRange range, const juce::Array<te::EditItemID>& keep = {})
+    {
+        juce::Array<te::Clip*> hit;
+
+        for (auto* clip : track.getClips())
+            if (! keep.contains (clip->itemID) && clip->getPosition().time.overlaps (range))
+                hit.add (clip);
+
+        for (auto* clip : hit)
+            te::deleteRegion (*clip, range);
+    }
+
+    /** Copies of the parts of the track's clips inside range, left in place. */
+    juce::Array<te::Clip*> copyClipParts (te::ClipTrack& track, te::TimeRange range,
+                                          const juce::Identifier& noteIdProperty, juce::UndoManager* um)
+    {
+        juce::Array<te::Clip*> originals, parts;
+
+        for (auto* clip : track.getClips())
+            if (clip->getPosition().time.overlaps (range))
+                originals.add (clip);
+
+        for (auto* clip : originals)
+        {
+            if (auto copy = te::duplicateClip (*clip))
+            {
+                renameNoteIds (*copy, noteIdProperty, um);
+                copy->trimAwayOverlap ({ te::TimePosition(), range.getStart() });
+                copy->trimAwayOverlap ({ range.getEnd(), te::Edit::getMaximumEditEnd() });
+                parts.add (copy.get());
+            }
+        }
+
+        return parts;
+    }
+
+    te::TimeRange toTimeRange (TimeRangeSeconds r)
+    {
+        return { te::TimePosition::fromSeconds (r.start), te::TimePosition::fromSeconds (r.end) };
+    }
+}
+
+bool ApplicationModel::Impl::placeTimeSelection (double targetSeconds, bool keepSource)
+{
+    const auto source = toTimeRange (*timeSelection);
+    const auto target = source.movedToStartAt (te::TimePosition::fromSeconds (targetSeconds));
+    const auto shift = target.getStart() - source.getStart();
+    auto* um = &undoManager();
+
+    for (auto* track : unfrozenTracks (edit()))
+    {
+        auto parts = copyClipParts (*track, source, noteIdProperty, um);
+        juce::Array<te::EditItemID> partIds;
+
+        for (auto* part : parts)
+            partIds.add (part->itemID);
+
+        if (! keepSource)
+            eraseClips (*track, source, partIds);
+
+        eraseClips (*track, target, partIds);
+
+        for (auto* part : parts)
+            part->setStart (part->getPosition().getStart() + shift, false, true);
+    }
+
+    for (auto* parameter : automatedParameters (edit()))
+    {
+        auto& curve = parameter->getCurve();
+        auto points = takePoints (curve, source, um);
+
+        if (keepSource)
+            addPoints (curve, points, {}, um);
+
+        curve.removePointsInRegion (target, um);
+        addPoints (curve, points, shift, um);
+    }
+
+    timeSelection = TimeRangeSeconds { target.getStart().inSeconds(), target.getEnd().inSeconds() };
+    notifyChanged();
+    return true;
+}
+
+void ApplicationModel::selectTime (TimeRangeSeconds range)
+{
+    if (range.end <= range.start)
+    {
+        impl->deselectTime();
+        return;
+    }
+
+    const TimeRangeSeconds next { std::max (0.0, range.start), range.end };
+
+    if (auto& current = impl->timeSelection; current && current->start == next.start && current->end == next.end)
+        return;
+
+    for (auto* clip : impl->selectionManager.getItemsOfType<te::Clip>())
+        impl->selectionManager.deselect (clip);
+
+    impl->timeSelection = next;
+    impl->notifyChanged();
+}
+
+std::optional<TimeRangeSeconds> ApplicationModel::getTimeSelection() const
+{
+    return impl->timeSelection;
+}
+
+bool ApplicationModel::duplicateTimeSelection (bool insertSpace)
+{
+    if (! impl->timeSelection)
+        return false;
+
+    const auto range = *impl->timeSelection;
+    impl->undo().beginStep (insertSpace ? "Insert Duplicate Time" : "Duplicate Time");
+
+    if (insertSpace)
+    {
+        const auto at = te::TimePosition::fromSeconds (range.end);
+        const auto length = te::TimeDuration::fromSeconds (range.end - range.start);
+
+        for (auto* track : unfrozenTracks (impl->edit()))
+            track->insertSpace (at, length);
+
+        for (auto* parameter : automatedParameters (impl->edit()))
+            shiftPoints (parameter->getCurve(), at, length, &impl->undoManager());
+    }
+
+    return impl->placeTimeSelection (range.end, true);
+}
+
+bool ApplicationModel::moveTimeSelection (double startSeconds, bool copy)
+{
+    if (! impl->timeSelection)
+        return false;
+
+    impl->undo().beginStep (copy ? "Copy Time" : "Move Time");
+    return impl->placeTimeSelection (std::max (0.0, startSeconds), copy);
+}
+
+bool ApplicationModel::splitClipsAtTimeSelection()
+{
+    if (! impl->timeSelection)
+        return false;
+
+    impl->undo().beginStep ("Split Clips at Selection");
+
+    // The engine won't cut within a millisecond of a clip's edge.
+    const auto margin = te::TimeDuration::fromSeconds (0.001);
+
+    for (auto* track : unfrozenTracks (impl->edit()))
+    {
+        for (const auto seconds : { impl->timeSelection->start, impl->timeSelection->end })
+        {
+            const auto time = te::TimePosition::fromSeconds (seconds);
+            juce::Array<te::Clip*> crossing;
+
+            for (auto* clip : track->getClips())
+                if (clip->getPosition().time.reduced (margin).contains (time))
+                    crossing.add (clip);
+
+            for (auto* clip : crossing)
+                track->splitClip (*clip, time);
+        }
+    }
+
+    return true;
+}
+
+bool ApplicationModel::eraseTimeSelection()
+{
+    if (! impl->timeSelection)
+        return false;
+
+    const auto range = toTimeRange (*impl->timeSelection);
+    impl->undo().beginStep ("Clear Time Selection");
+
+    for (auto* track : unfrozenTracks (impl->edit()))
+        eraseClips (*track, range);
+
+    for (auto* parameter : automatedParameters (impl->edit()))
+        parameter->getCurve().removePointsInRegion (range, &impl->undoManager());
+
+    return true;
+}
+
+bool ApplicationModel::deleteTimeSelection()
+{
+    if (! impl->timeSelection)
+        return false;
+
+    const auto range = toTimeRange (*impl->timeSelection);
+    const auto pullBack = -range.getLength();
+    auto* um = &impl->undoManager();
+    impl->undo().beginStep ("Delete Time");
+
+    for (auto* track : unfrozenTracks (impl->edit()))
+    {
+        eraseClips (*track, range);
+        juce::Array<te::Clip*> later;
+
+        for (auto* clip : track->getClips())
+            if (clip->getPosition().getStart() >= range.getEnd())
+                later.add (clip);
+
+        for (auto* clip : later)
+            clip->setStart (clip->getPosition().getStart() + pullBack, false, true);
+    }
+
+    for (auto* parameter : automatedParameters (impl->edit()))
+    {
+        parameter->getCurve().removePointsInRegion (range, um);
+        shiftPoints (parameter->getCurve(), range.getEnd(), pullBack, um);
+    }
 
     return true;
 }
@@ -1439,6 +1738,7 @@ void ApplicationModel::selectTrack (const juce::String& trackId, SelectionMode m
 void ApplicationModel::deselectAll()
 {
     impl->selectionManager.deselectAll();
+    impl->deselectTime();
     selectNotes ({});
 }
 
@@ -1446,6 +1746,7 @@ void ApplicationModel::selectClip (const juce::String& clipId, SelectionMode mod
 {
     auto* clip = impl->findClip (clipId);
     auto& selection = impl->selectionManager;
+    impl->deselectTime();
 
     if (clip == nullptr)
     {
@@ -1471,6 +1772,7 @@ void ApplicationModel::selectClip (const juce::String& clipId, SelectionMode mod
 void ApplicationModel::selectClipsInRange (TimeRangeSeconds range, const juce::StringArray& trackIds, SelectionMode mode)
 {
     auto& selection = impl->selectionManager;
+    impl->deselectTime();
 
     // Tracks and clips aren't selected together.
     if (mode == SelectionMode::replace)

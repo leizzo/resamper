@@ -67,6 +67,12 @@ void ArrangementView::zoomBy (double factor)
 
 void ArrangementView::zoomToSelection()
 {
+    if (auto selection = model.getTimeSelection())
+    {
+        view.zoomToFit (selection->start, selection->end, (float) lanes.getWidth());
+        return;
+    }
+
     double start = 0, end = 0;
 
     for (auto& track : tracks)

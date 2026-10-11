@@ -28,12 +28,6 @@ void registerClipCommands (CommandRegistry& registry, ApplicationModel& model, A
 
     registry.add (cmd::clipSelect, { "Select Clip" }, [&model] (const ClipSelectArgs& a) { model.selectClip (a.clipId, a.mode); });
 
-    // A marquee dragged across the Arrangement's lanes.
-    registry.add (cmd::clipSelectRange, { "Select Clips" }, [&model] (const ClipRangeArgs& a)
-    {
-        model.selectClipsInRange (a.range, a.trackIds, a.mode);
-    });
-
     registry.add (cmd::clipSelectAll, { "Select All" }, [&model]
     {
         model.selectClipsInRange ({ 0.0, std::numeric_limits<double>::max() }, {});
@@ -51,11 +45,21 @@ void registerClipCommands (CommandRegistry& registry, ApplicationModel& model, A
         model.resizeClip (a.clipId, a.startSeconds, a.endSeconds);
     });
 
+    auto timeSelected = [&model] { return model.getTimeSelection().has_value(); };
+
+    // Mod+E: the Time Selection's edges when there is one.
     registry.add (cmd::clipSplit, { "Split Clip at Playhead",
-                                    [&model] { return model.canSplitClip (model.getSelectedClipId(), model.getTransportPositionSeconds()); } },
+                                    [&model, timeSelected]
+                                    {
+                                        return timeSelected()
+                                            || model.canSplitClip (model.getSelectedClipId(), model.getTransportPositionSeconds());
+                                    } },
                   [&model]
     {
-        model.splitClip (model.getSelectedClipId(), model.getTransportPositionSeconds());
+        if (model.getTimeSelection())
+            model.splitClipsAtTimeSelection();
+        else
+            model.splitClip (model.getSelectedClipId(), model.getTransportPositionSeconds());
     });
 
     // A clip's take menu.
@@ -91,7 +95,15 @@ void registerClipCommands (CommandRegistry& registry, ApplicationModel& model, A
     // These act on the selected clips, so they are enabled only while some are.
     auto clipsSelected = [&model] { return ! model.getSelectedClipIds().isEmpty(); };
 
-    registry.add (cmd::clipDuplicate, { "Duplicate", clipsSelected }, [&model] { model.duplicateSelectedClips(); });
+    // Mod+D: the Time Selection when there is one.
+    registry.add (cmd::clipDuplicate, { "Duplicate", [clipsSelected, timeSelected] { return clipsSelected() || timeSelected(); } },
+                  [&model]
+    {
+        if (model.getTimeSelection())
+            model.duplicateTimeSelection (false);
+        else
+            model.duplicateSelectedClips();
+    });
 
     registry.add (cmd::clipConsolidate, { "Consolidate", clipsSelected }, [&model, &host]
     {
@@ -104,6 +116,22 @@ void registerClipCommands (CommandRegistry& registry, ApplicationModel& model, A
     });
 
     registry.add (cmd::clipDelete, { "Delete", clipsSelected }, [&model] { model.deleteSelectedClips(); });
+
+    // A drag on empty lane space, or a Time Selection handle in the ruler.
+    registry.add (cmd::timeSelect, { "Select Time" }, [&model] (const TimeRangeSeconds& range) { model.selectTime (range); });
+
+    registry.add (cmd::timeDuplicate, { "Duplicate Time Selection", timeSelected }, [&model] { model.duplicateTimeSelection (false); });
+    registry.add (cmd::timeInsertDuplicate, { "Insert Duplicate Time", timeSelected }, [&model] { model.duplicateTimeSelection (true); });
+
+    // The Time Selection's context menu, or a drag of it (Alt copies).
+    registry.add (cmd::timeMoveTo, { "Move Selection Here", timeSelected }, [&model] (const TimeMoveArgs& a)
+    {
+        model.moveTimeSelection (a.startSeconds, a.copy);
+    });
+
+    registry.add (cmd::timeSplit, { "Split Clips at Selection", timeSelected }, [&model] { model.splitClipsAtTimeSelection(); });
+    registry.add (cmd::timeClear, { "Clear Time Selection", timeSelected }, [&model] { model.eraseTimeSelection(); });
+    registry.add (cmd::timeDelete, { "Delete Time", timeSelected }, [&model] { model.deleteTimeSelection(); });
 }
 
 } // namespace resamper

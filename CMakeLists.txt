@@ -283,6 +283,7 @@ target_sources(ResamperTests PRIVATE
     Tests/ShellTests.cpp
     Tests/BrowserTests.cpp
     Tests/ClipOperationTests.cpp
+    Tests/TimeSelectionTests.cpp
     Tests/ShortcutTests.cpp
     Tests/AppTests.cpp
     Tests/AppUpdateTests.cpp

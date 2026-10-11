@@ -1,6 +1,8 @@
 #include "TrackLanes.h"
 #include "Commands/AppCommands.h"
+#include "UI/Controls/Icons.h"
 #include "UI/Controls/Menus.h"
+#include "UI/Theme/Interaction.h"
 #include "UI/PianoRoll/BeatGrid.h"
 #include "UI/State/ArrangementViewState.h"
 #include "UI/Theme/ThemeManager.h"
@@ -11,8 +13,8 @@ namespace resamper
 
 namespace
 {
-    /** Movement below this stays a click on empty lane space, not a marquee. */
-    constexpr int marqueeThresholdPixels = 4;
+    /** Movement below this stays a click, not a Time Selection drag. */
+    constexpr int timeDragThresholdPixels = 4;
 }
 
 TrackLanes::TrackLanes (const ApplicationModel& m, CommandRegistry& c, ThemeManager& tm, ArrangementViewState& v)
@@ -111,10 +113,10 @@ void TrackLanes::autoScrollAt (juce::Point<int> p)
 
 void TrackLanes::cancelDrag()
 {
-    if (drag || marquee)
+    if (drag || timeDrag)
     {
         drag.reset();
-        marquee.reset();
+        timeDrag.reset();
         setMouseCursor (juce::MouseCursor::NormalCursor);
         layoutClips();
         repaint();
@@ -198,49 +200,77 @@ void TrackLanes::paintOverChildren (juce::Graphics& g)
         g.drawRoundedRectangle (ghost.reduced (0.5f), 5.0f, 1.0f);
     }
 
-    if (marquee && marquee->active)
+    if (auto selection = model.getTimeSelection())
+        paintTimeSelection (g, *selection);
+
+    if (timeDrag && timeDrag->moving && timeDrag->active)
+        paintTimeGhost (g, *timeDrag);
+}
+
+juce::Rectangle<float> TrackLanes::columnArea (TimeRangeSeconds range) const
+{
+    const auto x1 = view.timeToX (range.start), x2 = view.timeToX (range.end);
+    return { x1, 0.0f, x2 - x1, (float) getHeight() };
+}
+
+void TrackLanes::paintTimeSelection (juce::Graphics& g, TimeRangeSeconds selection) const
+{
+    auto& theme = themeManager.getTheme();
+    const auto column = columnArea (selection);
+
+    // The clip parts inside it draw as selected.
     {
-        const auto area = marqueeBounds (*marquee).toFloat();
-        g.setColour (theme.accent.withAlpha (0.08f));
-        g.fillRect (area);
-        g.setColour (theme.accent.withAlpha (0.6f));
-        g.drawRect (area, 1.0f);
+        juce::Graphics::ScopedSaveState save (g);
+        g.reduceClipRegion (column.getSmallestIntegerContainer());
+        g.setColour (theme.clipOutlineSelected);
+
+        for (auto& [id, clip] : clips)
+            if (clip->getBounds().toFloat().intersects (column))
+                g.drawRoundedRectangle (clip->getBounds().toFloat().reduced (0.5f), 5.0f, 1.0f);
     }
+
+    g.setColour (theme.accent.withAlpha (0.06f));
+    g.fillRect (column);
+    g.setColour (theme.accent.withAlpha (0.15f));
+    g.fillRect (column.withWidth (1.0f));
+    g.fillRect (column.withX (column.getRight() - 1.0f).withWidth (1.0f));
 }
 
-juce::Rectangle<int> TrackLanes::marqueeBounds (const Marquee& m) const
+void TrackLanes::paintTimeGhost (juce::Graphics& g, const TimeDrag& d) const
 {
-    const auto x1 = view.timeToX (m.startSeconds), x2 = view.timeToX (m.endSeconds);
-    const auto scrollY = view.getScrollY();
-    return juce::Rectangle<int>::leftTopRightBottom (juce::roundToInt (std::min (x1, x2)), std::min (m.startY, m.endY) - scrollY,
-                                                     juce::roundToInt (std::max (x1, x2)), std::max (m.startY, m.endY) - scrollY);
-}
+    auto& theme = themeManager.getTheme();
+    const auto top = (float) view.rowToY (0, laneHeight());
+    const auto bottom = (float) view.rowToY ((int) tracks.size(), laneHeight());
+    const auto ghost = columnArea ({ d.targetStart, d.targetStart + d.original.end - d.original.start })
+                           .withTop (top).withBottom (std::max (top + (float) laneHeight(), bottom)).reduced (0.5f);
 
-void TrackLanes::selectInMarquee (const Marquee& m, juce::ModifierKeys mods)
-{
-    using Mode = ApplicationModel::SelectionMode;
-    const auto mode = mods.isShiftDown() ? Mode::add : mods.isCommandDown() ? Mode::toggle : Mode::replace;
+    g.setColour (theme.accent.withAlpha (0.07f));
+    g.fillRoundedRectangle (ghost, 3.0f);
+    g.setColour (theme.accent.withAlpha (0.4f));
+    g.drawRoundedRectangle (ghost, 3.0f, 1.0f);
 
-    const auto area = marqueeBounds (m);
-    const auto firstRow = std::max (0, view.yToRow (area.getY(), laneHeight()));
-    const auto lastRow = std::min ((int) tracks.size() - 1, view.yToRow (area.getBottom(), laneHeight()));
-
-    juce::StringArray trackIds;
-
-    for (int row = firstRow; row <= lastRow; ++row)
-        trackIds.add (tracks[(size_t) row].id);
-
-    // Only space below the last track: nothing to select (no track IDs would mean every track).
-    if (trackIds.isEmpty())
-    {
-        if (mode == Mode::replace)
-            commands.invoke (cmd::editDeselectAll);
-
+    if (! d.copy)
         return;
-    }
 
-    commands.invoke (cmd::clipSelectRange, { { std::min (m.startSeconds, m.endSeconds), std::max (m.startSeconds, m.endSeconds) },
-                                             trackIds, mode });
+    // Alt: a pill that says what the drop does.
+    const auto text = TRANS ("Duplicate time");
+    const auto font = themeManager.font (TypeStyle { 9.0f, false, 400 });
+    constexpr float iconSize = 12.0f, gap = 5.0f, padX = 7.0f, padY = 3.0f;
+    const auto width = padX * 2.0f + iconSize + gap + juce::GlyphArrangement::getStringWidth (font, text);
+    const auto pill = juce::Rectangle<float> (width, iconSize + padY * 2.0f)
+                          .withCentre ({ ghost.getCentreX(), ghost.getY() + 8.0f + padY + iconSize * 0.5f });
+
+    g.setColour (theme.bgDeep.withAlpha (0.9f));
+    g.fillRoundedRectangle (pill, 3.0f);
+    g.setColour (theme.accent.withAlpha (0.4f));
+    g.drawRoundedRectangle (pill, 3.0f, 1.0f);
+
+    auto content = pill.reduced (padX, padY);
+    drawIcon (g, Icon::copy, content.removeFromLeft (iconSize), theme.accent);
+    content.removeFromLeft (gap);
+    g.setColour (theme.textPrimary);
+    g.setFont (font);
+    g.drawText (text, content, juce::Justification::centredLeft, false);
 }
 
 void TrackLanes::timerCallback()
@@ -375,6 +405,34 @@ void TrackLanes::showLaneMenu (int row, double seconds)
     menu.showMenuAsync (juce::PopupMenu::Options().withTargetComponent (this).withMousePosition());
 }
 
+void TrackLanes::showTimeSelectionMenu (double seconds, int x)
+{
+    auto& theme = themeManager.getTheme();
+    const auto selection = model.getTimeSelection();
+    const auto target = std::max (0.0, snap (seconds, false));
+    const bool inside = selection && target >= selection->start && target < selection->end;
+
+    auto withIcon = [&theme] (juce::PopupMenu::Item item, Icon icon, juce::Colour colour)
+    {
+        item.setImage (createIconDrawable (icon, item.isEnabled ? colour : colour.withMultipliedAlpha (theme.disabledOpacity)));
+        return item;
+    };
+
+    juce::PopupMenu menu;
+    menu.addItem (withIcon (commandItem (commands, cmd::timeDuplicate), Icon::copy, theme.textSecondary));
+    menu.addItem (withIcon (commandItem (commands, cmd::timeInsertDuplicate), Icon::copyPlus, theme.textSecondary));
+    menu.addItem (withIcon (commandItem (commands, cmd::timeMoveTo, { target, false }).setEnabled (selection && ! inside),
+                            Icon::moveDiagonal2, theme.textSecondary));
+    menu.addItem (withIcon (commandItem (commands, cmd::timeSplit), Icon::scissors, theme.textSecondary));
+    menu.addItem (withIcon (commandItem (commands, cmd::timeClear), Icon::eraser, theme.textSecondary));
+    menu.addSeparator();
+    menu.addItem (withIcon (commandItem (commands, cmd::timeDelete).setColour (theme.rec), Icon::trash2, theme.rec));
+
+    // It opens under the ruler, at the click.
+    menu.showMenuAsync (juce::PopupMenu::Options().withTargetComponent (this)
+                            .withTargetScreenArea (localAreaToGlobal (juce::Rectangle<int> (x, 0, 1, 1))));
+}
+
 void TrackLanes::startRename (const ClipInfo& clip)
 {
     auto it = clips.find (clip.id);
@@ -436,8 +494,27 @@ void TrackLanes::mouseMove (const juce::MouseEvent& e)
 void TrackLanes::mouseDown (const juce::MouseEvent& e)
 {
     drag.reset();
+    timeDrag.reset();
 
-    if (auto* clip = clipAt (e.getPosition()))
+    const auto seconds = std::max (0.0, view.xToTime ((float) e.x));
+    const auto selection = model.getTimeSelection();
+    const bool insideSelection = selection && seconds >= selection->start && seconds < selection->end;
+    auto* clipUnder = clipAt (e.getPosition());
+
+    if (e.mods.isPopupMenu() && selection && clipUnder == nullptr)
+    {
+        showTimeSelectionMenu (seconds, e.x);
+        return;
+    }
+
+    // Inside the Time Selection a drag moves its content, over clips too.
+    if (insideSelection && ! e.mods.isPopupMenu() && ! e.mods.isShiftDown() && e.getNumberOfClicks() == 1)
+    {
+        timeDrag = TimeDrag { true, seconds, *selection, selection->start, false, false };
+        return;
+    }
+
+    if (auto* clip = clipUnder)
     {
         auto info = clip->getClip();
 
@@ -486,26 +563,21 @@ void TrackLanes::mouseDown (const juce::MouseEvent& e)
         return;
     }
 
-    // A click selects the track on release; a drag becomes a marquee.
-    const auto seconds = std::max (0.0, view.xToTime ((float) e.x));
-    const auto y = e.y + view.getScrollY();
-    marquee = Marquee { seconds, seconds, y, y, false };
+    // A click selects the track on release; a drag makes a Time Selection.
+    // Shift keeps the end of the current one that is further away.
+    auto anchor = snap (seconds, e.mods.isCommandDown());
+
+    if (e.mods.isShiftDown() && selection)
+        anchor = std::abs (seconds - selection->start) > std::abs (seconds - selection->end) ? selection->start : selection->end;
+
+    timeDrag = TimeDrag { false, anchor, {}, 0.0, false, false };
 }
 
 void TrackLanes::mouseDrag (const juce::MouseEvent& e)
 {
-    if (marquee)
+    if (timeDrag)
     {
-        marquee->active = marquee->active || e.getDistanceFromDragStart() >= marqueeThresholdPixels;
-
-        if (marquee->active)
-        {
-            autoScrollAt (e.getPosition());
-            marquee->endSeconds = std::max (0.0, view.xToTime ((float) e.x));
-            marquee->endY = e.y + view.getScrollY();
-            repaint();
-        }
-
+        timeDragged (e);
         return;
     }
 
@@ -571,15 +643,61 @@ void TrackLanes::mouseDrag (const juce::MouseEvent& e)
     repaint();
 }
 
+void TrackLanes::timeDragged (const juce::MouseEvent& e)
+{
+    timeDrag->active = timeDrag->active || e.getDistanceFromDragStart() >= timeDragThresholdPixels;
+
+    if (! timeDrag->active)
+        return;
+
+    autoScrollAt (e.getPosition());
+    const auto now = std::max (0.0, view.xToTime ((float) e.x));
+    const auto bypassSnap = e.mods.isCommandDown();
+
+    if (timeDrag->moving)
+    {
+        timeDrag->copy = e.mods.isAltDown();
+        timeDrag->targetStart = std::max (0.0, snap (timeDrag->original.start + now - timeDrag->anchorSeconds, bypassSnap));
+        setMouseCursor (timeDrag->copy ? juce::MouseCursor::CopyingCursor : juce::MouseCursor::DraggingHandCursor);
+        repaint();
+        return;
+    }
+
+    // Live, so the ruler shows it as it grows; selecting is never undoable.
+    const auto end = snap (now, bypassSnap);
+    commands.invoke (cmd::timeSelect, { std::min (timeDrag->anchorSeconds, end), std::max (timeDrag->anchorSeconds, end) });
+}
+
+void TrackLanes::timeReleased (const TimeDrag& released, const juce::MouseEvent& e)
+{
+    if (released.active)
+    {
+        if (released.moving && (released.copy || ! juce::exactlyEqual (released.targetStart, released.original.start)))
+            commands.invoke (cmd::timeMoveTo, { released.targetStart, released.copy });
+
+        return;
+    }
+
+    // A click: on a clip it selects the clip, on empty space the track; either clears the Time Selection.
+    if (auto* clip = clipAt (e.getMouseDownPosition()))
+    {
+        commands.invoke (cmd::clipSelect, { clip->getClip().id });
+        return;
+    }
+
+    if (model.getTimeSelection() && ! e.mods.isShiftDown())
+        commands.invoke (cmd::timeSelect, {});
+
+    if (onRowClicked)
+        onRowClicked (view.yToRow (e.getMouseDownY(), laneHeight()), e.mods);
+}
+
 void TrackLanes::mouseUp (const juce::MouseEvent& e)
 {
-    if (auto released = std::exchange (marquee, std::nullopt))
+    if (auto released = std::exchange (timeDrag, std::nullopt))
     {
-        if (released->active)
-            selectInMarquee (*released, e.mods);
-        else if (onRowClicked)
-            onRowClicked (view.yToRow (e.getMouseDownY(), laneHeight()), e.mods);
-
+        setMouseCursor (juce::MouseCursor::NormalCursor);
+        timeReleased (*released, e);
         repaint();
         return;
     }

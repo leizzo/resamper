@@ -18,7 +18,11 @@ class ThemeManager;
     Dragging along it sets a new loop (transport.setLoopRange, on release).
     Dragging the brace moves the loop, and dragging either end resizes it,
     leaving looping on or off (transport.moveLoop). The loop always lands on
-    the grid. Right-click: Loop, Loop Selection, Snap and the grid size. */
+    the grid. Right-click: Loop, Loop Selection, Snap and the grid size.
+
+    The Time Selection shows as a highlight with its range in bars.beats.ticks;
+    its 4 px handles resize it (Mod bypasses the grid) and win over the brace.
+    A click still moves the playhead and keeps it. */
 class TimelineHeader : public juce::Component
 {
 public:
@@ -31,7 +35,7 @@ public:
     void mouseUp (const juce::MouseEvent&) override;
 
 private:
-    enum class DragMode { newLoop, moveLoop, loopStart, loopEnd };
+    enum class DragMode { newLoop, moveLoop, loopStart, loopEnd, selectionStart, selectionEnd };
 
     const ApplicationModel& model;
     CommandRegistry& commands;
@@ -44,6 +48,9 @@ private:
     std::optional<TimeRangeSeconds> draggedLoop;   ///< previewed until release
 
     juce::Rectangle<float> braceArea (TimeRangeSeconds) const;
+    std::pair<juce::Rectangle<float>, juce::Rectangle<float>> selectionHandles (TimeRangeSeconds) const;
+    void paintTimeSelection (juce::Graphics&, TimeRangeSeconds) const;
+    juce::String barsBeatsText (double seconds) const;
     DragMode dragModeAt (juce::Point<int>) const;
     double snapped (double seconds) const;
     void showMenu();

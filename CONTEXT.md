@@ -50,6 +50,14 @@ _Avoid_: sample editor (that is part of Simpler)
 A named operation the user triggers from a button, menu or keyboard shortcut. It is the only way the UI changes the Edit.
 _Avoid_: Action, operation; JUCE's ApplicationCommand is a different thing and is always spelled in full
 
+**Clip Selection**:
+The clips the user has picked in the Arrangement, by clicking them (Shift adds, Mod toggles). Commands such as Duplicate, Split and Delete act on it when no Time Selection exists.
+_Avoid_: selection (unqualified)
+
+**Time Selection**:
+A bar range in the Arrangement that spans every track. It holds the parts of clips and Automation Lanes that fall inside it, and Commands act on those parts, not on whole clips. It and the Clip Selection never exist together. It is a kind of selection, so it is not undoable, and it is distinct from the Loop.
+_Avoid_: range, region, selection (unqualified)
+
 **Engine Undo**:
 The one undo history of the Edit. Every discrete change and every completed gesture (a fader drag, a velocity drag) is one undo step, including mute, solo and mixer changes during playback. Not undoable: transport (including the Loop), selection, zoom, scroll, a Device card's size, a track's Input and arming.
 

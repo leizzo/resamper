@@ -65,7 +65,8 @@ std::span<const char* const> getMenuNames();
 /** One menu's items, with their shortcuts. */
 juce::PopupMenu createCommandMenu (juce::ApplicationCommandManager&, const juce::String& menuName);
 
-/** The first shortcut bound to a Command, or an invalid KeyPress if none. */
+/** The first shortcut bound to a Command, or an invalid KeyPress if none. A
+    Time Selection Command that shares a key (Mod+D, Mod+E, Delete) gets that key. */
 juce::KeyPress findShortcut (const juce::String& commandId);
 
 /** The binding for a key in a context (a view's flag), or nullptr. A

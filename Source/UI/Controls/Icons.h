@@ -23,7 +23,7 @@ enum class Icon
     ellipsis, x, maximize, maximize2, minimize2, zoomIn, zoomOut,
     // Editing tools
     mousePointer2, textCursor, pencil, eraser, scissors, scissorsLineDashed, magnet, foldVertical, unfoldVertical,
-    copy, trash2, plus, undo2, flag, search, gripVertical,
+    copy, copyPlus, trash2, plus, undo2, flag, search, gripVertical,
     // Routing, racks & structure
     gitMerge, layers, network, folder, folderOpen, folderMinus, list, slidersHorizontal, slidersVertical, link2Off, unlink,
     // Files & visibility
@@ -58,6 +58,9 @@ void drawIcon (juce::Graphics&, Icon, juce::Rectangle<float> area, juce::Colour)
 
 /** Draws the icon size px square, centred on centre: `<Icon name size color />`. */
 void drawIcon (juce::Graphics&, Icon, juce::Point<float> centre, float size, juce::Colour);
+
+/** The icon stroked in colour as a Drawable, for a PopupMenu item's image. */
+std::unique_ptr<juce::Drawable> createIconDrawable (Icon, juce::Colour);
 
 /** The icon's lucide name, e.g. "trash-2". */
 juce::String lucideName (Icon);

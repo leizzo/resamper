@@ -1,6 +1,7 @@
 #include "ApplicationCommandTable.h"
 
 #include <array>
+#include <utility>
 #include <vector>
 
 namespace resamper
@@ -243,6 +244,8 @@ namespace
         KeyBinding { "pianoRoll.transpose",       KP::downKey,         shift,             pianoRollView, -12 },
         KeyBinding { "pianoRoll.selectAll",       'A',                 cmd,               pianoRollView },
         KeyBinding { "clip.selectAll",            'A',                 cmd,               arrangeView },
+        KeyBinding { "time.insertDuplicate",      'D',                 cmd | shift,       arrangeView },
+        KeyBinding { "time.delete",               KP::backspaceKey,    cmd | shift,       arrangeView },
     };
 
     /** §17 rows waiting on their feature tickets. */
@@ -254,6 +257,15 @@ namespace
         PendingShortcut { "Mod+Shift+R",         "Re-enable automation",             "Automation recording (M3)" },
         PendingShortcut { "Mod+D in the Piano Roll", "Duplicate notes",              "Piano roll (M4)" },
         PendingShortcut { "+ / - in the Piano Roll", "Zoom",                         "Piano roll (M4)" },
+    };
+
+    /** Commands reached through another Command's key: that Command acts on the
+        Time Selection when there is one, so their menu items show its key. */
+    const std::array sharedShortcuts
+    {
+        std::pair { "time.duplicate", "clip.duplicate" },
+        std::pair { "time.split",     "clip.split" },
+        std::pair { "time.clear",     "edit.delete" },
     };
 
     bool sameKey (const KeyBinding& b, const juce::KeyPress& key)
@@ -327,6 +339,10 @@ juce::KeyPress findShortcut (const juce::String& commandId)
     for (auto& b : bindings)
         if (commandId == b.commandId)
             return juce::KeyPress (b.keyCode, juce::ModifierKeys (b.modifiers), 0);
+
+    for (auto& [shared, owner] : sharedShortcuts)
+        if (commandId == shared)
+            return findShortcut (owner);
 
     return {};
 }

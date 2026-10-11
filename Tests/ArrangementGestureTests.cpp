@@ -245,12 +245,58 @@ struct ArrangementGestureTests : juce::UnitTest
             }
         }
 
-        beginTest ("Dragging on empty lane space selects every clip the rectangle touches, across tracks (#173 5)");
+        beginTest ("A drag on empty lane space makes a Time Selection on the grid; Mod bypasses it, Shift extends, a click clears it (#175)");
         {
             Fixture f;
             expect (f.theme.load().wasOk());
             addMidiClips (f, 2, 2.0);
-            f.invoke (cmd::editDeselectAll);
+            f.model.selectClip (f.model.getTracks()[0].clips[0].id);
+
+            UIStateStore store;
+            ArrangementViewState view (store.getState ("arrangement"));
+            view.setPixelsPerSecond (40.0);   // a beat every 20 px
+            TrackLanes lanes (f.model, f.commands, f.theme, view);
+            lanes.setSize (1000, 400);
+            lanes.setTracks (f.model.getTracks());
+            const auto rowMiddle = view.rowToY (0, lanes.laneHeight()) + lanes.laneHeight() / 2;
+
+            // 0.925 s to 3.325 s, starting left of the clips and ending over one.
+            dragAcross (lanes, { 37, rowMiddle }, { 133, rowMiddle });
+            auto selection = f.model.getTimeSelection();
+            expect (selection.has_value(), "no Time Selection");
+
+            if (selection)
+            {
+                expect (onBeat (f.model, selection->start) && onBeat (f.model, selection->end), "off the grid");
+                expectWithinAbsoluteError (selection->start, 0.925, 0.25);
+                expectWithinAbsoluteError (selection->end, 3.325, 0.25);
+            }
+
+            expect (f.model.getSelectedClipIds().isEmpty(), "the Clip Selection stayed");
+
+            dragAcross (lanes, { 37, rowMiddle }, { 133, rowMiddle }, juce::ModifierKeys::commandModifier);
+            selection = f.model.getTimeSelection();
+            expect (selection && std::abs (selection->start - 0.925) < 1.0e-3 && std::abs (selection->end - 3.325) < 1.0e-3,
+                    "Mod didn't bypass the grid");
+
+            f.invoke (cmd::timeSelect, { 1.0, 3.5 });
+            dragAcross (lanes, { 200, rowMiddle }, { 240, rowMiddle }, juce::ModifierKeys::shiftModifier);
+            selection = f.model.getTimeSelection();
+            expect (selection && std::abs (selection->start - 1.0) < 1.0e-6 && std::abs (selection->end - 6.0) < 1.0e-6,
+                    "Shift didn't extend it to 6 s");
+
+            int clickedRow = -1;
+            lanes.onRowClicked = [&] (int row, juce::ModifierKeys) { clickedRow = row; };
+            dragAcross (lanes, { 300, rowMiddle }, { 300, rowMiddle });
+            expect (! f.model.getTimeSelection().has_value(), "a click on empty lane space kept it");
+            expectEquals (clickedRow, 0);
+        }
+
+        beginTest ("A drag inside the Time Selection moves its content; Alt copies it under a ghost (#175)");
+        {
+            Fixture f;
+            expect (f.theme.load().wasOk());
+            addMidiClips (f, 2, 2.0);
 
             UIStateStore store;
             ArrangementViewState view (store.getState ("arrangement"));
@@ -258,30 +304,83 @@ struct ArrangementGestureTests : juce::UnitTest
             TrackLanes lanes (f.model, f.commands, f.theme, view);
             lanes.setSize (1000, 400);
             lanes.setTracks (f.model.getTracks());
+            const auto rowMiddle = view.rowToY (0, lanes.laneHeight()) + lanes.laneHeight() / 2;
 
-            // From empty space left of the first clip to the middle of the second track's clip.
-            const auto secondRowMiddle = view.rowToY (1, lanes.laneHeight()) + lanes.laneHeight() / 2;
-            dragAcross (lanes, { 20, 10 }, { (int) view.timeToX (2.5), secondRowMiddle });
+            // Over the clip, inside the selection: its content moves 2 s later, on both tracks.
+            f.invoke (cmd::timeSelect, { 2.0, 4.0 });
+            dragAcross (lanes, { 120, rowMiddle }, { 200, rowMiddle });
 
-            expectEquals (f.model.getSelectedClipIds().size(), 2);
+            for (auto& track : f.model.getTracks())
+            {
+                expectEquals ((int) track.clips.size(), 1);
+                expectWithinAbsoluteError (track.clips[0].startSeconds, 4.0, 1.0e-6);
+            }
 
-            // Shift adds the clips the rectangle touches; Mod toggles them.
-            const auto firstId = f.model.getTracks()[0].clips[0].id;
-            const auto firstMiddle = view.rowToY (0, lanes.laneHeight()) + lanes.laneHeight() / 2;
-            f.model.selectClip (firstId);
-            dragAcross (lanes, { 20, secondRowMiddle }, { (int) view.timeToX (2.5), secondRowMiddle + 2 },
-                        juce::ModifierKeys::shiftModifier);
-            expectEquals (f.model.getSelectedClipIds().size(), 2);
+            expect (f.model.getTimeSelection() && std::abs (f.model.getTimeSelection()->start - 4.0) < 1.0e-6,
+                    "the selection didn't follow");
 
-            dragAcross (lanes, { 20, firstMiddle }, { (int) view.timeToX (2.5), firstMiddle + 2 },
-                        juce::ModifierKeys::commandModifier);
-            expect (f.model.getSelectedClipIds() == juce::StringArray (f.model.getTracks()[1].clips[0].id));
+            // Alt: a ghost while dragging, then a copy, the original staying.
+            lanes.setTracks (f.model.getTracks());
+            const auto background = lanes.createComponentSnapshot (lanes.getLocalBounds(), false, 1.0f);
+            const auto alt = juce::ModifierKeys (left | juce::ModifierKeys::altModifier);
+            const juce::Point<int> from { 200, rowMiddle }, to { 360, rowMiddle };
+            lanes.mouseDown (mouseEventWith (lanes, from, from, false, alt));
+            lanes.mouseDrag (mouseEventWith (lanes, to, from, true, alt));
 
-            // A click on empty space still reports its row (the view selects that track).
-            int clickedRow = -1;
-            lanes.onRowClicked = [&] (int row, juce::ModifierKeys) { clickedRow = row; };
-            dragAcross (lanes, { 20, firstMiddle }, { 20, firstMiddle });
-            expectEquals (clickedRow, 0);
+            const auto ghostEdge = juce::roundToInt (view.timeToX (8.0));
+            const auto during = lanes.createComponentSnapshot (lanes.getLocalBounds(), false, 1.0f);
+            expect (during.getPixelAt (ghostEdge, rowMiddle) != background.getPixelAt (ghostEdge, rowMiddle), "no ghost");
+
+            lanes.mouseUp (mouseEventWith (lanes, to, from, true, juce::ModifierKeys (juce::ModifierKeys::altModifier)));
+            const auto clips = f.model.getTracks()[0].clips;
+            expectEquals ((int) clips.size(), 2);
+
+            // The Time Selection's menu, on a right-click while it exists.
+            juce::PopupMenu::dismissAllActiveMenus();
+            const auto rightClick = juce::ModifierKeys (juce::ModifierKeys::rightButtonModifier);
+            lanes.mouseDown (mouseEventWith (lanes, { 700, rowMiddle }, { 700, rowMiddle }, false, rightClick));
+            expect (juce::PopupMenu::dismissAllActiveMenus(), "no Time Selection menu");
+        }
+
+        beginTest ("The Time Selection's handles in the ruler resize it over the loop brace; a ruler click keeps it (#175)");
+        {
+            Fixture f;
+            expect (f.theme.load().wasOk());
+
+            UIStateStore store;
+            ArrangementViewState view (store.getState ("arrangement"));
+            view.setPixelsPerSecond (40.0);
+            TimelineHeader ruler (f.model, f.commands, f.theme, view);
+            ruler.setSize (1000, 30);
+
+            const auto plain = ruler.createComponentSnapshot (ruler.getLocalBounds(), false, 1.0f);
+            f.invoke (cmd::timeSelect, { 2.0, 4.0 });
+            const auto highlighted = ruler.createComponentSnapshot (ruler.getLocalBounds(), false, 1.0f);
+            expect (highlighted.getPixelAt (100, 22) != plain.getPixelAt (100, 22), "no highlight");
+
+            const auto loop = f.model.getLoopRange();
+
+            // The start handle (x 80..84) out to 3 s, inside the loop brace.
+            dragAcross (ruler, { 82, 8 }, { 122, 8 });
+            auto selection = f.model.getTimeSelection();
+            expect (selection && std::abs (selection->start - 3.0) < 1.0e-6 && std::abs (selection->end - 4.0) < 1.0e-6,
+                    "the handle didn't resize it");
+            expectEquals (f.model.getLoopRange().start, loop.start);
+            expectEquals (f.model.getLoopRange().end, loop.end);
+
+            // Onto the other end it keeps its last width rather than vanishing; past it, it turns round.
+            ruler.mouseDown (mouseEventWith (ruler, { 122, 8 }, { 122, 8 }, false, juce::ModifierKeys (left)));
+            ruler.mouseDrag (mouseEventWith (ruler, { 160, 8 }, { 122, 8 }, true, juce::ModifierKeys (left)));
+            expect (f.model.getTimeSelection().has_value(), "dragged onto its end, it vanished");
+            ruler.mouseDrag (mouseEventWith (ruler, { 200, 8 }, { 122, 8 }, true, juce::ModifierKeys (left)));
+            ruler.mouseUp (mouseEventWith (ruler, { 200, 8 }, { 122, 8 }, true, juce::ModifierKeys()));
+            selection = f.model.getTimeSelection();
+            expect (selection && std::abs (selection->start - 4.0) < 1.0e-6 && std::abs (selection->end - 5.0) < 1.0e-6,
+                    "dragged past its end, it didn't turn round");
+
+            dragAcross (ruler, { 300, 20 }, { 300, 20 });
+            expectWithinAbsoluteError (f.model.getTransportPositionSeconds(), 7.5, 1.0e-6);
+            expect (f.model.getTimeSelection().has_value(), "a ruler click cleared it");
         }
 
         beginTest ("Select All and Insert MIDI Clip at a position act through Commands (#173 6)");
