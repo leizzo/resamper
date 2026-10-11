@@ -87,7 +87,7 @@ TimelineHeader::DragMode TimelineHeader::dragModeAt (juce::Point<int> p) const
 
 double TimelineHeader::snapped (double seconds) const
 {
-    return std::max (0.0, snapToGrid (model, view, themeManager.getMetrics(), std::max (0.0, seconds)));
+    return snapToGrid (model, view, themeManager.getMetrics(), std::max (0.0, seconds));
 }
 
 void TimelineHeader::mouseMove (const juce::MouseEvent& e)
@@ -130,9 +130,8 @@ void TimelineHeader::mouseDrag (const juce::MouseEvent& e)
 
         case DragMode::moveLoop:
         {
-            const auto length = loop.end - loop.start;
-            loop.start = snapped (loop.start + now - dragStartSeconds);
-            loop.end = loop.start + length;
+            const auto delta = std::max (now - dragStartSeconds, -loop.start);
+            loop = { snapped (loop.start + delta), snapped (loop.end + delta) };
             break;
         }
 
@@ -188,7 +187,8 @@ void TimelineHeader::showMenu()
 
     juce::PopupMenu menu;
     menu.addItem (commandItem (commands, cmd::transportToggleLoop).setTicked (model.isLooping()));
-    menu.addItem (commandItem (commands, cmd::transportLoopSelection));
+    // With nothing selected Mod+L toggles the loop instead, which the menu has its own item for.
+    menu.addItem (commandItem (commands, cmd::transportLoopSelection).setEnabled (! model.getSelectedClipIds().isEmpty()));
     menu.addSeparator();
     menu.addItem (juce::PopupMenu::Item (TRANS ("Snap to Grid")).setTicked (view.isSnapOn())
                       .setAction ([safe = juce::Component::SafePointer<TimelineHeader> (this)]

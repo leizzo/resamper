@@ -371,7 +371,7 @@ void TrackLanes::showLaneMenu (int row, double seconds)
                       .setEnabled (onMidiTrack));
     menu.addSeparator();
     menu.addItem (commandItem (commands, cmd::clipSelectAll));
-    menu.addItem (commandItem (commands, cmd::transportLoopSelection));
+    menu.addItem (commandItem (commands, cmd::transportLoopSelection).setEnabled (! model.getSelectedClipIds().isEmpty()));
     menu.showMenuAsync (juce::PopupMenu::Options().withTargetComponent (this).withMousePosition());
 }
 
