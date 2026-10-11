@@ -28,8 +28,8 @@ juce::PopupMenu::Item commandItem (CommandRegistry& commands, CommandRef<Args> c
     return commandItem (commands, command.id, std::any (std::move (args)), label);
 }
 
-/** The item with the icon in colour as its image, dimmed while the item is disabled. */
-juce::PopupMenu::Item withIcon (juce::PopupMenu::Item, Icon, juce::Colour, const Theme&);
+/** The item with the icon in colour as its image (the menu dims it while the item is disabled). */
+juce::PopupMenu::Item withIcon (juce::PopupMenu::Item, Icon, juce::Colour);
 
 /** "Name (shortcut)" for a tooltip, when the Command has a shortcut (PRD §16.6). */
 juce::String tooltipFor (const juce::String& name, const juce::String& commandId);

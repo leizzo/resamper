@@ -79,7 +79,10 @@ struct Theme
                  clipOutlineSelected,   ///< the outline round a selected clip
                  midiClip, midiClipSelected, midiNote,
                  pianoWhite, pianoBlack, noteSelected, gridLine, velocity,
-                 ruler, error;
+                 ruler, error,
+                 menuBackground,   ///< every PopupMenu, combo-box drop-downs included
+                 menuOutline,      ///< the PopupMenu's outline and its separators
+                 menuHighlight;    ///< the PopupMenu row under the mouse
     float cornerRadius = 0;
     float fontSize = 0;
 };
@@ -94,6 +97,8 @@ struct LayoutMetrics
     int controlXs = 0, controlSm = 0, controlMd = 0, controlLg = 0;   ///< control heights 16 / 20 / 22 / 26
     int transportButton = 0;     ///< square transport buttons
     int iconChip = 0, iconControl = 0, iconSection = 0, iconToolbar = 0;   ///< icon sizes (§15.8) 10 / 12 / 14 / 16
+    int menuItemHeight = 0;      ///< a PopupMenu row's highlight (the row adds 1 px above and below)
+    int iconMenu = 0;            ///< a PopupMenu row's icon
     int toolbarHeight = 0;
     int topBarHeight = 0;
     int inspectorWidth = 0;

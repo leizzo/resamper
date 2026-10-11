@@ -68,7 +68,10 @@
     "gridLine": "$grid-bar",
     "velocity": "$clip-fx",
     "ruler": "$text-secondary",
-    "error": "$rec"
+    "error": "$rec",
+    "menuBackground": "#26262BF2",
+    "menuOutline": "$border",
+    "menuHighlight": "$border"
   },
   "type": {
     "fs-display": { "size": 26, "family": "mono", "weight": 500, "tracking": 0 },
@@ -126,6 +129,8 @@
     "icon-control": 12,
     "icon-section": 14,
     "icon-toolbar": 16,
+    "icon-menu": 13,
+    "h-menu-item": 26,
     "w-track-header": 200,
     "w-inspector": 248,
     "w-browser": 236,

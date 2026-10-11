@@ -1,5 +1,6 @@
 #include "ThemeManager.h"
 #include "UI/Theme/UIFileSource.h"
+#include "UI/Controls/Icons.h"
 
 namespace resamper
 {
@@ -26,7 +27,7 @@ namespace
             setColour (juce::ComboBox::textColourId, t.textPrimary);
             setColour (juce::ComboBox::arrowColourId, t.textSecondary);
             setColour (juce::ListBox::backgroundColourId, t.bgPanel);
-            setColour (juce::PopupMenu::highlightedTextColourId, t.textOnAccent);
+            setColour (juce::PopupMenu::highlightedTextColourId, t.text);
             setColour (juce::DocumentWindow::textColourId, t.text);
             setColour (juce::TextButton::buttonColourId, t.panel);
             setColour (juce::TextButton::buttonOnColourId, t.accent);
@@ -42,15 +43,16 @@ namespace
             setColour (juce::BubbleComponent::outlineColourId, t.mutedText.withAlpha (0.4f));
             setColour (juce::TooltipWindow::backgroundColourId, t.panel);
             setColour (juce::TooltipWindow::textColourId, t.text);
-            setColour (juce::PopupMenu::backgroundColourId, t.panel);
+            setColour (juce::PopupMenu::backgroundColourId, t.menuBackground);
             setColour (juce::PopupMenu::textColourId, t.text);
-            setColour (juce::PopupMenu::highlightedBackgroundColourId, t.accent);
+            setColour (juce::PopupMenu::headerTextColourId, t.textDim);
+            setColour (juce::PopupMenu::highlightedBackgroundColourId, t.menuHighlight);
             setColour (juce::AlertWindow::backgroundColourId, t.panel);
             setColour (juce::AlertWindow::textColourId, t.text);
         }
 
         juce::Font getTextButtonFont (juce::TextButton&, int) override   { return themeManager.font (themeManager.getTheme().label); }
-        juce::Font getPopupMenuFont() override                           { return themeManager.font (themeManager.getTheme().body).withPointHeight (12.0f); }
+        juce::Font getPopupMenuFont() override                           { return themeManager.font (themeManager.getTheme().bodySm); }
         juce::Font getComboBoxFont (juce::ComboBox&) override             { return themeManager.font (themeManager.getTheme().body); }
         juce::Font getLabelFont (juce::Label&) override                   { return themeManager.font (themeManager.getTheme().body); }
 
@@ -130,8 +132,144 @@ namespace
             g.drawLine ({ centre, thumb }, lineWidth * 0.75f);
         }
 
+        //==============================================================================
+        // PopupMenu: every menu, combo-box drop-downs included. A row is a
+        // menuItemHeight highlight with 1 px above and below; inside it, padding, the
+        // icon slot, the label, and a right-aligned column for the shortcut or the
+        // submenu chevron.
+        //
+        // JUCE measures a row from its text alone (not its image, tick or submenu,
+        // nor the other rows), so every row reserves the icon slot and room for the
+        // chevron: that keeps labels lined up when only some rows have an icon.
+
+        int getPopupMenuBorderSize() override   { return themeManager.getMetrics().spaceSm; }
+
+        void drawPopupMenuBackground (juce::Graphics& g, int width, int height) override
+        {
+            auto& t = themeManager.getTheme();
+            const auto bounds = juce::Rectangle<int> (width, height).toFloat();
+
+            g.setColour (t.menuBackground);
+            g.fillRoundedRectangle (bounds, t.radiusLg);
+            g.setColour (t.menuOutline);
+            g.drawRoundedRectangle (bounds.reduced (0.5f), t.radiusLg, 1.0f);
+        }
+
+        void getIdealPopupMenuItemSize (const juce::String& text, bool isSeparator, int, int& idealWidth, int& idealHeight) override
+        {
+            auto& m = themeManager.getMetrics();
+
+            if (isSeparator)
+            {
+                idealWidth = m.spaceMd * 2;
+                idealHeight = 1 + m.spaceXs * 2;
+                return;
+            }
+
+            // PopupMenu measures "label   shortcut".
+            const auto split = text.lastIndexOf ("   ");
+            const auto label = split < 0 ? text : text.substring (0, split);
+            const auto shortcut = split < 0 ? juce::String() : text.substring (split).trim();
+
+            idealHeight = menuRowHeight();
+            idealWidth = m.spaceMd + m.iconMenu + m.spaceMd
+                       + juce::GlyphArrangement::getStringWidthInt (getPopupMenuFont(), label)
+                       + m.space2xl + juce::jmax (m.iconMenu, juce::GlyphArrangement::getStringWidthInt (shortcutFont(), shortcut))
+                       + m.spaceMd;
+        }
+
+        void drawPopupMenuItem (juce::Graphics& g, const juce::Rectangle<int>& area, bool isSeparator, bool isActive,
+                                bool isHighlighted, bool isTicked, bool hasSubMenu, const juce::String& text,
+                                const juce::String& shortcutKeyText, const juce::Drawable* icon,
+                                const juce::Colour* textColour) override
+        {
+            auto& t = themeManager.getTheme();
+            auto& m = themeManager.getMetrics();
+            const auto row = area.reduced (getPopupMenuBorderSize(), 0);
+
+            if (isSeparator)
+            {
+                g.setColour (t.menuOutline);
+                g.fillRect (row.withSizeKeepingCentre (row.getWidth(), 1));
+                return;
+            }
+
+            const auto highlight = row.withSizeKeepingCentre (row.getWidth(), m.menuItemHeight);
+
+            if (isHighlighted && isActive)
+            {
+                g.setColour (t.menuHighlight);
+                g.fillRoundedRectangle (highlight.toFloat(), t.radiusSm);
+            }
+
+            const auto alpha = isActive ? 1.0f : t.disabledOpacity;
+            auto content = highlight.reduced (m.spaceMd, 0);
+            const auto iconSlot = content.removeFromLeft (m.iconMenu).withSizeKeepingCentre (m.iconMenu, m.iconMenu).toFloat();
+            content.removeFromLeft (m.spaceMd);
+
+            if (icon != nullptr)
+                icon->drawWithin (g, iconSlot, juce::RectanglePlacement::centred, alpha);
+            else if (isTicked)
+                drawIcon (g, Icon::check, iconSlot, t.accent.withMultipliedAlpha (alpha));
+
+            if (hasSubMenu)
+            {
+                drawIcon (g, Icon::chevronRight, content.removeFromRight (m.iconMenu).withSizeKeepingCentre (m.iconMenu, m.iconMenu).toFloat(),
+                          t.textDim.withMultipliedAlpha (alpha));
+                content.removeFromRight (m.spaceMd);
+            }
+            else if (shortcutKeyText.isNotEmpty())
+            {
+                const auto font = shortcutFont();
+                g.setFont (font);
+                g.setColour (t.textDim.withMultipliedAlpha (alpha));
+                g.drawText (shortcutKeyText, content.removeFromRight (juce::GlyphArrangement::getStringWidthInt (font, shortcutKeyText)),
+                            juce::Justification::centredRight, false);
+                content.removeFromRight (m.spaceMd);
+            }
+
+            const auto colour = textColour != nullptr ? *textColour
+                              : findColour (isHighlighted && isActive ? juce::PopupMenu::highlightedTextColourId
+                                                                     : juce::PopupMenu::textColourId);
+            g.setFont (getPopupMenuFont());
+            g.setColour (colour.withMultipliedAlpha (alpha));
+            g.drawFittedText (text, content, juce::Justification::centredLeft, 1);
+        }
+
+        void getIdealPopupMenuSectionHeaderSizeWithOptions (const juce::String& text, int, int& idealWidth, int& idealHeight,
+                                                            const juce::PopupMenu::Options&) override
+        {
+            auto& m = themeManager.getMetrics();
+            auto& t = themeManager.getTheme();
+            idealHeight = menuRowHeight();
+            idealWidth = m.spaceMd * 2 + juce::GlyphArrangement::getStringWidthInt (themeManager.font (t.caption), t.caption.apply (text));
+        }
+
+        void drawPopupMenuSectionHeader (juce::Graphics& g, const juce::Rectangle<int>& area, const juce::String& sectionName) override
+        {
+            auto& t = themeManager.getTheme();
+            g.setFont (themeManager.font (t.caption));
+            g.setColour (findColour (juce::PopupMenu::headerTextColourId));
+            g.drawFittedText (t.caption.apply (sectionName),
+                              area.reduced (getPopupMenuBorderSize() + themeManager.getMetrics().spaceMd, 0),
+                              juce::Justification::centredLeft, 1);
+        }
+
     private:
         const ThemeManager& themeManager;
+
+        /** A menu row: the highlight with 1 px above and below, the design's 2 px row gap. */
+        int menuRowHeight() const   { return themeManager.getMetrics().menuItemHeight + 2; }
+
+        /** A shortcut in a menu row: mono at caption size, regular weight. */
+        juce::Font shortcutFont() const
+        {
+            auto style = themeManager.getTheme().caption;
+            style.mono = true;
+            style.weight = 400;
+            style.tracking = 0;
+            return themeManager.font (style);
+        }
     };
 
     juce::Result parseHex (const juce::String& value, const juce::String& key, juce::Colour& out)
@@ -388,6 +526,8 @@ juce::Result ThemeManager::parse (const juce::String& text, Theme& t, LayoutMetr
         { "pianoWhite", &Theme::pianoWhite }, { "pianoBlack", &Theme::pianoBlack },
         { "noteSelected", &Theme::noteSelected }, { "gridLine", &Theme::gridLine }, { "velocity", &Theme::velocity },
         { "ruler", &Theme::ruler }, { "error", &Theme::error },
+        { "menuBackground", &Theme::menuBackground }, { "menuOutline", &Theme::menuOutline },
+        { "menuHighlight", &Theme::menuHighlight },
     };
 
     const char* paletteKeys[] = { "clip-drums", "clip-bass", "clip-chords", "clip-pads", "clip-arp", "clip-vocal", "clip-fx" };
@@ -416,6 +556,7 @@ juce::Result ThemeManager::parse (const juce::String& text, Theme& t, LayoutMetr
         { "h-transport", &LayoutMetrics::transportButton }, { "h-toolbar", &LayoutMetrics::toolbarHeight },
         { "icon-chip", &LayoutMetrics::iconChip }, { "icon-control", &LayoutMetrics::iconControl },
         { "icon-section", &LayoutMetrics::iconSection }, { "icon-toolbar", &LayoutMetrics::iconToolbar },
+        { "h-menu-item", &LayoutMetrics::menuItemHeight }, { "icon-menu", &LayoutMetrics::iconMenu },
         { "h-topbar", &LayoutMetrics::topBarHeight }, { "w-track-header", &LayoutMetrics::trackHeaderWidth },
         { "w-inspector", &LayoutMetrics::inspectorWidth }, { "w-browser", &LayoutMetrics::browserWidth }, { "w-strip", &LayoutMetrics::stripWidth },
         { "w-strip-compact", &LayoutMetrics::stripCompactWidth }, { "w-strip-bus", &LayoutMetrics::stripBusWidth },
