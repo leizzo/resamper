@@ -1131,6 +1131,9 @@ struct PluginSandboxTests : juce::UnitTest
             PluginSandbox::pressKeyInOwnEditor (instance, juce::KeyPress ('T', mod, 't'));
             expect (dispatchUntil ([&] { return f.model.getTracks().size() == tracks + 1; }), "Mod+T in the sandboxed UI added no track");
 
+            // The new track took the selection, hiding this track's window: select its track again.
+            f.invoke (cmd::trackSelect, { track });
+
             // Mod+Alt+P hides every plug-in window, and shows them again.
             PluginSandbox::pressKeyInOwnEditor (instance, juce::KeyPress ('P', juce::ModifierKeys (mod | juce::ModifierKeys::altModifier), 'p'));
             expect (dispatchUntil ([&] { return ! windows.isShowing (id); }), "Mod+Alt+P in the sandboxed UI didn't hide the windows");

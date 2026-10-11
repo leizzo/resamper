@@ -1,4 +1,5 @@
 #include "TestFixture.h"
+#include "Commands/ApplicationCommandTable.h"
 #include "UI/Arrangement/ClipComponent.h"
 #include "UI/Arrangement/TimelineHeader.h"
 #include "UI/Arrangement/TrackLanes.h"
@@ -419,6 +420,85 @@ struct ArrangementGestureTests : juce::UnitTest
                 c->mouseDown (mouseEventWith (*c, { 300, 10 }, { 300, 10 }, false, rightClick));
                 expect (juce::PopupMenu::dismissAllActiveMenus(), c == &lanes ? "no lane menu" : "no ruler menu");
             }
+        }
+
+        beginTest ("The lane menu: the Add Track items with their shortcuts first, then the clip items (#176)");
+        {
+            Fixture f;
+            expect (f.theme.load().wasOk());
+            f.invoke (cmd::trackAddMidi);
+            f.invoke (cmd::trackAdd);
+            f.model.deselectAll();
+
+            UIStateStore store;
+            ArrangementViewState view (store.getState ("arrangement"));
+            TrackLanes lanes (f.model, f.commands, f.theme, view);
+            lanes.setSize (1000, 400);
+            lanes.setTracks (f.model.getTracks());
+
+            auto items = [] (const juce::PopupMenu& menu)
+            {
+                std::vector<juce::PopupMenu::Item> result;
+
+                for (juce::PopupMenu::MenuItemIterator it (menu); it.next();)
+                    result.push_back (it.getItem());
+
+                return result;
+            };
+
+            const auto first = f.model.getTracks()[0].id;
+            auto menu = items (lanes.createLaneMenu (0, 1.0));
+            expectEquals ((int) menu.size(), 9);
+
+            const juce::StringArray labels { "Add MIDI Track", "Add Audio Track", "Add Folder Track", "Add Bus Track",
+                                             "Add Return Track", "", "Insert MIDI Clip", "Select All", "Loop Selection" };
+
+            for (size_t i = 0; i < menu.size(); ++i)
+                expectEquals (menu[i].text, labels[(int) i]);
+
+            expect (menu[5].isSeparator);
+            expect (menu[0].isEnabled && menu[1].isEnabled && menu[4].isEnabled);
+            expect (! menu[2].isEnabled && ! menu[3].isEnabled, "Folder and Bus wait on #37");
+            expect (menu[6].isEnabled, "Insert MIDI Clip on a MIDI lane");
+            expect (menu[0].image != nullptr && menu[4].image != nullptr);
+
+            expectEquals (menu[0].shortcutKeyDescription, findShortcut (cmd::trackAddMidi.id).getTextDescriptionWithIcons());
+            expectEquals (menu[1].shortcutKeyDescription, findShortcut (cmd::trackAdd.id).getTextDescriptionWithIcons());
+            expectEquals (menu[4].shortcutKeyDescription, findShortcut (cmd::mixerAddReturn.id).getTextDescriptionWithIcons());
+
+            // Add Audio Track on the first lane inserts after it and selects the new track.
+            menu[1].action();
+            auto tracks = f.model.getTracks();
+            expectEquals ((int) tracks.size(), 3);
+            expect (tracks[1].kind == TrackKind::audio && tracks[1].selected);
+            expectEquals (tracks[0].id, first);
+
+            // On the audio lane Insert MIDI Clip is off; below the last track nothing is clicked.
+            expect (! items (lanes.createLaneMenu (1, 1.0))[6].isEnabled);
+            expect (! items (lanes.createLaneMenu (7, 1.0))[6].isEnabled);
+        }
+
+        beginTest ("Right-clicking a lane leaves the clip selection and the selected track alone (#176)");
+        {
+            Fixture f;
+            expect (f.theme.load().wasOk());
+            addMidiClips (f, 2, 0.0);
+            const auto tracks = f.model.getTracks();
+            f.model.selectClip (tracks[1].clips[0].id);
+
+            UIStateStore store;
+            ArrangementViewState view (store.getState ("arrangement"));
+            TrackLanes lanes (f.model, f.commands, f.theme, view);
+            lanes.setSize (1000, 400);
+            lanes.setTracks (f.model.getTracks());
+
+            const auto y = view.rowToY (0, lanes.laneHeight()) + lanes.laneHeight() / 2;
+            const auto x = juce::roundToInt (view.timeToX (20.0));
+            juce::PopupMenu::dismissAllActiveMenus();
+            lanes.mouseDown (mouseEventWith (lanes, { x, y }, { x, y }, false, juce::ModifierKeys (juce::ModifierKeys::rightButtonModifier)));
+            expect (juce::PopupMenu::dismissAllActiveMenus(), "no lane menu");
+
+            expect (f.model.getSelectedClipIds() == juce::StringArray { tracks[1].clips[0].id });
         }
     }
 };

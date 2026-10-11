@@ -57,6 +57,7 @@ struct ProductionTests : juce::UnitTest
             Fixture f;
             f.invoke (cmd::trackAdd);
             f.invoke (cmd::trackAdd);
+            f.model.selectTrack (f.model.getTracks()[0].id);
             f.audioFileToChoose = writeSineWav (f.scratchDir().getChildFile ("tone.wav"), 1.0);
             f.invoke (cmd::clipAdd);
 

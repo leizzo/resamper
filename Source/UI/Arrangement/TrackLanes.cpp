@@ -1,5 +1,6 @@
 #include "TrackLanes.h"
 #include "Commands/AppCommands.h"
+#include "Commands/MixerCommands.h"
 #include "UI/Controls/Icons.h"
 #include "UI/Controls/Menus.h"
 #include "UI/Theme/Interaction.h"
@@ -391,18 +392,30 @@ void TrackLanes::showClipMenu (const ClipInfo& clip)
     menu.showMenuAsync (juce::PopupMenu::Options().withTargetComponent (this).withMousePosition());
 }
 
-void TrackLanes::showLaneMenu (int row, double seconds)
+juce::PopupMenu TrackLanes::createLaneMenu (int row, double seconds)
 {
-    const bool onMidiTrack = juce::isPositiveAndBelow (row, (int) tracks.size()) && tracks[(size_t) row].kind == TrackKind::midi;
-    const auto trackId = onMidiTrack ? tracks[(size_t) row].id : juce::String();
+    auto& theme = themeManager.getTheme();
+    const bool onTrack = juce::isPositiveAndBelow (row, (int) tracks.size());
+    const auto clickedId = onTrack ? tracks[(size_t) row].id : juce::String();
+    const bool onMidiTrack = onTrack && tracks[(size_t) row].kind == TrackKind::midi;
+
+    // Folder and Bus wait on their Commands (#37 / #38).
+    auto unavailable = [] (const juce::String& label) { return juce::PopupMenu::Item (label).setEnabled (false); };
 
     juce::PopupMenu menu;
-    menu.addItem (commandItem (commands, cmd::clipAddMidiAt, { trackId, std::max (0.0, snap (seconds, false)) })
-                      .setEnabled (onMidiTrack));
+    menu.addItem (withIcon (commandItem (commands, cmd::trackAddMidi, { clickedId }), Icon::piano, theme.accent, theme));
+    menu.addItem (withIcon (commandItem (commands, cmd::trackAdd, { clickedId }), Icon::audioWaveform, theme.textSecondary, theme));
+    menu.addItem (withIcon (unavailable (TRANS ("Add Folder Track")), Icon::folder, theme.textSecondary, theme));
+    menu.addItem (withIcon (unavailable (TRANS ("Add Bus Track")), Icon::network, theme.textSecondary, theme));
+    menu.addItem (withIcon (commandItem (commands, cmd::mixerAddReturn, {}, TRANS ("Add Return Track")),
+                            Icon::plus, theme.textSecondary, theme));
     menu.addSeparator();
+    menu.addItem (commandItem (commands, cmd::clipAddMidiAt, { onMidiTrack ? clickedId : juce::String(),
+                                                               std::max (0.0, snap (seconds, false)) })
+                      .setEnabled (onMidiTrack));
     menu.addItem (commandItem (commands, cmd::clipSelectAll));
     menu.addItem (commandItem (commands, cmd::transportLoopSelection).setEnabled (! model.getSelectedClipIds().isEmpty()));
-    menu.showMenuAsync (juce::PopupMenu::Options().withTargetComponent (this).withMousePosition());
+    return menu;
 }
 
 void TrackLanes::showTimeSelectionMenu (double seconds, int x)
@@ -412,21 +425,15 @@ void TrackLanes::showTimeSelectionMenu (double seconds, int x)
     const auto target = std::max (0.0, snap (seconds, false));
     const bool inside = selection && target >= selection->start && target < selection->end;
 
-    auto withIcon = [&theme] (juce::PopupMenu::Item item, Icon icon, juce::Colour colour)
-    {
-        item.setImage (createIconDrawable (icon, item.isEnabled ? colour : colour.withMultipliedAlpha (theme.disabledOpacity)));
-        return item;
-    };
-
     juce::PopupMenu menu;
-    menu.addItem (withIcon (commandItem (commands, cmd::timeDuplicate), Icon::copy, theme.textSecondary));
-    menu.addItem (withIcon (commandItem (commands, cmd::timeInsertDuplicate), Icon::copyPlus, theme.textSecondary));
+    menu.addItem (withIcon (commandItem (commands, cmd::timeDuplicate), Icon::copy, theme.textSecondary, theme));
+    menu.addItem (withIcon (commandItem (commands, cmd::timeInsertDuplicate), Icon::copyPlus, theme.textSecondary, theme));
     menu.addItem (withIcon (commandItem (commands, cmd::timeMoveTo, { target, false }).setEnabled (selection && ! inside),
-                            Icon::moveDiagonal2, theme.textSecondary));
-    menu.addItem (withIcon (commandItem (commands, cmd::timeSplit), Icon::scissors, theme.textSecondary));
-    menu.addItem (withIcon (commandItem (commands, cmd::timeClear), Icon::eraser, theme.textSecondary));
+                            Icon::moveDiagonal2, theme.textSecondary, theme));
+    menu.addItem (withIcon (commandItem (commands, cmd::timeSplit), Icon::scissors, theme.textSecondary, theme));
+    menu.addItem (withIcon (commandItem (commands, cmd::timeClear), Icon::eraser, theme.textSecondary, theme));
     menu.addSeparator();
-    menu.addItem (withIcon (commandItem (commands, cmd::timeDelete).setColour (theme.rec), Icon::trash2, theme.rec));
+    menu.addItem (withIcon (commandItem (commands, cmd::timeDelete).setColour (theme.rec), Icon::trash2, theme.rec, theme));
 
     // It opens under the ruler, at the click.
     menu.showMenuAsync (juce::PopupMenu::Options().withTargetComponent (this)
@@ -559,7 +566,8 @@ void TrackLanes::mouseDown (const juce::MouseEvent& e)
 
     if (e.mods.isPopupMenu())
     {
-        showLaneMenu (view.yToRow (e.y, laneHeight()), view.xToTime ((float) e.x));
+        createLaneMenu (view.yToRow (e.y, laneHeight()), view.xToTime ((float) e.x))
+            .showMenuAsync (juce::PopupMenu::Options().withTargetComponent (this).withMousePosition());
         return;
     }
 

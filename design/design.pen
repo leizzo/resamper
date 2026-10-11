@@ -17659,7 +17659,7 @@
                           "id": "QhLtg",
                           "name": "Add MIDI Track Shortcut",
                           "fill": "$text-dim",
-                          "content": "⇧⌘M",
+                          "content": "⇧⌘T",
                           "fontFamily": "$font-mono",
                           "fontSize": 9,
                           "fontWeight": "normal"
@@ -17712,7 +17712,7 @@
                           "id": "lO4NI",
                           "name": "Add Audio Track Shortcut",
                           "fill": "$text-dim",
-                          "content": "⇧⌘A",
+                          "content": "⌘T",
                           "fontFamily": "$font-mono",
                           "fontSize": 9,
                           "fontWeight": "normal"
@@ -17765,7 +17765,7 @@
                           "id": "qNIUj",
                           "name": "Add Folder Track Shortcut",
                           "fill": "$text-dim",
-                          "content": "⇧⌘F",
+                          "content": "",
                           "fontFamily": "$font-mono",
                           "fontSize": 9,
                           "fontWeight": "normal"
@@ -17818,7 +17818,7 @@
                           "id": "v2aVQ",
                           "name": "Add Bus Track Shortcut",
                           "fill": "$text-dim",
-                          "content": "⇧⌘B",
+                          "content": "",
                           "fontFamily": "$font-mono",
                           "fontSize": 9,
                           "fontWeight": "normal"
@@ -17871,7 +17871,7 @@
                           "id": "CZLia",
                           "name": "Add Return Track Shortcut",
                           "fill": "$text-dim",
-                          "content": "⇧⌘R",
+                          "content": "⌥⌘T",
                           "fontFamily": "$font-mono",
                           "fontSize": 9,
                           "fontWeight": "normal"
