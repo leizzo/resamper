@@ -57,6 +57,16 @@ public:
     int rowToY (int row, int rowHeight) const;
     int yToRow (int y, int rowHeight) const;
 
+    /** Whether clip moves and trims snap to the grid (Mod bypasses it while
+        held). On until the user turns it off. The loop brace always snaps. */
+    bool isSnapOn() const;
+    void setSnapOn (bool);
+
+    /** The grid size in beats, or adaptiveGrid for the grid the zoom shows. */
+    static constexpr double adaptiveGrid = 0.0;
+    double getGridBeats() const;
+    void setGridBeats (double);
+
     /** Whether a track's automation shows (its header's Auto button). */
     bool isAutomationShown (const juce::String& trackId) const;
     void setAutomationShown (const juce::String& trackId, bool);

@@ -768,9 +768,19 @@ juce::Result ApplicationModel::insertMidiClip()
     if (track == nullptr)
         return juce::Result::fail ("Select a MIDI track");
 
+    return insertMidiClip (track->itemID.toString(), getTransportPositionSeconds());
+}
+
+juce::Result ApplicationModel::insertMidiClip (const juce::String& trackId, double startSeconds)
+{
+    auto* track = findAudioTrack (impl->edit(), trackId);
+
+    if (track == nullptr || ! isMidi (*track))
+        return juce::Result::fail ("Select a MIDI track");
+
     impl->undo().beginStep ("Insert MIDI Clip");
 
-    const auto start = te::TimePosition::fromSeconds (std::max (0.0, getTransportPositionSeconds()));
+    const auto start = te::TimePosition::fromSeconds (std::max (0.0, startSeconds));
     auto clip = track->insertMIDIClip ("MIDI Clip", { start, impl->oneBarAfter (start) }, nullptr);
 
     if (clip == nullptr)
@@ -1458,6 +1468,37 @@ void ApplicationModel::selectClip (const juce::String& clipId, SelectionMode mod
         selection.deselect (clip);
 }
 
+void ApplicationModel::selectClipsInRange (TimeRangeSeconds range, const juce::StringArray& trackIds, SelectionMode mode)
+{
+    auto& selection = impl->selectionManager;
+
+    // Tracks and clips aren't selected together.
+    if (mode == SelectionMode::replace)
+        selection.deselectAll();
+    else
+        for (auto* track : selection.getItemsOfType<te::AudioTrack>())
+            selection.deselect (track);
+
+    for (auto* track : te::getAudioTracks (impl->edit()))
+    {
+        if (! trackIds.isEmpty() && ! trackIds.contains (track->itemID.toString()))
+            continue;
+
+        for (auto* clip : track->getClips())
+        {
+            const auto position = clip->getPosition().time;
+
+            if (position.getEnd().inSeconds() <= range.start || position.getStart().inSeconds() >= range.end)
+                continue;
+
+            if (mode == SelectionMode::toggle && selection.isSelected (clip))
+                selection.deselect (clip);
+            else
+                selection.addToSelection (clip);
+        }
+    }
+}
+
 juce::StringArray ApplicationModel::getSelectedClipIds() const
 {
     juce::StringArray ids;
@@ -1697,6 +1738,13 @@ void ApplicationModel::setLooping (bool shouldLoop)
     if (isRecording())
         return;
 
+    // Turned on before any loop was set: the range the ruler shows.
+    if (shouldLoop && impl->transport().getLoopRange().isEmpty())
+    {
+        const auto shown = getLoopRange();
+        impl->transport().setLoopRange ({ te::TimePosition::fromSeconds (shown.start), te::TimePosition::fromSeconds (shown.end) });
+    }
+
     impl->transport().looping = shouldLoop;
     impl->notifyChanged();
 }
@@ -1721,6 +1769,13 @@ bool ApplicationModel::setLoopRange (double startSeconds, double endSeconds)
 TimeRangeSeconds ApplicationModel::getLoopRange() const
 {
     const auto range = impl->transport().getLoopRange();
+
+    if (range.isEmpty())
+    {
+        constexpr int defaultLoopBars = 4;
+        return { 0.0, beatsToSeconds ((double) (defaultLoopBars * std::max (1, getBeatsPerBar (0.0)))) };
+    }
+
     return { range.getStart().inSeconds(), range.getEnd().inSeconds() };
 }
 

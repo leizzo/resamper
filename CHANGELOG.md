@@ -15,6 +15,19 @@ patch release; until then every release is published on GitHub as an alpha pre-r
   signed app. A development build opens the release in the browser.
 - The first launch of a version opens a dialog of what was added and changed since the version
   opened last time.
+- The Arrangement grid subdivides into beats, 1/8 and 1/16 as you zoom in, and clip moves and trims
+  snap to the grid you see. The ruler's right-click menu turns Snap to Grid on or off and picks a
+  fixed grid size; `Mod` still bypasses the snap.
+- The loop brace is always on the ruler, dim while Loop is off. Drag it to move the loop or drag an
+  end to resize it; it always lands on the grid.
+- Dragging on empty lane space selects every clip the rectangle touches, across tracks (`Shift`
+  adds, `Mod` toggles). `Mod+A` selects every clip.
+- Right-clicking empty lane space offers Insert MIDI Clip, Select All and Loop Selection.
+
+### Fixed
+
+- A loop dragged in the ruler started and ended between beats.
+- Alt-dragging a clip seemed to move it: the original now stays put and a ghost shows the copy.
 
 ## [0.2.2] - 2026-10-04
 

@@ -9,6 +9,12 @@
 namespace resamper
 {
 
+namespace
+{
+    /** Movement below this stays a click on empty lane space, not a marquee. */
+    constexpr int marqueeThresholdPixels = 4;
+}
+
 TrackLanes::TrackLanes (const ApplicationModel& m, CommandRegistry& c, ThemeManager& tm, ArrangementViewState& v)
     : model (m), commands (c), themeManager (tm), view (v)
 {
@@ -48,11 +54,18 @@ void TrackLanes::setTracks (const std::vector<TrackInfo>& newTracks)
     repaint();
 }
 
+juce::Rectangle<int> TrackLanes::clipBounds (const ClipInfo& clip, int row) const
+{
+    const auto x = view.timeToX (clip.startSeconds);
+    const auto y = view.rowToY (row, laneHeight());
+    const auto width = (float) (clip.lengthSeconds * view.getPixelsPerSecond());
+    return juce::Rectangle<float> (x, (float) y, width, (float) laneHeight())
+               .getSmallestIntegerContainer()
+               .reduced (0, themeManager.getMetrics().spaceSm);
+}
+
 void TrackLanes::layoutClips()
 {
-    auto& metrics = themeManager.getMetrics();
-    const auto pixelsPerSecond = view.getPixelsPerSecond();
-
     for (size_t trackRow = 0; trackRow < tracks.size(); ++trackRow)
     {
         for (auto& trackClip : tracks[trackRow].clips)
@@ -62,8 +75,9 @@ void TrackLanes::layoutClips()
             if (it == clips.end())
                 continue;
 
-            // A clip being dragged shows where it would land, until the Command commits it.
-            const bool dragged = drag && drag->original.id == trackClip.id;
+            // A clip being moved or trimmed shows where it would land, until the
+            // Command commits it. One being copied stays put under its ghost.
+            const bool dragged = drag && drag->original.id == trackClip.id && ! drag->copy;
             const auto& clip = dragged ? drag->preview : trackClip;
             const auto row = dragged ? drag->row : (int) trackRow;
 
@@ -71,13 +85,7 @@ void TrackLanes::layoutClips()
             it->second->setTrackLook (clip.colourIndex >= 0 ? themeManager.getTheme().trackColour (clip.colourIndex)
                                                             : trackColour (tracks[trackRow]),
                                       tracks[trackRow].muted);
-
-            const auto x = view.timeToX (clip.startSeconds);
-            const auto y = view.rowToY (row, laneHeight());
-            const auto width = (float) (clip.lengthSeconds * pixelsPerSecond);
-            it->second->setBounds (juce::Rectangle<float> (x, (float) y, width, (float) laneHeight())
-                                       .getSmallestIntegerContainer()
-                                       .reduced (0, metrics.spaceSm));
+            it->second->setBounds (clipBounds (clip, row));
         }
     }
 }
@@ -103,10 +111,13 @@ void TrackLanes::autoScrollAt (juce::Point<int> p)
 
 void TrackLanes::cancelDrag()
 {
-    if (drag)
+    if (drag || marquee)
     {
         drag.reset();
+        marquee.reset();
+        setMouseCursor (juce::MouseCursor::NormalCursor);
         layoutClips();
+        repaint();
     }
 }
 
@@ -130,11 +141,15 @@ void TrackLanes::paint (juce::Graphics& g)
     g.setColour (theme.bgSlot);
     g.fillRect (0, view.rowToY (0, rowHeight), getWidth(), (int) tracks.size() * rowHeight);
 
-    // Grid lines where the ruler numbers its bars.
-    g.setColour (theme.borderSoft);
-
-    for (auto& line : barLines (model, view.xToTime (0.0f), view.xToTime ((float) getWidth()), barsPerGridLine (model, view)))
+    // A line on every grid step the zoom shows: bars stronger than the beats between them.
+    for (auto& line : beatLines (model, view.xToTime (0.0f), view.xToTime ((float) getWidth()),
+                                 drawnGridBeats (model, view, themeManager.getMetrics())))
+    {
+        g.setColour (line.bar ? theme.gridBar : theme.gridBeat);
         g.fillRect (juce::roundToInt (view.timeToX (line.seconds)), 0, 1, getHeight());
+    }
+
+    g.setColour (theme.borderSoft);
 
     for (size_t row = 0; row < tracks.size(); ++row)
         g.fillRect (0, view.rowToY ((int) row, rowHeight) + rowHeight - 1, getWidth(), 1);
@@ -167,6 +182,65 @@ void TrackLanes::paintOverChildren (juce::Graphics& g)
             waveform->second->draw (g, area.withTrimmedTop (metrics.clipHeaderHeight), 0.0, recording.lengthSeconds, 0.0);
         }
     }
+
+    // Alt-drag: a ghost where the copy would land; the original stays drawn in place.
+    if (drag && drag->copy)
+    {
+        const auto& from = drag->original;
+        const auto row = rowOf (from.id);
+        const auto colour = from.colourIndex >= 0 ? theme.trackColour (from.colourIndex)
+                          : row >= 0              ? trackColour (tracks[(size_t) row])
+                                                  : theme.clip;
+        const auto ghost = clipBounds (drag->preview, drag->row).toFloat();
+        g.setColour (colour.withAlpha (0.35f));
+        g.fillRoundedRectangle (ghost, 5.0f);
+        g.setColour (theme.clipOutlineSelected.withAlpha (0.8f));
+        g.drawRoundedRectangle (ghost.reduced (0.5f), 5.0f, 1.0f);
+    }
+
+    if (marquee && marquee->active)
+    {
+        const auto area = marqueeBounds (*marquee).toFloat();
+        g.setColour (theme.accent.withAlpha (0.08f));
+        g.fillRect (area);
+        g.setColour (theme.accent.withAlpha (0.6f));
+        g.drawRect (area, 1.0f);
+    }
+}
+
+juce::Rectangle<int> TrackLanes::marqueeBounds (const Marquee& m) const
+{
+    const auto x1 = view.timeToX (m.startSeconds), x2 = view.timeToX (m.endSeconds);
+    const auto scrollY = view.getScrollY();
+    return juce::Rectangle<int>::leftTopRightBottom (juce::roundToInt (std::min (x1, x2)), std::min (m.startY, m.endY) - scrollY,
+                                                     juce::roundToInt (std::max (x1, x2)), std::max (m.startY, m.endY) - scrollY);
+}
+
+void TrackLanes::selectInMarquee (const Marquee& m, juce::ModifierKeys mods)
+{
+    using Mode = ApplicationModel::SelectionMode;
+    const auto mode = mods.isShiftDown() ? Mode::add : mods.isCommandDown() ? Mode::toggle : Mode::replace;
+
+    const auto area = marqueeBounds (m);
+    const auto firstRow = std::max (0, view.yToRow (area.getY(), laneHeight()));
+    const auto lastRow = std::min ((int) tracks.size() - 1, view.yToRow (area.getBottom(), laneHeight()));
+
+    juce::StringArray trackIds;
+
+    for (int row = firstRow; row <= lastRow; ++row)
+        trackIds.add (tracks[(size_t) row].id);
+
+    // Only space below the last track: nothing to select (no track IDs would mean every track).
+    if (trackIds.isEmpty())
+    {
+        if (mode == Mode::replace)
+            commands.invoke (cmd::editDeselectAll);
+
+        return;
+    }
+
+    commands.invoke (cmd::clipSelectRange, { { std::min (m.startSeconds, m.endSeconds), std::max (m.startSeconds, m.endSeconds) },
+                                             trackIds, mode });
 }
 
 void TrackLanes::timerCallback()
@@ -233,10 +307,10 @@ int TrackLanes::rowOfTrack (const juce::String& trackId) const
 
 double TrackLanes::snap (double seconds, bool bypass) const
 {
-    if (bypass)
+    if (bypass || ! view.isSnapOn())
         return seconds;
 
-    return model.beatsToSeconds (std::round (model.secondsToBeats (seconds)));
+    return snapToGrid (model, view, themeManager.getMetrics(), seconds);
 }
 
 void TrackLanes::showClipMenu (const ClipInfo& clip)
@@ -284,6 +358,20 @@ void TrackLanes::showClipMenu (const ClipInfo& clip)
 
     menu.addSeparator();
     menu.addItem (commandItem (commands, cmd::editDelete));
+    menu.showMenuAsync (juce::PopupMenu::Options().withTargetComponent (this).withMousePosition());
+}
+
+void TrackLanes::showLaneMenu (int row, double seconds)
+{
+    const bool onMidiTrack = juce::isPositiveAndBelow (row, (int) tracks.size()) && tracks[(size_t) row].kind == TrackKind::midi;
+    const auto trackId = onMidiTrack ? tracks[(size_t) row].id : juce::String();
+
+    juce::PopupMenu menu;
+    menu.addItem (commandItem (commands, cmd::clipAddMidiAt, { trackId, std::max (0.0, snap (seconds, false)) })
+                      .setEnabled (onMidiTrack));
+    menu.addSeparator();
+    menu.addItem (commandItem (commands, cmd::clipSelectAll));
+    menu.addItem (commandItem (commands, cmd::transportLoopSelection).setEnabled (! model.getSelectedClipIds().isEmpty()));
     menu.showMenuAsync (juce::PopupMenu::Options().withTargetComponent (this).withMousePosition());
 }
 
@@ -392,12 +480,35 @@ void TrackLanes::mouseDown (const juce::MouseEvent& e)
         return;
     }
 
-    if (onRowClicked)
-        onRowClicked (view.yToRow (e.y, laneHeight()), e.mods);
+    if (e.mods.isPopupMenu())
+    {
+        showLaneMenu (view.yToRow (e.y, laneHeight()), view.xToTime ((float) e.x));
+        return;
+    }
+
+    // A click selects the track on release; a drag becomes a marquee.
+    const auto seconds = std::max (0.0, view.xToTime ((float) e.x));
+    const auto y = e.y + view.getScrollY();
+    marquee = Marquee { seconds, seconds, y, y, false };
 }
 
 void TrackLanes::mouseDrag (const juce::MouseEvent& e)
 {
+    if (marquee)
+    {
+        marquee->active = marquee->active || e.getDistanceFromDragStart() >= marqueeThresholdPixels;
+
+        if (marquee->active)
+        {
+            autoScrollAt (e.getPosition());
+            marquee->endSeconds = std::max (0.0, view.xToTime ((float) e.x));
+            marquee->endY = e.y + view.getScrollY();
+            repaint();
+        }
+
+        return;
+    }
+
     if (! drag || tracks.empty())
         return;
 
@@ -419,6 +530,7 @@ void TrackLanes::mouseDrag (const juce::MouseEvent& e)
         case DragMode::move:
         {
             drag->copy = e.mods.isAltDown();
+            setMouseCursor (drag->copy ? juce::MouseCursor::CopyingCursor : juce::MouseCursor::NormalCursor);
             to.startSeconds = std::max (0.0, snap (from.startSeconds + delta, e.mods.isCommandDown()));
             const auto row = juce::jlimit (0, (int) tracks.size() - 1, view.yToRow (e.y, laneHeight()));
 
@@ -456,12 +568,26 @@ void TrackLanes::mouseDrag (const juce::MouseEvent& e)
     }
 
     layoutClips();
+    repaint();
 }
 
 void TrackLanes::mouseUp (const juce::MouseEvent& e)
 {
+    if (auto released = std::exchange (marquee, std::nullopt))
+    {
+        if (released->active)
+            selectInMarquee (*released, e.mods);
+        else if (onRowClicked)
+            onRowClicked (view.yToRow (e.getMouseDownY(), laneHeight()), e.mods);
+
+        repaint();
+        return;
+    }
+
     if (! drag)
         return;
+
+    setMouseCursor (juce::MouseCursor::NormalCursor);
 
     const auto released = *drag;
     drag.reset();

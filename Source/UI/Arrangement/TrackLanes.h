@@ -16,11 +16,19 @@ class CommandRegistry;
     waveforms aren't regenerated.
 
     Clip gestures (PRD §8.2): a click selects a clip (Shift adds, Mod toggles);
-    dragging its body moves it (across lanes too, snapping to beats; Mod
-    bypasses the snap, Alt drops a copy); dragging an edge trims it; dragging
-    its top-right corner loop-extends it. The drag is previewed here and
+    dragging its body moves it (across lanes too); dragging an edge trims it;
+    dragging its top-right corner loop-extends it. Moves and trims snap to the
+    grid while Snap is on; Mod bypasses it. Alt drops a copy: the original
+    stays put and a ghost follows the pointer. The drag is previewed here and
     committed on release as one Command. Right-click opens the clip menu with
     each item's shortcut; double-click opens the Piano Roll or the Editor.
+
+    On empty lane space a click selects the track; a drag draws a marquee and
+    selects every clip it touches, across tracks (Shift adds, Mod toggles);
+    right-click opens the lane menu.
+
+    The grid draws a line on every step of the grid the zoom shows (bars in
+    grid-bar, the beats between them in grid-beat).
 
     While recording, each recording is drawn in its lane with its waveform
     growing, polled from the model at ~30 Hz like the Playhead.
@@ -36,7 +44,7 @@ public:
     /** Scrolls when p (lane coordinates) is near an edge, during a drag. */
     void autoScrollAt (juce::Point<int> p);
 
-    /** Drops a clip drag in progress, leaving the clip where it was (Esc). */
+    /** Drops a clip drag or marquee in progress, leaving everything as it was (Esc). */
     void cancelDrag();
 
     /** Re-positions every clip from the view state (after zoom/scroll). */
@@ -80,6 +88,16 @@ private:
     std::map<juce::String, std::unique_ptr<ClipComponent>> clips;
     std::optional<Drag> drag;
 
+    /** A drag on empty lane space, anchored in time and in content y (scroll applied). */
+    struct Marquee
+    {
+        double startSeconds = 0, endSeconds = 0;
+        int startY = 0, endY = 0;
+        bool active = false;   ///< past the drag threshold
+    };
+
+    std::optional<Marquee> marquee;
+
     std::vector<RecordingInfo> recordings;
     std::map<juce::String, std::unique_ptr<ClipWaveform>> recordingWaveforms;   ///< by track ID
 
@@ -89,6 +107,10 @@ private:
     int rowOf (const juce::String& clipId) const;
     int rowOfTrack (const juce::String& trackId) const;
     void showClipMenu (const ClipInfo&);
+    void showLaneMenu (int row, double seconds);
+    juce::Rectangle<int> marqueeBounds (const Marquee&) const;
+    void selectInMarquee (const Marquee&, juce::ModifierKeys);
+    juce::Rectangle<int> clipBounds (const ClipInfo&, int row) const;
     void startRename (const ClipInfo&);
     double snap (double seconds, bool bypass) const;
     std::unique_ptr<juce::TextEditor> renameEditor;

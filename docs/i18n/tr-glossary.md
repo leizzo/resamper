@@ -137,6 +137,7 @@ Turkish suffixes attach to them with an apostrophe: "Clip'i sil", "Track'e ekle"
 | UI scale | Arayüz ölçeği |
 | Sounds / Instruments / Samples | Sesler / Enstrümanlar / Sample'lar |
 | Drums / Bass / Chords / Vocal (track colours) | Davul / Bas / Akorlar / Vokal |
+| Grid / Snap to Grid / Adaptive (grid size) | Izgara / Izgaraya hizala / Uyarlanır |
 
 A percentage keeps the English form, `%1%` ("İndiriliyor 40%"), as numbers and units are not localised (ADR-0015).
 

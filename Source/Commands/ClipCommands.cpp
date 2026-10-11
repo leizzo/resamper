@@ -1,6 +1,8 @@
 #include "ClipCommands.h"
 #include "AppCommandHost.h"
 
+#include <limits>
+
 namespace resamper
 {
 
@@ -19,7 +21,23 @@ void registerClipCommands (CommandRegistry& registry, ApplicationModel& model, A
 
     registry.add (cmd::clipAddMidi, { "Add MIDI Clip" }, [&model, &host] { host.report (model.insertMidiClip()); });
 
+    registry.add (cmd::clipAddMidiAt, { "Insert MIDI Clip" }, [&model, &host] (const ClipMidiAtArgs& a)
+    {
+        host.report (model.insertMidiClip (a.trackId, a.startSeconds));
+    });
+
     registry.add (cmd::clipSelect, { "Select Clip" }, [&model] (const ClipSelectArgs& a) { model.selectClip (a.clipId, a.mode); });
+
+    // A marquee dragged across the Arrangement's lanes.
+    registry.add (cmd::clipSelectRange, { "Select Clips" }, [&model] (const ClipRangeArgs& a)
+    {
+        model.selectClipsInRange (a.range, a.trackIds, a.mode);
+    });
+
+    registry.add (cmd::clipSelectAll, { "Select All" }, [&model]
+    {
+        model.selectClipsInRange ({ 0.0, std::numeric_limits<double>::max() }, {});
+    });
 
     // A drag in the Arrangement.
     registry.add (cmd::clipMove, { "Move Clip" }, [&model] (const ClipMoveArgs& a)

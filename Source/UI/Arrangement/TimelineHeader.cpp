@@ -3,6 +3,8 @@
 #include "UI/PianoRoll/BeatGrid.h"
 #include "UI/State/ArrangementViewState.h"
 #include "UI/Theme/ThemeManager.h"
+#include "UI/Controls/Menus.h"
+#include "UI/Localisation.h"
 
 namespace resamper
 {
@@ -21,13 +23,22 @@ TimelineHeader::TimelineHeader (const ApplicationModel& m, CommandRegistry& c, T
 void TimelineHeader::paint (juce::Graphics& g)
 {
     auto& theme = themeManager.getTheme();
+    auto& metrics = themeManager.getMetrics();
     g.fillAll (theme.bgPanel);
 
-    // Bar numbers, one per grid line.
-    const auto numberFont = themeManager.numberFont (TypeStyle { 10.0f, true, 400 });
-    const auto every = barsPerGridLine (model, view);
+    const auto startSeconds = view.xToTime (0.0f), endSeconds = view.xToTime ((float) getWidth());
 
-    for (auto& line : barLines (model, view.xToTime (0.0f), view.xToTime ((float) getWidth()), every))
+    // A tick on every grid line the lanes draw.
+    g.setColour (theme.gridBar);
+    const auto tickHeight = getHeight() / 3;
+
+    for (auto& line : beatLines (model, startSeconds, endSeconds, drawnGridBeats (model, view, metrics)))
+        g.fillRect (juce::roundToInt (view.timeToX (line.seconds)), getHeight() - tickHeight, 1, tickHeight);
+
+    // Bar numbers, kept far enough apart to read.
+    const auto numberFont = themeManager.numberFont (TypeStyle { 10.0f, true, 400 });
+
+    for (auto& line : barLines (model, startSeconds, endSeconds, barsPerGridLine (model, view)))
     {
         const auto x = juce::roundToInt (view.timeToX (line.seconds));
         g.setColour (theme.border);
@@ -37,47 +48,156 @@ void TimelineHeader::paint (juce::Graphics& g)
         g.drawText (juce::String (line.barNumber), x + 5, 0, 40, getHeight(), juce::Justification::centredLeft, false);
     }
 
-    // The loop brace: lime while looping, faint when off.
+    // The loop brace, always there: lime while looping, faint when off.
     const auto loop = draggedLoop.value_or (model.getLoopRange());
-
-    if (loop.end > loop.start)
-    {
-        const auto x1 = view.timeToX (loop.start), x2 = view.timeToX (loop.end);
-        const auto brace = juce::Rectangle<float> (x1, 2.0f, x2 - x1, 6.0f);
-        g.setColour (theme.accent.withAlpha (draggedLoop || model.isLooping() ? 0.9f : 0.3f));
-        g.fillRoundedRectangle (brace, 2.0f);
-        g.fillRect (juce::Rectangle<float> (x1, 2.0f, 2.0f, 12.0f));
-        g.fillRect (juce::Rectangle<float> (x2 - 2.0f, 2.0f, 2.0f, 12.0f));
-    }
+    const auto brace = braceArea (loop);
+    const bool active = model.isLooping() || (draggedLoop && dragMode == DragMode::newLoop);
+    g.setColour (theme.accent.withAlpha (active ? 0.9f : 0.3f));
+    g.fillRoundedRectangle (brace.withHeight (6.0f), 2.0f);
+    g.fillRect (brace.withWidth (2.0f));
+    g.fillRect (brace.withTrimmedLeft (brace.getWidth() - 2.0f));
 
     g.setColour (theme.borderSoft);
     g.fillRect (0, getHeight() - 1, getWidth(), 1);
 }
 
+juce::Rectangle<float> TimelineHeader::braceArea (TimeRangeSeconds loop) const
+{
+    const auto x1 = view.timeToX (loop.start), x2 = view.timeToX (loop.end);
+    return { x1, 2.0f, std::max (2.0f, x2 - x1), 12.0f };
+}
+
+TimelineHeader::DragMode TimelineHeader::dragModeAt (juce::Point<int> p) const
+{
+    const auto handle = (float) themeManager.getMetrics().clipResizeHandleWidth;
+    const auto brace = braceArea (model.getLoopRange());
+    const auto x = (float) p.x;
+
+    if ((float) p.y > brace.getBottom() + 2.0f || x < brace.getX() - handle || x > brace.getRight() + handle)
+        return DragMode::newLoop;
+
+    if (std::abs (x - brace.getX()) <= handle)
+        return DragMode::loopStart;
+
+    if (std::abs (x - brace.getRight()) <= handle)
+        return DragMode::loopEnd;
+
+    return DragMode::moveLoop;
+}
+
+double TimelineHeader::snapped (double seconds) const
+{
+    return snapToGrid (model, view, themeManager.getMetrics(), std::max (0.0, seconds));
+}
+
+void TimelineHeader::mouseMove (const juce::MouseEvent& e)
+{
+    const auto mode = dragModeAt (e.getPosition());
+    setMouseCursor (mode == DragMode::loopStart || mode == DragMode::loopEnd ? juce::MouseCursor::LeftRightResizeCursor
+                  : mode == DragMode::moveLoop                              ? juce::MouseCursor::DraggingHandCursor
+                                                                            : juce::MouseCursor::NormalCursor);
+}
+
 void TimelineHeader::mouseDown (const juce::MouseEvent& e)
 {
-    dragStartSeconds = std::max (0.0, view.xToTime ((float) e.x));
     draggedLoop.reset();
+
+    if (e.mods.isPopupMenu())
+    {
+        dragMode = DragMode::newLoop;
+        showMenu();
+        return;
+    }
+
+    dragMode = dragModeAt (e.getPosition());
+    dragStartSeconds = std::max (0.0, view.xToTime ((float) e.x));
+    loopAtDragStart = model.getLoopRange();
 }
 
 void TimelineHeader::mouseDrag (const juce::MouseEvent& e)
 {
-    if (e.getDistanceFromDragStart() < loopDragThresholdPixels)
+    if (e.mods.isPopupMenu() || e.getDistanceFromDragStart() < loopDragThresholdPixels)
         return;
 
     const auto now = std::max (0.0, view.xToTime ((float) e.x));
-    draggedLoop = TimeRangeSeconds { std::min (dragStartSeconds, now), std::max (dragStartSeconds, now) };
+    auto loop = loopAtDragStart;
+
+    switch (dragMode)
+    {
+        case DragMode::newLoop:
+            loop = { snapped (std::min (dragStartSeconds, now)), snapped (std::max (dragStartSeconds, now)) };
+            break;
+
+        case DragMode::moveLoop:
+        {
+            const auto delta = std::max (now - dragStartSeconds, -loop.start);
+            loop = { snapped (loop.start + delta), snapped (loop.end + delta) };
+            break;
+        }
+
+        case DragMode::loopStart:   loop.start = snapped (now); break;
+        case DragMode::loopEnd:     loop.end = snapped (now); break;
+    }
+
+    // An end dragged past the other, or a loop narrower than the grid, keeps the last preview.
+    if (loop.end > loop.start)
+        draggedLoop = loop;
+
     repaint();
 }
 
-void TimelineHeader::mouseUp (const juce::MouseEvent&)
+void TimelineHeader::mouseUp (const juce::MouseEvent& e)
 {
+    if (e.mods.isPopupMenu())
+        return;
+
     if (auto loop = std::exchange (draggedLoop, std::nullopt))
-        commands.invoke (cmd::transportSetLoopRange, { loop->start, loop->end });
+        commands.invoke (dragMode == DragMode::newLoop ? cmd::transportSetLoopRange : cmd::transportMoveLoop,
+                         { loop->start, loop->end });
     else
         commands.invoke (cmd::transportSetPosition, dragStartSeconds);
 
     repaint();
+}
+
+void TimelineHeader::showMenu()
+{
+    juce::PopupMenu grid;
+    const auto gridBeats = view.getGridBeats();
+
+    auto chooseGrid = [this] (double beats)
+    {
+        return [safe = juce::Component::SafePointer<TimelineHeader> (this), beats]
+        {
+            if (safe != nullptr)
+                safe->view.setGridBeats (beats);
+        };
+    };
+
+    grid.addItem (juce::PopupMenu::Item (TRANS ("Adaptive")).setTicked (gridBeats <= ArrangementViewState::adaptiveGrid)
+                      .setAction (chooseGrid (ArrangementViewState::adaptiveGrid)));
+
+    // 1/2 .. 1/16 notes, in quarter-note beats.
+    for (const int noteValue : { 2, 4, 8, 16 })
+    {
+        const auto beats = 4.0 / (double) noteValue;
+        grid.addItem (juce::PopupMenu::Item ("1/" + juce::String (noteValue)).setTicked (std::abs (gridBeats - beats) < 1.0e-9)
+                          .setAction (chooseGrid (beats)));
+    }
+
+    juce::PopupMenu menu;
+    menu.addItem (commandItem (commands, cmd::transportToggleLoop).setTicked (model.isLooping()));
+    // With nothing selected Mod+L toggles the loop instead, which the menu has its own item for.
+    menu.addItem (commandItem (commands, cmd::transportLoopSelection).setEnabled (! model.getSelectedClipIds().isEmpty()));
+    menu.addSeparator();
+    menu.addItem (juce::PopupMenu::Item (TRANS ("Snap to Grid")).setTicked (view.isSnapOn())
+                      .setAction ([safe = juce::Component::SafePointer<TimelineHeader> (this)]
+                                  {
+                                      if (safe != nullptr)
+                                          safe->view.setSnapOn (! safe->view.isSnapOn());
+                                  }));
+    menu.addSubMenu (TRANS ("Grid"), grid);
+    menu.showMenuAsync (juce::PopupMenu::Options().withTargetComponent (this).withMousePosition());
 }
 
 } // namespace resamper

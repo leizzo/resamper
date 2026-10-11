@@ -286,6 +286,7 @@ target_sources(ResamperTests PRIVATE
     Tests/ShortcutTests.cpp
     Tests/AppTests.cpp
     Tests/AppUpdateTests.cpp
+    Tests/ArrangementGestureTests.cpp
     Tests/WaveformTests.cpp
     Tests/ClipViewTests.cpp
     Tests/AudioImportTests.cpp

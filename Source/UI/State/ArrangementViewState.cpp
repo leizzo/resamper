@@ -9,6 +9,8 @@ namespace
     const juce::Identifier scrollSecondsId ("scrollSeconds");
     const juce::Identifier scrollYId ("scrollY");
     const juce::Identifier laneHeightId ("laneHeight");
+    const juce::Identifier snapId ("snap");
+    const juce::Identifier gridBeatsId ("gridBeats");
 }
 
 ArrangementViewState::ArrangementViewState (juce::ValueTree uiState)
@@ -59,6 +61,11 @@ bool ArrangementViewState::follow (double seconds, float width)
     setScrollSeconds (seconds - 0.1 * (double) width / getPixelsPerSecond());
     return true;
 }
+
+bool ArrangementViewState::isSnapOn() const        { return state.getProperty (snapId, true); }
+void ArrangementViewState::setSnapOn (bool on)      { state.setProperty (snapId, on, nullptr); }
+double ArrangementViewState::getGridBeats() const   { return std::max (adaptiveGrid, (double) state.getProperty (gridBeatsId, adaptiveGrid)); }
+void ArrangementViewState::setGridBeats (double beats)   { state.setProperty (gridBeatsId, std::max (adaptiveGrid, beats), nullptr); }
 
 int ArrangementViewState::getLaneHeight (int defaultHeight) const
 {

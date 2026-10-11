@@ -31,6 +31,7 @@ namespace cmd
     inline constexpr CommandRef<RecordArgs> transportRecord { "transport.record" };
     inline constexpr CommandRef<> transportToggleLoop { "transport.toggleLoop" };
     inline constexpr CommandRef<TimeRangeSeconds> transportSetLoopRange { "transport.setLoopRange" }; ///< also turns looping on
+    inline constexpr CommandRef<TimeRangeSeconds> transportMoveLoop { "transport.moveLoop" };         ///< leaves looping as it is
     inline constexpr CommandRef<> transportLoopSelection { "transport.loopSelection" };
     inline constexpr CommandRef<> transportPlayFromSelection { "transport.playFromSelection" };
     inline constexpr CommandRef<TempoArgs> transportSetTempo { "transport.setTempo" };

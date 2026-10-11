@@ -21,6 +21,21 @@ struct ClipSelectArgs
     ApplicationModel::SelectionMode mode = ApplicationModel::SelectionMode::replace;
 };
 
+/** A marquee: the clips on these tracks (none listed: every track) that overlap range. */
+struct ClipRangeArgs
+{
+    TimeRangeSeconds range;
+    juce::StringArray trackIds;
+    ApplicationModel::SelectionMode mode = ApplicationModel::SelectionMode::replace;
+};
+
+/** A new MIDI clip on a track at a position. */
+struct ClipMidiAtArgs
+{
+    juce::String trackId;
+    double startSeconds = 0;
+};
+
 /** An audio file dropped on a track at a position. */
 struct ClipInsertArgs
 {
@@ -77,6 +92,7 @@ namespace cmd
     inline constexpr CommandRef<> clipAdd { "clip.add" };
     inline constexpr CommandRef<ClipInsertArgs> clipInsertAt { "clip.insertAt" };
     inline constexpr CommandRef<> clipAddMidi { "clip.addMidi" };
+    inline constexpr CommandRef<ClipMidiAtArgs> clipAddMidiAt { "clip.addMidiAt" };
     inline constexpr CommandRef<ClipMoveArgs> clipMove { "clip.move" };
     inline constexpr CommandRef<ClipEdgesArgs> clipResize { "clip.resize" };
     inline constexpr CommandRef<> clipSplit { "clip.split" };                      ///< the selected clip, at the playhead
@@ -87,6 +103,8 @@ namespace cmd
     inline constexpr CommandRef<ClipArgs> clipReverse { "clip.reverse" };          ///< no clipId: the selected clip
     inline constexpr CommandRef<ClipColourArgs> clipSetColour { "clip.setColour" };
     inline constexpr CommandRef<ClipSelectArgs> clipSelect { "clip.select" };     ///< never undoable
+    inline constexpr CommandRef<ClipRangeArgs> clipSelectRange { "clip.selectRange" };   ///< never undoable
+    inline constexpr CommandRef<> clipSelectAll { "clip.selectAll" };                     ///< never undoable
 
     // These act on the selected clips.
     inline constexpr CommandRef<> clipDuplicate { "clip.duplicate" };
