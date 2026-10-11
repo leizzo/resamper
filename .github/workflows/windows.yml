@@ -1,5 +1,6 @@
 # Builds the app and the tests on Windows (MSVC) and runs the tests. The
-# zipped Resamper.exe is attached to the run as an artifact.
+# Resamper.exe, with the C runtime linked in so it needs no installer, is
+# attached to the run as an artifact.
 name: Windows
 
 on:
@@ -25,7 +26,7 @@ jobs:
 
       - name: Build
         run: |
-          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded
           cmake --build build --target Resamper ResamperTests -- -k 0
 
       - name: Test
