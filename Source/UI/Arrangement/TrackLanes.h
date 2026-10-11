@@ -68,7 +68,7 @@ public:
 
     /** The menu a right-click on empty lane space opens at row (may be out of
         range) and seconds: the design's Add Track items, which insert after the
-        clicked lane's track, then Add MIDI Clip, Select All and Loop Selection.
+        clicked lane's track, then Insert MIDI Clip, Select All and Loop Selection.
         Opening it leaves the selection alone. */
     juce::PopupMenu createLaneMenu (int row, double seconds);
 

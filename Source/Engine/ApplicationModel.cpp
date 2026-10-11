@@ -280,9 +280,7 @@ struct ApplicationModel::Impl : private juce::ValueTree::Listener,
         return nullptr;
     }
 
-    /** Where a new Audio or MIDI track goes: after afterTrackId, else after the
-        selection's track, else at the end. Returns stay below the regular tracks,
-        so a Return there puts it before the first Return. */
+    /** Where a new Audio or MIDI track goes (see ApplicationModel::addAudioTrack). */
     te::TrackInsertPoint newTrackInsertPoint (const juce::String& afterTrackId) const
     {
         auto* reference = findAudioTrack (edit(), afterTrackId);

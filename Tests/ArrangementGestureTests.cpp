@@ -458,7 +458,7 @@ struct ArrangementGestureTests : juce::UnitTest
 
             expect (menu[5].isSeparator);
             expect (menu[0].isEnabled && menu[1].isEnabled && menu[4].isEnabled);
-            expect (! menu[2].isEnabled && ! menu[3].isEnabled, "Folder and Bus wait on #37");
+            expect (! menu[2].isEnabled && ! menu[3].isEnabled, "Folder and Bus wait on #37 / #38");
             expect (menu[6].isEnabled, "Insert MIDI Clip on a MIDI lane");
             expect (menu[0].image != nullptr && menu[4].image != nullptr);
 
@@ -485,6 +485,7 @@ struct ArrangementGestureTests : juce::UnitTest
             addMidiClips (f, 2, 0.0);
             const auto tracks = f.model.getTracks();
             f.model.selectClip (tracks[1].clips[0].id);
+            const auto selectedTrack = f.model.getSelectedTrackId();
 
             UIStateStore store;
             ArrangementViewState view (store.getState ("arrangement"));
@@ -499,6 +500,7 @@ struct ArrangementGestureTests : juce::UnitTest
             expect (juce::PopupMenu::dismissAllActiveMenus(), "no lane menu");
 
             expect (f.model.getSelectedClipIds() == juce::StringArray { tracks[1].clips[0].id });
+            expectEquals (f.model.getSelectedTrackId(), selectedTrack);
         }
     }
 };

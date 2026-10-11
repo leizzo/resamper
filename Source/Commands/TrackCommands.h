@@ -12,9 +12,8 @@ struct TrackArgs
     juce::String trackId;
 };
 
-/** A new Audio or MIDI track goes after afterTrackId; empty, after the selected
-    track, or at the end when nothing is selected. A Return there puts it before
-    the first Return. The new track becomes the selection. */
+/** Where track.add / track.addMidi put the new track (ApplicationModel::addAudioTrack):
+    after afterTrackId, or, empty, after the selected track. */
 struct TrackAddArgs
 {
     juce::String afterTrackId;
