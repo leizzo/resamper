@@ -1,4 +1,4 @@
-# Builds the app and the tests on Windows (MSVC) and runs the tests. The
+# Builds the app and the tests on Windows (MSVC) and runs the tests.
 # Resamper.exe, with the C runtime linked in so it needs no installer, is
 # attached to the run as an artifact.
 name: Windows
@@ -6,7 +6,7 @@ name: Windows
 on:
   pull_request:
   push:
-    branches: [main, ci/windows-build]
+    branches: [main]
   workflow_dispatch:
 
 jobs:
