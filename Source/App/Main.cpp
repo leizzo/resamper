@@ -246,20 +246,51 @@ private:
 // by PluginSandbox) serves its one plug-in, without starting the app.
 JUCE_CREATE_APPLICATION_DEFINE (resamper::ResamperApplication)
 
-int main (int argc, char* argv[])
+namespace
 {
-    if (resamper::PluginScanner::isWorker (argc, argv))
+    int run (int argc, const char* const* argv)
     {
-        juce::ScopedJuceInitialiser_GUI juceInit;
-        return resamper::PluginScanner::runWorker (argc, argv);
-    }
+        if (resamper::PluginScanner::isWorker (argc, argv))
+        {
+            juce::ScopedJuceInitialiser_GUI juceInit;
+            return resamper::PluginScanner::runWorker (argc, argv);
+        }
 
-    if (resamper::PluginSandbox::isHost (argc, argv))
-    {
-        juce::ScopedJuceInitialiser_GUI juceInit;
-        return resamper::PluginSandbox::runHost (argc, argv);
-    }
+        if (resamper::PluginSandbox::isHost (argc, argv))
+        {
+            juce::ScopedJuceInitialiser_GUI juceInit;
+            return resamper::PluginSandbox::runHost (argc, argv);
+        }
 
-    juce::JUCEApplicationBase::createInstance = &juce_CreateApplication;
-    return juce::JUCEApplicationBase::main (argc, (const char**) argv);
+        juce::JUCEApplicationBase::createInstance = &juce_CreateApplication;
+
+       #if JUCE_WINDOWS
+        return juce::JUCEApplicationBase::main();
+       #else
+        return juce::JUCEApplicationBase::main (argc, const_cast<const char**> (argv));
+       #endif
+    }
+}
+
+// WinMain on Windows, main elsewhere.
+JUCE_MAIN_FUNCTION
+{
+   #if JUCE_WINDOWS
+    // WinMain has no argv: read the wide command line, so a path keeps its non-ASCII characters.
+    auto args = juce::JUCEApplicationBase::getCommandLineParameterArray();
+    args.insert (0, juce::File::getSpecialLocation (juce::File::currentExecutableFile).getFullPathName());
+
+    std::vector<std::string> utf8;
+    std::vector<const char*> argv;
+
+    for (const auto& arg : args)
+        utf8.push_back (arg.toStdString());
+
+    for (const auto& arg : utf8)
+        argv.push_back (arg.c_str());
+
+    return run (static_cast<int> (argv.size()), argv.data());
+   #else
+    return run (argc, argv);
+   #endif
 }
