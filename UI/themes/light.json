@@ -29,7 +29,10 @@
     "velocity": "#1f8a62",
     "ruler": "#5c5c5c",
     "playhead": "#d23b3b",
-    "error": "#c62828"
+    "error": "#c62828",
+    "menuBackground": "#FFFFFFF2",
+    "menuOutline": "#00000022",
+    "menuHighlight": "#0000000F"
   },
   "style": {
     "cornerRadius": 5,

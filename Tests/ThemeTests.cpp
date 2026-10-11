@@ -165,6 +165,88 @@ struct ThemeTests : juce::UnitTest
             expect (s.themes.getTheme().background != s.themes.getTheme().bgDeep);
             expect (s.themes.getTheme().accentHover == darkAccentHover);
         }
+
+        beginTest ("Menu chrome is Theme entries and Layout Metrics (#179)");
+        {
+            Setup s;
+            auto& t = s.themes.getTheme();
+            expectColour (t.menuBackground, "#26262BF2", "menuBackground");
+            expectColour (t.menuOutline, "#34343B", "menuOutline");
+            expectColour (t.menuHighlight, "#34343B", "menuHighlight");
+            expectEquals (s.themes.getMetrics().menuItemHeight, 26);
+            expectEquals (s.themes.getMetrics().iconMenu, 13);
+
+            expect (s.themes.useTheme ("themes/light.json").wasOk());
+            auto& light = s.themes.getTheme();
+            expectColour (light.menuBackground, "#FFFFFFF2", "light menuBackground");
+            expectColour (light.menuOutline, "#00000022", "light menuOutline");
+            expectColour (light.menuHighlight, "#0000000F", "light menuHighlight");
+        }
+
+        beginTest ("A menu has a 6 px border, 28-high rows and 9-high separators, and is as wide as its content");
+        {
+            Setup s;
+            auto& lf = s.themes.getLookAndFeel();
+            expectEquals (lf.getPopupMenuBorderSize(), 6);
+
+            auto size = [&lf] (const juce::String& text, bool separator)
+            {
+                int w = 0, h = 0;
+                lf.getIdealPopupMenuItemSize (text, separator, 0, w, h);
+                return std::pair { w, h };
+            };
+
+            expectEquals (size ("Add MIDI Track", false).second, 28);
+            expectEquals (size ({}, true).second, 9);
+
+            // 8 padding, 13 icon, 8 gap and 8 padding round the label at least
+            expectGreaterThan (size ("Add MIDI Track", false).first, 37);
+            expectGreaterThan (size ("Add MIDI Track and More", false).first, size ("Add MIDI Track", false).first);
+            expectGreaterThan (size ("Add MIDI Track   " + juce::String (juce::CharPointer_UTF8 ("\xe2\x87\xa7\xe2\x8c\x98T")), false).first,
+                               size ("Add MIDI Track", false).first);
+        }
+
+        beginTest ("A menu paints a rounded menuBackground with a menuOutline, and the hovered row in menuHighlight");
+        {
+            Setup s;
+            auto& t = s.themes.getTheme();
+            auto& lf = s.themes.getLookAndFeel();
+            expect (lf.findColour (juce::PopupMenu::backgroundColourId) == t.menuBackground);
+            expect (lf.findColour (juce::PopupMenu::highlightedBackgroundColourId) == t.menuHighlight);
+            expect (lf.findColour (juce::PopupMenu::highlightedTextColourId) == t.text);
+
+            juce::Image window (juce::Image::ARGB, 120, 60, true);
+            {
+                juce::Graphics g (window);
+                lf.drawPopupMenuBackground (g, 120, 60);
+            }
+            expect (window.getPixelAt (0, 0).getAlpha() == 0, "the corner is cut by the radius");
+            expect (window.getPixelAt (60, 0) == t.menuOutline, "the top edge is the outline");
+            // A translucent colour comes back through the image's premultiplied pixels.
+            juce::Image stored (juce::Image::ARGB, 1, 1, true);
+            stored.setPixelAt (0, 0, t.menuBackground);
+            expect (window.getPixelAt (60, 30) == stored.getPixelAt (0, 0), "the inside is the background");
+
+            juce::Image row (juce::Image::ARGB, 120, 28, true);
+            {
+                juce::Graphics g (row);
+                lf.drawPopupMenuItem (g, row.getBounds(), false, true, true, false, false, "X", {}, nullptr, nullptr);
+            }
+            expect (row.getPixelAt (60, 0).getAlpha() == 0, "1 px above the highlight");
+            expect (row.getPixelAt (110, 14) == t.menuHighlight, "the highlight");
+            expect (row.getPixelAt (119, 14).getAlpha() == 0, "the menu's 6 px border beside the highlight");
+
+            // A disabled row's image is drawn at disabledOpacity, whoever made it.
+            juce::DrawableRectangle square;
+            square.setRectangle (juce::Rectangle<float> (0, 0, 13, 13));
+            square.setFill (juce::Colours::white);
+            juce::Image disabled (juce::Image::ARGB, 120, 28, true);
+            {
+                juce::Graphics g (disabled);
+                lf.drawPopupMenuItem (g, disabled.getBounds(), false, false, false, false, false, "X", {}, &square, nullptr);
+            }
+            expectEquals ((int) disabled.getPixelAt (20, 14).getAlpha(), juce::roundToInt (255 * t.disabledOpacity));
+        }
     }
 };
 

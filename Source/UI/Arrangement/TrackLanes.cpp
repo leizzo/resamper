@@ -403,12 +403,12 @@ juce::PopupMenu TrackLanes::createLaneMenu (int row, double seconds)
     auto unavailable = [] (const juce::String& label) { return juce::PopupMenu::Item (label).setEnabled (false); };
 
     juce::PopupMenu menu;
-    menu.addItem (withIcon (commandItem (commands, cmd::trackAddMidi, { clickedId }), Icon::piano, theme.accent, theme));
-    menu.addItem (withIcon (commandItem (commands, cmd::trackAdd, { clickedId }), Icon::audioWaveform, theme.textSecondary, theme));
-    menu.addItem (withIcon (unavailable (TRANS ("Add Folder Track")), Icon::folder, theme.textSecondary, theme));
-    menu.addItem (withIcon (unavailable (TRANS ("Add Bus Track")), Icon::network, theme.textSecondary, theme));
+    menu.addItem (withIcon (commandItem (commands, cmd::trackAddMidi, { clickedId }), Icon::piano, theme.accent));
+    menu.addItem (withIcon (commandItem (commands, cmd::trackAdd, { clickedId }), Icon::audioWaveform, theme.textSecondary));
+    menu.addItem (withIcon (unavailable (TRANS ("Add Folder Track")), Icon::folder, theme.textSecondary));
+    menu.addItem (withIcon (unavailable (TRANS ("Add Bus Track")), Icon::network, theme.textSecondary));
     menu.addItem (withIcon (commandItem (commands, cmd::mixerAddReturn, {}, TRANS ("Add Return Track")),
-                            Icon::plus, theme.textSecondary, theme));
+                            Icon::plus, theme.textSecondary));
     menu.addSeparator();
     menu.addItem (commandItem (commands, cmd::clipAddMidiAt, { onMidiTrack ? clickedId : juce::String(),
                                                                std::max (0.0, snap (seconds, false)) })
@@ -426,14 +426,14 @@ void TrackLanes::showTimeSelectionMenu (double seconds, int x)
     const bool inside = selection && target >= selection->start && target < selection->end;
 
     juce::PopupMenu menu;
-    menu.addItem (withIcon (commandItem (commands, cmd::timeDuplicate), Icon::copy, theme.textSecondary, theme));
-    menu.addItem (withIcon (commandItem (commands, cmd::timeInsertDuplicate), Icon::copyPlus, theme.textSecondary, theme));
+    menu.addItem (withIcon (commandItem (commands, cmd::timeDuplicate), Icon::copy, theme.textSecondary));
+    menu.addItem (withIcon (commandItem (commands, cmd::timeInsertDuplicate), Icon::copyPlus, theme.textSecondary));
     menu.addItem (withIcon (commandItem (commands, cmd::timeMoveTo, { target, false }).setEnabled (selection && ! inside),
-                            Icon::moveDiagonal2, theme.textSecondary, theme));
-    menu.addItem (withIcon (commandItem (commands, cmd::timeSplit), Icon::scissors, theme.textSecondary, theme));
-    menu.addItem (withIcon (commandItem (commands, cmd::timeClear), Icon::eraser, theme.textSecondary, theme));
+                            Icon::moveDiagonal2, theme.textSecondary));
+    menu.addItem (withIcon (commandItem (commands, cmd::timeSplit), Icon::scissors, theme.textSecondary));
+    menu.addItem (withIcon (commandItem (commands, cmd::timeClear), Icon::eraser, theme.textSecondary));
     menu.addSeparator();
-    menu.addItem (withIcon (commandItem (commands, cmd::timeDelete).setColour (theme.rec), Icon::trash2, theme.rec, theme));
+    menu.addItem (withIcon (commandItem (commands, cmd::timeDelete).setColour (theme.rec), Icon::trash2, theme.rec));
 
     // It opens under the ruler, at the click.
     menu.showMenuAsync (juce::PopupMenu::Options().withTargetComponent (this)
