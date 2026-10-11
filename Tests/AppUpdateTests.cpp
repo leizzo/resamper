@@ -103,6 +103,8 @@ struct AppUpdateTests : juce::UnitTest
             expect (! newerRelease (juce::JSON::parse ("[]"), "0.2.2").has_value());
         }
 
+       #if JUCE_MAC
+        // The updater swaps a macOS app bundle in place; elsewhere it opens the release page.
         beginTest ("only an installed app bundle outside a build tree can be replaced");
         {
             struct TempDir
@@ -138,6 +140,7 @@ struct AppUpdateTests : juce::UnitTest
             file.replaceWithText ("not a bundle");
             expect (! canReplaceInstalledApp (file));
         }
+       #endif
 
         beginTest ("Later remembers the skipped release");
         {

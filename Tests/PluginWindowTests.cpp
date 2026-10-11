@@ -5,6 +5,7 @@
 #include "Commands/PluginCommands.h"
 #include "Commands/ProjectCommands.h"
 #include "Commands/TrackCommands.h"
+#include "Engine/PluginSandbox.h"
 #include "UI/Detail/DeviceCard.h"
 #include "UI/MainWindow/MainComponent.h"
 #include "UI/Mixer/InsertSlot.h"
@@ -106,7 +107,9 @@ struct PluginWindowTests : juce::UnitTest
             expect (f.errors.isEmpty(), f.errors.joinIntoString ("; "));
             expectEquals (visiblePluginWindows(), 1);
             expect (f.windows().isShowing (id));
-            expect (elapsed < 300.0, "the window took " + juce::String (elapsed) + " ms");
+            // In its sandbox the plug-in loads in the background; without one, inserting loads it.
+            if (PluginSandbox::isAvailable())
+                expect (elapsed < 300.0, "the window took " + juce::String (elapsed) + " ms");
 
             // The host chrome and the loading state come first; the vendor UI follows.
             auto* window = f.windows().getWindow (id);
