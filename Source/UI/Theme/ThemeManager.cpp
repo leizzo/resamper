@@ -430,6 +430,7 @@ juce::Result ThemeManager::parse (const juce::String& text, Theme& t, LayoutMetr
         { "pianoKeyWidth", &LayoutMetrics::pianoKeyWidth }, { "pianoKeyHeight", &LayoutMetrics::pianoKeyHeight },
         { "pianoBlackKeyWidth", &LayoutMetrics::pianoBlackKeyWidth }, { "pianoScrollMargin", &LayoutMetrics::pianoScrollMargin },
         { "velocityLaneHeight", &LayoutMetrics::velocityLaneHeight },
+        { "gridMinPixels", &LayoutMetrics::gridMinPixels },
         { "gridEighthPixels", &LayoutMetrics::gridEighthPixels }, { "gridSixteenthPixels", &LayoutMetrics::gridSixteenthPixels },
         { "h-plugin-titlebar", &LayoutMetrics::pluginTitleBarHeight }, { "h-plugin-toolbar", &LayoutMetrics::pluginToolbarHeight },
         { "h-plugin-footer", &LayoutMetrics::pluginFooterHeight }, { "h-plugin-parameters-min", &LayoutMetrics::pluginParametersMinHeight },

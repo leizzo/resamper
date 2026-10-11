@@ -99,4 +99,47 @@ inline std::vector<BeatLine> barLines (const ApplicationModel& model, double sta
     return beatLines (model, startSeconds, endSeconds, (double) (barsPerLine * std::max (1, model.getBeatsPerBar (0.0))));
 }
 
+/** The grid the Arrangement's zoom shows, in beats: zoomed in, a beat or its
+    1/8 or 1/16 subdivision as the Piano Roll's; zoomed out, 1, 2, 4 ... bars.
+    The finest whose lines stay gridMinPixels apart. */
+inline double adaptiveGridBeats (const ApplicationModel& model, const ArrangementViewState& view, const LayoutMetrics& metrics)
+{
+    const auto perBeat = pixelsPerBeat (model, view, 0.0f);
+    const auto minPixels = (double) std::max (1, metrics.gridMinPixels);
+
+    if (perBeat >= minPixels)
+        return gridStepBeats (perBeat, metrics);
+
+    const auto beatsPerBar = (double) std::max (1, model.getBeatsPerBar (0.0));
+
+    for (int bars = 1; bars < 1024; bars *= 2)
+        if (perBeat * beatsPerBar * (double) bars >= minPixels)
+            return beatsPerBar * (double) bars;
+
+    return beatsPerBar * 1024.0;
+}
+
+/** The grid clip moves and trims snap to, in beats: the size chosen in the
+    ruler's menu, else the grid the zoom shows. */
+inline double snapGridBeats (const ApplicationModel& model, const ArrangementViewState& view, const LayoutMetrics& metrics)
+{
+    const auto chosen = view.getGridBeats();
+    return chosen > ArrangementViewState::adaptiveGrid ? chosen : adaptiveGridBeats (model, view, metrics);
+}
+
+/** The grid lines the lanes and ruler draw, in beats: the snap grid, but never
+    closer than the zoom can show. */
+inline double drawnGridBeats (const ApplicationModel& model, const ArrangementViewState& view, const LayoutMetrics& metrics)
+{
+    return std::max (snapGridBeats (model, view, metrics), adaptiveGridBeats (model, view, metrics));
+}
+
+/** seconds moved to the nearest line of the snap grid. */
+inline double snapToGrid (const ApplicationModel& model, const ArrangementViewState& view, const LayoutMetrics& metrics,
+                          double seconds)
+{
+    const auto step = snapGridBeats (model, view, metrics);
+    return model.beatsToSeconds (std::round (model.secondsToBeats (seconds) / step) * step);
+}
+
 } // namespace resamper

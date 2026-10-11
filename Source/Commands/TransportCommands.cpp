@@ -85,6 +85,12 @@ void registerTransportCommands (CommandRegistry& registry, ApplicationModel& mod
             model.setLooping (true);
     });
 
+    // The loop brace dragged by its body or an end.
+    registry.add (cmd::transportMoveLoop, { "Move Loop" }, [&model] (const TimeRangeSeconds& range)
+    {
+        model.setLoopRange (range.start, range.end);
+    });
+
     // Mod+L: loop the selection, or with nothing selected, toggle the loop.
     registry.add (cmd::transportLoopSelection, { "Loop Selection" }, [&model]
     {

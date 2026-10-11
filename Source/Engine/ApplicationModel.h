@@ -221,6 +221,10 @@ public:
         track is not a MIDI track or the Edit has none. */
     juce::Result insertMidiClip();
 
+    /** Inserts an empty MIDI clip, one bar long, on a MIDI track at startSeconds
+        (a right-click on its lane). Fails, changing nothing, for any other track. */
+    juce::Result insertMidiClip (const juce::String& trackId, double startSeconds);
+
     /** Moves a clip to start at startSeconds (clamped to the Edit start), onto
         the track trackId if given. */
     bool moveClip (const juce::String& clipId, double startSeconds, const juce::String& trackId = {});
@@ -306,6 +310,11 @@ public:
     /** Clears every selection: tracks, clips and notes (Esc). */
     void deselectAll();
     void selectClip (const juce::String& clipId, SelectionMode = SelectionMode::replace);
+
+    /** Selects the clips on these tracks (none listed: every track) that overlap
+        range, as a marquee does: replace leaves exactly them selected, add adds
+        them, toggle flips each. */
+    void selectClipsInRange (TimeRangeSeconds range, const juce::StringArray& trackIds, SelectionMode = SelectionMode::replace);
     juce::String getSelectedTrackId() const;
 
     /** The first selected clip, or empty. */
@@ -390,6 +399,9 @@ public:
 
     /** Sets the loop; returns false for an empty range. */
     bool setLoopRange (double startSeconds, double endSeconds);
+
+    /** Never empty: until one is set, the first four bars, which turning the
+        loop on then plays. */
     TimeRangeSeconds getLoopRange() const;
 
     //==============================================================================

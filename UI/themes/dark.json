@@ -149,6 +149,7 @@
     "pianoBlackKeyWidth": 50,
     "pianoScrollMargin": 4,
     "velocityLaneHeight": 80,
+    "gridMinPixels": 16,
     "gridEighthPixels": 48,
     "gridSixteenthPixels": 90,
     "h-plugin-titlebar": 36,

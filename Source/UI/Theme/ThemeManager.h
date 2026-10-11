@@ -118,6 +118,7 @@ struct LayoutMetrics
     int pianoBlackKeyWidth = 0;      ///< black keys, shorter than a white key
     int pianoScrollMargin = 0;       ///< key rows kept above middle C on open
     int velocityLaneHeight = 0;      ///< piano roll velocity lane
+    int gridMinPixels = 0;           ///< the Arrangement's grid lines (and snap) stay this far apart
     int gridEighthPixels = 0;        ///< pixels per beat before the grid shows 1/8
     int gridSixteenthPixels = 0;     ///< pixels per beat before the grid shows 1/16
     int pluginTitleBarHeight = 0;    ///< a plug-in window's title bar (§9.6)

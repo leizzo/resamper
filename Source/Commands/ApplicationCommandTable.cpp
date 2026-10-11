@@ -242,6 +242,7 @@ namespace
         KeyBinding { "pianoRoll.transpose",       KP::upKey,           shift,             pianoRollView, 12 },
         KeyBinding { "pianoRoll.transpose",       KP::downKey,         shift,             pianoRollView, -12 },
         KeyBinding { "pianoRoll.selectAll",       'A',                 cmd,               pianoRollView },
+        KeyBinding { "clip.selectAll",            'A',                 cmd,               arrangeView },
     };
 
     /** §17 rows waiting on their feature tickets. */
