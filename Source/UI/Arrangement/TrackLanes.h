@@ -23,9 +23,14 @@ class CommandRegistry;
     committed on release as one Command. Right-click opens the clip menu with
     each item's shortcut; double-click opens the Piano Roll or the Editor.
 
-    On empty lane space a click selects the track; a drag draws a marquee and
-    selects every clip it touches, across tracks (Shift adds, Mod toggles);
-    right-click opens the lane menu.
+    On empty lane space a click selects the track and clears the Time
+    Selection; a drag makes a Time Selection across every track, on the grid
+    (Mod bypasses it, Shift extends the one there is). Inside the Time
+    Selection a drag moves its content to where it is dropped, Alt copies it
+    under a ghost; a click there selects the clip under it or clears the
+    selection. Right-click on empty lane space opens the Time Selection's menu while
+    there is one (under the ruler), else the lane menu. The Time Selection draws as a tint
+    down every lane, with the clip parts inside it outlined as selected.
 
     The grid draws a line on every step of the grid the zoom shows (bars in
     grid-bar, the beats between them in grid-beat).
@@ -44,7 +49,7 @@ public:
     /** Scrolls when p (lane coordinates) is near an edge, during a drag. */
     void autoScrollAt (juce::Point<int> p);
 
-    /** Drops a clip drag or marquee in progress, leaving everything as it was (Esc). */
+    /** Drops a clip or Time Selection drag in progress (Esc). */
     void cancelDrag();
 
     /** Re-positions every clip from the view state (after zoom/scroll). */
@@ -88,15 +93,18 @@ private:
     std::map<juce::String, std::unique_ptr<ClipComponent>> clips;
     std::optional<Drag> drag;
 
-    /** A drag on empty lane space, anchored in time and in content y (scroll applied). */
-    struct Marquee
+    /** A drag that makes the Time Selection, or moves (copies) its content. */
+    struct TimeDrag
     {
-        double startSeconds = 0, endSeconds = 0;
-        int startY = 0, endY = 0;
-        bool active = false;   ///< past the drag threshold
+        bool moving = false;         ///< inside the Time Selection: its content moves
+        double anchorSeconds = 0;    ///< making: the fixed end; moving: the time under the pointer at mouse-down
+        TimeRangeSeconds original;   ///< moving: the selection at mouse-down
+        double targetStart = 0;      ///< moving: where it would land
+        bool copy = false;           ///< moving with Alt
+        bool active = false;         ///< past the drag threshold
     };
 
-    std::optional<Marquee> marquee;
+    std::optional<TimeDrag> timeDrag;
 
     std::vector<RecordingInfo> recordings;
     std::map<juce::String, std::unique_ptr<ClipWaveform>> recordingWaveforms;   ///< by track ID
@@ -108,8 +116,12 @@ private:
     int rowOfTrack (const juce::String& trackId) const;
     void showClipMenu (const ClipInfo&);
     void showLaneMenu (int row, double seconds);
-    juce::Rectangle<int> marqueeBounds (const Marquee&) const;
-    void selectInMarquee (const Marquee&, juce::ModifierKeys);
+    void showTimeSelectionMenu (double seconds, int x);
+    void timeDragged (const juce::MouseEvent&);
+    void timeReleased (const TimeDrag&, const juce::MouseEvent&);
+    void paintTimeSelection (juce::Graphics&, TimeRangeSeconds) const;
+    void paintTimeGhost (juce::Graphics&, const TimeDrag&) const;
+    juce::Rectangle<float> columnArea (TimeRangeSeconds) const;
     juce::Rectangle<int> clipBounds (const ClipInfo&, int row) const;
     void startRename (const ClipInfo&);
     double snap (double seconds, bool bypass) const;

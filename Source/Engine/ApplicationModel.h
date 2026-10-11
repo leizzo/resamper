@@ -100,13 +100,14 @@ struct TimeSignature
 
     Undoable (Engine Undo): adding/removing tracks (audio and MIDI), track volume
     and pan, inserting, moving, resizing and splitting clips, switching a
-    clip's take, each recording, and adding, deleting, moving, resizing,
-    changing the velocity of, and quantizing MIDI notes — one undo step per
-    call that changes something. A continued velocity gesture joins the previous
-    step, the way a fader drag does. A clip only moves onto a track of its own
-    kind. Mute and solo, on a track or a Bus, are one undo step each. Not
-    undoable: transport (including the loop), selection (clips and notes), track
-    input and arming (the engine keeps inputs out of its UndoManager). The
+    clip's take, each recording, each Time Selection operation, and adding,
+    deleting, moving, resizing, changing the velocity of, and quantizing MIDI
+    notes — one undo step per call that changes something. A continued
+    velocity gesture joins the previous step, the way a fader drag does. A
+    clip only moves onto a track of its own kind. Mute and solo, on a track or
+    a Bus, are one undo step each. Not undoable: transport (including the
+    loop), selection (clips, notes and the Time Selection), track input and
+    arming (the engine keeps inputs out of its UndoManager). The
     track, clip and note operations return false, recording no undo step, when
     they would change nothing (unknown clip or note, same value or position,
     empty range, unknown quantize grid).
@@ -320,6 +321,42 @@ public:
     /** The first selected clip, or empty. */
     juce::String getSelectedClipId() const;
     juce::StringArray getSelectedClipIds() const;
+
+    //==============================================================================
+    // Time Selection: a range of the Arrangement spanning every track. Making,
+    // changing or clearing it is never undoable, and it isn't saved. It and the
+    // Clip Selection never exist together: selecting a clip, or deselectAll,
+    // clears it.
+
+    /** Makes range the Time Selection and deselects every clip. An empty range
+        clears it. */
+    void selectTime (TimeRangeSeconds range);
+    std::optional<TimeRangeSeconds> getTimeSelection() const;
+
+    /** The Time Selection operations act on the parts of clips and the
+        automation points inside it, on every track that isn't frozen; tempo
+        and time signature stay put, and so do the Loop and the playhead. Each
+        is one undo step. Placing content at a target overwrites it: clips
+        overlapping the target are cut at its edges and the part inside is
+        replaced, as are its automation points. Without a Time Selection they
+        do nothing and return false. */
+
+    /** Copies the range right after itself; with insertSpace, later material
+        moves back by the range's length first. The selection moves onto the copy. */
+    bool duplicateTimeSelection (bool insertSpace);
+
+    /** Moves (or copies) the range's content to start at startSeconds,
+        clamped to 0, leaving a gap behind a move. The selection follows. */
+    bool moveTimeSelection (double startSeconds, bool copy);
+
+    /** Splits every clip crossing either edge of the range. */
+    bool splitClipsAtTimeSelection();
+
+    /** Removes the range's content, leaving a gap. */
+    bool eraseTimeSelection();
+
+    /** Removes the range and pulls later material earlier by its length. */
+    bool deleteTimeSelection();
 
     /** Replaces the note selection. Never an undo step. Ids that don't match a
         note simply aren't shown selected. */

@@ -9,10 +9,13 @@ namespace resamper
 
 namespace
 {
-    /** The span of the selected clips, if any. */
+    /** The Time Selection, else the span of the selected clips, if any. */
     std::optional<TimeRangeSeconds> selectionSpan (const ApplicationModel& model)
     {
-        std::optional<TimeRangeSeconds> span;
+        auto span = model.getTimeSelection();
+
+        if (span)
+            return span;
 
         for (auto& track : model.getTracks())
             for (auto& clip : track.clips)

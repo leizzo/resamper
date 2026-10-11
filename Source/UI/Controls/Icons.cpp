@@ -160,6 +160,10 @@ namespace
         { Icon::copy, "copy",
             R"(<rect width="14" height="14" x="8" y="8" rx="2" ry="2"/>)"
             R"(<path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>)" },
+        { Icon::copyPlus, "copy-plus",
+            R"(<line x1="15" x2="15" y1="12" y2="18"/><line x1="12" x2="18" y1="15" y2="15"/>)"
+            R"(<rect width="14" height="14" x="8" y="8" rx="2" ry="2"/>)"
+            R"(<path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>)" },
         { Icon::trash2, "trash-2",
             R"(<path d="M10 11v6"/><path d="M14 11v6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/>)"
             R"(<path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>)" },
@@ -402,6 +406,16 @@ const juce::Path& iconPath (Icon icon)
 
     jassertfalse;
     return none;
+}
+
+std::unique_ptr<juce::Drawable> createIconDrawable (Icon icon, juce::Colour colour)
+{
+    auto drawable = std::make_unique<juce::DrawablePath>();
+    drawable->setPath (iconPath (icon));
+    drawable->setFill (colour.withAlpha (0.0f));
+    drawable->setStrokeFill (colour);
+    drawable->setStrokeType ({ 2.0f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded });
+    return drawable;
 }
 
 float iconStrokeWidth (float size, float physicalScale)

@@ -40,7 +40,7 @@ public:
     void zoomIn()    { zoomBy (2.0); }
     void zoomOut()   { zoomBy (0.5); }
 
-    /** Z: the selected clips fill the view. */
+    /** Z: the Time Selection, else the selected clips, fills the view. */
     void zoomToSelection();
 
     /** Shift+Z: the whole song fills the view. */
