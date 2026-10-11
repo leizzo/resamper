@@ -365,6 +365,13 @@ struct PluginSandboxTests : juce::UnitTest
 
     void runTest() override
     {
+        // Windows has no sandbox yet: plug-ins load in-process there.
+        if (! PluginSandbox::isAvailable())
+        {
+            logMessage ("Skipped: plug-ins can't run sandboxed on this platform");
+            return;
+        }
+
         beginTest ("A plug-in runs in its sandbox by default: its audio, parameters and latency go through it");
         {
             Fixture f;
