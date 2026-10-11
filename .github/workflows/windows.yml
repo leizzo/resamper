@@ -1,0 +1,37 @@
+# Builds the app and the tests on Windows (MSVC) and runs the tests. The
+# zipped Resamper.exe is attached to the run as an artifact.
+name: Windows
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch dependencies
+        shell: bash
+        run: |
+          git submodule update --init external/gin external/melatonin_inspector external/tracktion_engine
+          git -C external/tracktion_engine config submodule.modules/juce.url https://github.com/juce-framework/JUCE.git
+          git -C external/tracktion_engine submodule update --init modules/juce
+
+      - uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Build
+        run: |
+          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+          cmake --build build --target Resamper ResamperTests
+
+      - name: Test
+        run: ctest --test-dir build --output-on-failure
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Resamper-windows
+          path: build/Resamper_artefacts/Release/Resamper.exe
