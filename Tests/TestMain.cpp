@@ -11,6 +11,16 @@ namespace resamper::test
 namespace
 {
     EngineManager* engineManager = nullptr;
+
+    /** Logs to stderr everywhere: JUCE's default goes to the debugger on
+        Windows, where a CI run would show nothing. */
+    struct ConsoleTestRunner : juce::UnitTestRunner
+    {
+        void logMessage (const juce::String& message) override
+        {
+            std::cerr << message << std::endl;
+        }
+    };
 }
 
 EngineManager& getEngineManager()
@@ -46,7 +56,7 @@ int main (int argc, char** argv)
     resamper::EngineManager engine ("ResamperTests", resamper::EngineManager::AudioDevice::none);
     resamper::test::engineManager = &engine;
 
-    juce::UnitTestRunner runner;
+    resamper::test::ConsoleTestRunner runner;
     runner.setAssertOnFailure (false);
 
     // Optional argument: run only the suites whose name contains it.
