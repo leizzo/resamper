@@ -14,7 +14,7 @@
 A dark, dense, keyboard-friendly desktop DAW for electronic producers and mix engineers.
 
 > **Status: alpha.** Resamper is in early development. The current release is
-> [v0.2.2 — M1.1 Devices & Plug-ins](https://github.com/leizzo/resamper/releases/tag/v0.2.2),
+> [v0.2.3 — M1.2 Fixes](https://github.com/leizzo/resamper/releases/tag/v0.2.3),
 > published as an alpha pre-release. Expect missing features, rough edges and project-format
 > changes — don't trust it with your only copy of a song yet.
 
@@ -28,7 +28,7 @@ signal path you can always see.
 
 > These images come from the product design ([`design/design.pen`](design/design.pen)) and show
 > where Resamper is heading. Several features in them belong to later milestones — see the
-> [roadmap](#roadmap) for what's in v0.2.2 today.
+> [roadmap](#roadmap) for what's in v0.2.3 today.
 
 ### A console, not a list
 
@@ -42,10 +42,11 @@ signal path you can always see.
 
 <img src="docs/images/workflow.png" alt="Scale-aware piano roll, audio clip envelopes with their own loop, folders and bus channels, and arrangement automation." width="100%">
 
-## What you can do today (v0.2.2)
+## What you can do today (v0.2.3)
 
 - **Arrange** — audio and MIDI tracks, clips you can move, resize, split, duplicate, loop-extend and
-  consolidate; zoom, lane height and Follow.
+  consolidate; a Time Selection across every track; a grid that subdivides as you zoom; zoom, lane
+  height and Follow.
 - **Record** — audio recording with input selection, live waveform and takes; MIDI recording from a
   MIDI input; count-in (Shift-click Rec to skip it).
 - **Edit MIDI** — piano roll note editing and quantize.
@@ -57,6 +58,7 @@ signal path you can always see.
   Bus Strips with their own inserts and Sends.
 - **Browse** — a library browser with search, categories, sample preview and drag-to-track.
 - **Stay safe** — autosave and crash recovery.
+- **Stay current** — in-app updates; the UI in English or Turkish.
 
 See [CHANGELOG.md](CHANGELOG.md) for the full list.
 
@@ -66,6 +68,7 @@ See [CHANGELOG.md](CHANGELOG.md) for the full list.
 |---|---|
 | **M1 — Core** ✅ | Shell, transport, Arrangement, device chain with plug-ins, basic Mixer, design system (v0.1.0) |
 | **M1.1 — Devices & Plug-ins** ✅ | Native devices (EQ Eight, Compressor), VST3 / AU / CLAP hosting with crash isolation, plug-in window on insert (v0.2.2) |
+| **M1.2 — Fixes** ✅ | Turkish UI, in-app updates, Time Selection, grid snap, menu design, plug-in and undo fixes (v0.2.3) |
 | **M2 — Mix** | Pre-FX / Pre / Post sends, returns, master loudness, folders & buses, sidechain inputs |
 | **M3 — Automation** | Arrangement lanes, clip overlays, Read / Touch / Latch / Write |
 | **M4 — Editors** | Scale-aware piano roll with chords and velocity, audio editor with warp and fades, clip envelopes |

@@ -9,8 +9,15 @@ patch release; until then every release is published on GitHub as an alpha pre-r
 
 ## [Unreleased]
 
+## [0.2.3] - 2026-10-11
+
+**M1.2 — Fixes** on top of **M1.1 — Devices & Plug-ins**: Turkish UI, in-app updates, Time
+Selection, and fixes to plug-ins, undo and the Arrangement.
+
 ### Added
 
+- The UI speaks Turkish. **Options → Language / Dil** picks System, English or Türkçe; the choice
+  applies after a relaunch, which the app offers.
 - On launch, a newer release shows an Update button and downloads in place. Restart swaps in the
   signed app. A development build opens the release in the browser.
 - The first launch of a version opens a dialog of what was added and changed since the version
@@ -20,14 +27,31 @@ patch release; until then every release is published on GitHub as an alpha pre-r
   fixed grid size; `Mod` still bypasses the snap.
 - The loop brace is always on the ruler, dim while Loop is off. Drag it to move the loop or drag an
   end to resize it; it always lands on the grid.
-- Dragging on empty lane space selects every clip the rectangle touches, across tracks (`Shift`
-  adds, `Mod` toggles). `Mod+A` selects every clip.
-- Right-clicking empty lane space offers Insert MIDI Clip, Select All and Loop Selection.
+- A Time Selection spans every track. Drag on empty lane space to select bars (`Shift` extends), drag
+  its ruler handles to resize it, and drag inside it to move what it holds (`Alt` copies). Duplicate
+  (`Mod+D`), Insert Duplicate (`Mod+Shift+D`), Split (`Mod+E`), Clear (`⌫`) and Delete Time
+  (`Mod+Shift+⌫`) act on the clips and automation inside it, each one undo step. `Mod+A` selects
+  every clip.
+- Right-clicking empty lane space adds a MIDI, Audio or Return track after the clicked lane, and
+  offers Insert MIDI Clip, Select All and Loop Selection. Right-clicking a Time Selection opens its
+  own menu.
+
+### Changed
+
+- Every context menu and drop-down has the design's look: a rounded, translucent menu with icons and
+  a shortcut column.
 
 ### Fixed
 
 - A loop dragged in the ruler started and ended between beats.
 - Alt-dragging a clip seemed to move it: the original now stays put and a ghost shows the copy.
+- A plug-in added to a Device Chain, or switched to or from Run in-process, played dry; exports were
+  unaffected (#168).
+- A Plug-in Window went black after Bypass or a click, and some plug-in UIs stuttered (#168).
+- Switching **Run in-process** or reloading a plug-in lost the changes made since the last save
+  (#171).
+- Parameters gives a plug-in with a small UI a readable window (#132).
+- Track and Bus mute and solo are one undo step each (#81).
 
 ## [0.2.2] - 2026-10-04
 
@@ -221,7 +245,8 @@ basic Mixer, and the Resamper design system.
 - Silent tempo-tagged loops with no waveform.
 - M1 review findings and design parity in lanes, devices and the mixer.
 
-[Unreleased]: https://github.com/leizzo/resamper/compare/v0.2.2...HEAD
+[Unreleased]: https://github.com/leizzo/resamper/compare/v0.2.3...HEAD
+[0.2.3]: https://github.com/leizzo/resamper/compare/v0.2.2...v0.2.3
 [0.2.2]: https://github.com/leizzo/resamper/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/leizzo/resamper/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/leizzo/resamper/compare/v0.1.3...v0.2.0
