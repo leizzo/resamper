@@ -29,7 +29,7 @@ class CommandRegistry;
     Selection a drag moves its content to where it is dropped, Alt copies it
     under a ghost; a click there selects the clip under it or clears the
     selection. Right-click on empty lane space opens the Time Selection's menu while
-    there is one (under the ruler), else the lane menu. The Time Selection draws as a tint
+    there is one (under the ruler), else the lane menu (createLaneMenu). The Time Selection draws as a tint
     down every lane, with the clip parts inside it outlined as selected.
 
     The grid draws a line on every step of the grid the zoom shows (bars in
@@ -65,6 +65,12 @@ public:
     void mouseDown (const juce::MouseEvent&) override;
     void mouseDrag (const juce::MouseEvent&) override;
     void mouseUp (const juce::MouseEvent&) override;
+
+    /** The menu a right-click on empty lane space opens at row (may be out of
+        range) and seconds: the design's Add Track items, which insert after the
+        clicked lane's track, then Insert MIDI Clip, Select All and Loop Selection.
+        Opening it leaves the selection alone. */
+    juce::PopupMenu createLaneMenu (int row, double seconds);
 
     /** Called with the row index under a click on an empty lane (may be out of range). */
     std::function<void (int row, juce::ModifierKeys)> onRowClicked;
@@ -115,7 +121,6 @@ private:
     int rowOf (const juce::String& clipId) const;
     int rowOfTrack (const juce::String& trackId) const;
     void showClipMenu (const ClipInfo&);
-    void showLaneMenu (int row, double seconds);
     void showTimeSelectionMenu (double seconds, int x);
     void timeDragged (const juce::MouseEvent&);
     void timeReleased (const TimeDrag&, const juce::MouseEvent&);

@@ -141,10 +141,14 @@ public:
 
     //==============================================================================
     // Model mutations (each one is a single Engine Undo step)
-    void addAudioTrack();
+    /** Adds an audio track after afterTrackId; empty (or gone), after the selected
+        track, or at the end when nothing is selected. When that track is a Return,
+        it goes before the first Return instead. The new track becomes the selection. */
+    void addAudioTrack (const juce::String& afterTrackId = {});
 
-    /** Adds a MIDI track: an audio track marked MIDI, with the built-in instrument. */
-    void addMidiTrack();
+    /** Adds a MIDI track, placed and selected as addAudioTrack: an audio track
+        marked MIDI, with the built-in instrument. */
+    void addMidiTrack (const juce::String& afterTrackId = {});
 
     /** Removes the selected track, or the last one if none is selected.
         Returns false if there is no track to remove. */

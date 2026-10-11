@@ -12,6 +12,13 @@ struct TrackArgs
     juce::String trackId;
 };
 
+/** Where track.add / track.addMidi put the new track (ApplicationModel::addAudioTrack):
+    after afterTrackId, or, empty, after the selected track. */
+struct TrackAddArgs
+{
+    juce::String afterTrackId;
+};
+
 /** A click on a track: replaces the selection, or extends or toggles it. */
 struct TrackSelectArgs
 {
@@ -52,8 +59,8 @@ struct TrackColourArgs
 
 namespace cmd
 {
-    inline constexpr CommandRef<> trackAdd { "track.add" };
-    inline constexpr CommandRef<> trackAddMidi { "track.addMidi" };
+    inline constexpr CommandRef<TrackAddArgs> trackAdd { "track.add" };
+    inline constexpr CommandRef<TrackAddArgs> trackAddMidi { "track.addMidi" };
     inline constexpr CommandRef<> trackRemove { "track.remove" };
     inline constexpr CommandRef<TrackVolumeArgs> trackSetVolume { "track.setVolume" };
     inline constexpr CommandRef<TrackPanArgs> trackSetPan { "track.setPan" };

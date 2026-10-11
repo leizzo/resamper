@@ -1,6 +1,7 @@
 #include "Menus.h"
 #include "Commands/ApplicationCommandTable.h"
 #include "UI/Localisation.h"
+#include "UI/Theme/ThemeManager.h"
 
 namespace resamper
 {
@@ -16,6 +17,12 @@ juce::PopupMenu::Item commandItem (CommandRegistry& commands, const juce::String
     if (auto key = findShortcut (commandId); key.isValid())
         item.shortcutKeyDescription = key.getTextDescriptionWithIcons();
 
+    return item;
+}
+
+juce::PopupMenu::Item withIcon (juce::PopupMenu::Item item, Icon icon, juce::Colour colour, const Theme& theme)
+{
+    item.setImage (createIconDrawable (icon, item.isEnabled ? colour : colour.withMultipliedAlpha (theme.disabledOpacity)));
     return item;
 }
 

@@ -5,8 +5,8 @@ namespace resamper
 
 void registerTrackCommands (CommandRegistry& registry, ApplicationModel& model)
 {
-    registry.add (cmd::trackAdd, { "Add Audio Track" }, [&model] { model.addAudioTrack(); });
-    registry.add (cmd::trackAddMidi, { "Add MIDI Track" }, [&model] { model.addMidiTrack(); });
+    registry.add (cmd::trackAdd, { "Add Audio Track" }, [&model] (const TrackAddArgs& a) { model.addAudioTrack (a.afterTrackId); });
+    registry.add (cmd::trackAddMidi, { "Add MIDI Track" }, [&model] (const TrackAddArgs& a) { model.addMidiTrack (a.afterTrackId); });
     registry.add (cmd::trackRemove, { "Remove Track" }, [&model] { model.removeTrack(); });
 
     registry.add (cmd::trackSetVolume, { "Set Track Volume" }, [&model] (const TrackVolumeArgs& a)

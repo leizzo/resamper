@@ -268,6 +268,51 @@ struct ApplicationModel::Impl : private juce::ValueTree::Listener,
         return selected.isEmpty() ? nullptr : selected.getFirst();
     }
 
+    /** The selected track, or the selected clip's. */
+    te::AudioTrack* trackOfSelection() const
+    {
+        if (auto* track = selectedTrack())
+            return track;
+
+        if (auto* clip = selectedClip())
+            return dynamic_cast<te::AudioTrack*> (clip->getTrack());
+
+        return nullptr;
+    }
+
+    /** Where a new Audio or MIDI track goes (see ApplicationModel::addAudioTrack). */
+    te::TrackInsertPoint newTrackInsertPoint (const juce::String& afterTrackId) const
+    {
+        auto* reference = findAudioTrack (edit(), afterTrackId);
+
+        if (reference == nullptr)
+            reference = trackOfSelection();
+
+        if (reference == nullptr)
+            return te::TrackInsertPoint::getEndOfTracks (edit());
+
+        if (isReturnTrack (*reference))
+            for (auto* track : te::getAudioTracks (edit()))
+                if (isReturnTrack (*track))
+                    return { *track, true };
+
+        return { *reference, false };
+    }
+
+    /** Inserts an audio track there, with the next colour, and selects it. */
+    te::AudioTrack::Ptr insertNewTrack (const juce::String& afterTrackId)
+    {
+        auto track = edit().insertNewAudioTrack (newTrackInsertPoint (afterTrackId), nullptr);
+
+        if (track != nullptr)
+        {
+            giveNextColour (*track);
+            selectionManager.selectOnly (track.get());
+        }
+
+        return track;
+    }
+
     juce::String noteId (const te::MidiNote& note) const
     {
         return note.state[noteIdProperty].toString();
@@ -547,27 +592,23 @@ bool ApplicationModel::setTrackColour (const juce::String& trackId, int colourIn
     return true;
 }
 
-void ApplicationModel::addAudioTrack()
+void ApplicationModel::addAudioTrack (const juce::String& afterTrackId)
 {
-    auto& edit = impl->edit();
     impl->undo().beginStep ("Add Track");
-
-    if (auto track = edit.insertNewAudioTrack (te::TrackInsertPoint::getEndOfTracks (edit), nullptr))
-        impl->giveNextColour (*track);
+    impl->insertNewTrack (afterTrackId);
 }
 
-void ApplicationModel::addMidiTrack()
+void ApplicationModel::addMidiTrack (const juce::String& afterTrackId)
 {
     auto& edit = impl->edit();
     impl->undo().beginStep ("Add MIDI Track");
-    auto track = edit.insertNewAudioTrack (te::TrackInsertPoint::getEndOfTracks (edit), nullptr);
+    auto track = impl->insertNewTrack (afterTrackId);
 
     if (track == nullptr)
         return;
 
     // Kind is a property, not "whichever synth is loaded": Phase 6 replaces the synth.
     markMidi (*track, &impl->undoManager());
-    impl->giveNextColour (*track);
 
     // Ahead of the volume plugin, so the track's fader still applies.
     if (auto plugin = edit.getPluginCache().createNewPlugin (te::FourOscPlugin::xmlTypeName, {}))
@@ -1813,14 +1854,8 @@ juce::StringArray ApplicationModel::getSelectedClipIds() const
 
 juce::String ApplicationModel::getSelectedTrackId() const
 {
-    if (auto* track = impl->selectedTrack())
-        return track->itemID.toString();
-
-    if (auto* clip = impl->selectedClip())
-        if (auto* owner = dynamic_cast<te::AudioTrack*> (clip->getTrack()))
-            return owner->itemID.toString();
-
-    return {};
+    auto* track = impl->trackOfSelection();
+    return track != nullptr ? track->itemID.toString() : juce::String();
 }
 
 juce::String ApplicationModel::getSelectedClipId() const
